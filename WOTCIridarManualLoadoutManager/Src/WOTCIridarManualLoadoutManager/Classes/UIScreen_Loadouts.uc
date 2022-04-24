@@ -1,5 +1,14 @@
 class UIScreen_Loadouts extends UIInventory_XComDatabase;
 
+// Used in two capacities. 
+
+// 1. When saving a loadout (bForSaving = true), the list on the left shows previously saved loadouts. At the top of the list is a "create new loadout" element.
+// Each previously saved loadout has a "delete" button on it. Clicking on one of the loadouts allows overwriting it.
+// The ItemCard on the right shows items currently equipped on the unit, allowing to select which of those items will be saved into the loadout.
+// 2. When equipping a previously saved loadout, (bForSaving = false), the list on the left has checkboxes to indiciate which of the loadouts is currently selected.
+// The ItemCard on the right shows items in that loadout, allowing to select which of those items should be equipped on the unit.
+// The big "equip loadout" green button appears on this screen.
+
 var UIArmory_Loadout	UIArmoryLoadoutScreen;
 var XComGameState_Unit	UnitState;
 var bool				bForSaving;
@@ -43,6 +52,7 @@ simulated function BuildScreen()
 
 	ItemCard = Spawn(class'UIItemCard_Inventory', ListContainer).InitItemCard('ItemCard');
 	ItemCard.SetX(ItemCard.X + 1200);
+	UIItemCard_Inventory(ItemCard).UnitState = UnitState;
 
 	ListBG = Spawn(class'UIPanel', ListContainer);
 	ListBG.InitPanel('InventoryListBG'); 
@@ -84,20 +94,20 @@ simulated function BuildScreen()
 
 private function OnEquipLoadoutClicked(UIButton Button)
 {
-	local array<XComGameState_Item> ItemStates;
+	local array<IRILoadoutItemStruct> LoadoutItems;
 
-	ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItems();
-	if (ItemStates.Length == 0)
+	LoadoutItems = UIItemCard_Inventory(ItemCard).GetSelectedLoadoutItems();
+	if (LoadoutItems.Length == 0)
 	{
 		ShowInfoPopup(`GetLocalizedString('InvalidLoadoutNameTitle'), `GetLocalizedString('NoItemsInLoadoutText_Equip'), eDialog_Warning);
 		return;
 	}
 
-	EquipItems(ItemStates);
+	EquipItems(LoadoutItems);
 	CloseScreen();
 }
 
-private function EquipItems(array<XComGameState_Item> ItemStates)
+private function EquipItems(array<IRILoadoutItemStruct> ItemStates)
 {
 }
 
@@ -118,7 +128,7 @@ simulated function PopulateData()
 		SpawnedItem.ListItemWidthMod = ListItemWidthMod;
 		SpawnedItem.UpdateDataDescription(`GetLocalizedString('CreateNewLoadoutButton'), OnCreateLoadoutClicked);
 		
-		UIItemCard_Inventory(ItemCard).PopulateLoadoutFromUnit(UnitState);
+		UIItemCard_Inventory(ItemCard).PopulateLoadoutFromUnit();
 	}
 
 	Loadouts = class'X2LoadoutSafe'.static.GetLoadouts();
@@ -218,7 +228,7 @@ private function OnSaveSelectedLoadoutClicked()
 	local array<XComGameState_Item>		ItemStates;
 	local TDialogueBoxData				kDialogData;
 
-	ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItems();
+	ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItemStates();
 	if (ItemStates.Length == 0)
 	{
 		ShowInfoPopup(`GetLocalizedString('InvalidLoadoutTitle'), `GetLocalizedString('NoItemsInLoadoutText'), eDialog_Warning);
@@ -243,7 +253,7 @@ private function OnOverwriteLoadoutClickedCallback(Name eAction)
 
 	if (eAction == 'eUIAction_Accept')
 	{
-		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItems();
+		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItemStates();
 		class'X2LoadoutSafe'.static.SaveLoadut_Static(CachedNewLoadoutName, ItemStates);
 		CloseScreen();
 	}
@@ -254,7 +264,7 @@ private function OnCreateLoadoutClicked()
 	local array<XComGameState_Item>	ItemStates;
 	local TInputDialogData			kData;
 
-	ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItems();
+	ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItemStates();
 	if (ItemStates.Length == 0)
 	{
 		ShowInfoPopup(`GetLocalizedString('InvalidLoadoutTitle'), `GetLocalizedString('NoItemsInLoadoutText'), eDialog_Warning);
@@ -314,24 +324,24 @@ private function OnCreateLoadoutInputBoxAccepted(string LoadoutName)
 		kDialogData.strText = `GetLocalizedString('LoadoutAlreadyExistsText');
 		kDialogData.strAccept = class'UIUtilities_Text'.default.m_strGenericYes;
 		kDialogData.strCancel = class'UIUtilities_Text'.default.m_strGenericNo;
-		kDialogData.fnCallback = OnClickedCallback;
+		kDialogData.fnCallback = OnCreateLoadoutClickedCallback;
 		Movie.Pres.UIRaiseDialog(kDialogData);
 	}
 	else
 	{
-		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItems();
+		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItemStates();
 		class'X2LoadoutSafe'.static.SaveLoadut_Static(LoadoutName, ItemStates);
 		CloseScreen();
 	}
 }
 
-private function OnClickedCallback(Name eAction)
+private function OnCreateLoadoutClickedCallback(Name eAction)
 {
 	local array<XComGameState_Item> ItemStates;
 
 	if (eAction == 'eUIAction_Accept')
 	{
-		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItems();
+		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItemStates();
 		class'X2LoadoutSafe'.static.SaveLoadut_Static(CachedNewLoadoutName, ItemStates);
 		CloseScreen();
 	}
@@ -351,28 +361,11 @@ private function ShowInfoPopup(string strTitle, string strText, optional EUIDial
 
 simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 {
-
-	//local UIMechaListItem_Bounty ListItem;
-	//local array<string> LoadoutNames;
-
-	//ListItem = UIMechaListItem_Bounty(ContainerList.GetItem(ItemIndex));
-	//if (ListItem != none)
-	//{
-	//	ItemCard.PopulateData(ListItem.GetBountyUnitName(), ListItem.GetBountyCard(), "" /*string Requirements*/, ListItem.GetBountyCardImage());
-	//	DisplayAbilities(ListItem.BountyInfo.GrantedAbilities);
-	//}
-	//LoadoutNames = class'X2LoadoutSafe'.static.GetLoadoutNames();
 	if (bForSaving)
 	{
-		//ItemCard.PopulateData(LoadoutNames[ItemIndex - 2], "wow loadout description", "", "");
-		//UIItemCard_Inventory(ItemCard).PopulateLoadoutFromUnit(UnitState);
 	}
 	else
 	{
-		//ItemCard.PopulateData(LoadoutNames[ItemIndex - 1], "wow loadout description", "", "");
-		//UIItemCard_Inventory(ItemCard).PopulateLoadoutCard();
-
-		
 	}
 }
 
@@ -391,7 +384,7 @@ private function SelectListItem(const int ItemIndex)
 			if (i == ItemIndex)
 			{
 				ListItem.Checkbox.SetChecked(true, false);
-				UIItemCard_Inventory(ItemCard).DisplayLoadout(ListItem.Loadout, UnitState);
+				UIItemCard_Inventory(ItemCard).PopulateLoadoutFromStruct(ListItem.Loadout);
 			}
 			else
 			{

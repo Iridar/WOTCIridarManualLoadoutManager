@@ -1,11 +1,14 @@
 class UIMechaListItem_LoadoutItem extends UIMechaListItem;
 
-var XComGameState_Item	ItemState;
-var EInventorySlot		InventorySlot;
-var IRILoadoutStruct	Loadout;
+// Used in several capacities.
+// Overall, it's simply a UIMechaList item with some additional storage options.
+
+var IRILoadoutStruct		Loadout;		// Used when displaying a list of loadouts in the UIScreen_Loadouts on the left.
+var XComGameState_Item		ItemState;		// Used when displaying items equipped on the unit in the UIScreen_Loadouts on the right when saving a loadout.
+var IRILoadoutItemStruct	LoadoutItem;	// Used when displaying items in a previously saved loadout in the UIScreen_Loadouts on the right when loading a loadout.
+
+// Bandaid fix for incoherent list width.
 var int					ListItemWidthMod;
-
-
 simulated function SetWidth(float NewWidth)
 {
 	NewWidth += ListItemWidthMod;
@@ -16,7 +19,7 @@ simulated function SetWidth(float NewWidth)
 	if (Checkbox != none) Checkbox.SetX(NewWidth - 34);
 	if (Desc != none) Desc.SetWidth(NewWidth - 36);
 }
-
+/*
 simulated function UIMechaListItem UpdateDataButton(string _Desc,
 								 	 string _ButtonLabel,
 								 	 delegate<OnButtonClickedCallback> _OnButtonClicked = none,
@@ -48,4 +51,4 @@ simulated function UIMechaListItem UpdateDataButton(string _Desc,
 	OnButtonClickedCallback = _OnButtonClicked;
 
 	return self;
-}
+}*/

@@ -1,8 +1,10 @@
 class UIItemCard_Inventory extends UIItemCard config(UI);
 
-var UIPanel ListContainer; // contains all controls bellow
-var UIList	List;
-var UIPanel ListBG;
+var XComGameState_Unit UnitState;
+
+var private UIPanel ListContainer; // contains all controls bellow
+var private UIList	List;
+var private UIPanel ListBG;
 
 var config int RightPanelX;
 var config int RightPanelY;
@@ -55,7 +57,24 @@ simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 	SetItemImages(SpawnedItem.ItemState.GetMyTemplate(), SpawnedItem.ItemState.GetReference());
 }
 
-simulated function PopulateLoadoutFromUnit(XComGameState_Unit UnitState)
+final function array<UIMechaListItem_LoadoutItem> GetCheckedItemStatess()
+{
+	local UIMechaListItem_LoadoutItem			ListItem;
+	local array<UIMechaListItem_LoadoutItem>	ReturnArray;
+	local int i;
+
+	for (i = 0; i < List.ItemCount; i++)
+	{
+		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
+		if (ListItem != none && ListItem.Checkbox.bChecked)
+		{
+			ReturnArray.AddItem(ListItem);
+		}
+	}
+	return ReturnArray;
+}
+
+simulated function PopulateLoadoutFromUnit()
 {
 	local UIMechaListItem_LoadoutItem	SpawnedItem;
 	local UIInventory_HeaderListItem	HeaderItem;
@@ -66,7 +85,7 @@ simulated function PopulateLoadoutFromUnit(XComGameState_Unit UnitState)
 
 	List.ClearItems();
 
-	ItemStates = GetInventory(UnitState);
+	ItemStates = GetUnitInventory();
 	foreach ItemStates(ItemState)
 	{
 		if (!bImageDisplayed)
@@ -86,7 +105,6 @@ simulated function PopulateLoadoutFromUnit(XComGameState_Unit UnitState)
 		SpawnedItem.bAnimateOnInit = false;
 		SpawnedItem.InitListItem();
 		SpawnedItem.ItemState = ItemState;
-		SpawnedItem.InventorySlot = ItemState.InventorySlot;
 		SpawnedItem.UpdateDataCheckbox(ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", true);
 
 		PreviousSlot = ItemState.InventorySlot;
@@ -102,7 +120,7 @@ simulated function PopulateLoadoutFromUnit(XComGameState_Unit UnitState)
 	}
 }
 
-private function array<XComGameState_Item> GetInventory(XComGameState_Unit UnitState)
+private function array<XComGameState_Item> GetUnitInventory()
 {
 	local CHUIItemSlotEnumerator	En;
 	local array<XComGameState_Item> ReturnArray;
@@ -120,7 +138,7 @@ private function array<XComGameState_Item> GetInventory(XComGameState_Unit UnitS
 	return ReturnArray;
 }
 
-final function array<XComGameState_Item> GetSelectedItems()
+final function array<XComGameState_Item> GetSelectedItemStates()
 {
 	local UIMechaListItem_LoadoutItem	ListItem;
 	local array<XComGameState_Item>		ReturnArray;
@@ -137,26 +155,48 @@ final function array<XComGameState_Item> GetSelectedItems()
 	return ReturnArray;
 }
 
-final function DisplayLoadout(const IRILoadoutStruct Loadout, XComGameState_Unit UnitState)
+final function array<IRILoadoutItemStruct> GetSelectedLoadoutItems()
+{
+	local UIMechaListItem_LoadoutItem	ListItem;
+	local array<IRILoadoutItemStruct>		ReturnArray;
+	local int i;
+
+	for (i = 0; i < List.ItemCount; i++)
+	{
+		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
+		if (ListItem != none && ListItem.Checkbox.bChecked)
+		{
+			ReturnArray.AddItem(ListItem.LoadoutItem);
+		}
+	}
+	return ReturnArray;
+}
+
+final function PopulateLoadoutFromStruct(const IRILoadoutStruct Loadout)
 {
 	local IRILoadoutItemStruct			LoadoutItem;
 	local UIMechaListItem_LoadoutItem	SpawnedItem;
 	local UIInventory_HeaderListItem	HeaderItem;
-	local XComGameState_Item			ItemState;
 	local EInventorySlot				PreviousSlot;
 	local EUIState						ItemStatus;
 	local bool							bImageDisplayed;
+	local X2ItemTemplateManager			ItemMgr;
+	local X2ItemTemplate				ItemTemplate;
 
 	List.ClearItems();
+	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
 
 	foreach Loadout.LoadoutItems(LoadoutItem)
 	{
-		ItemState = GetItemOfTemplate(LoadoutItem.TemplateName);
-		ItemStatus = GetItemStatus(ItemState, LoadoutItem, UnitState);
+		ItemTemplate = ItemMgr.FindItemTemplate(LoadoutItem.TemplateName);
+		if (ItemTemplate == none)
+			continue;
 
-		if (ItemState != none && !bImageDisplayed)
+		ItemStatus = GetItemStatus(ItemTemplate, LoadoutItem);
+
+		if (!bImageDisplayed)
 		{
-			SetItemImages(ItemState.GetMyTemplate(), ItemState.GetReference());
+			SetItemImages(ItemTemplate);
 			bImageDisplayed = true;
 		}
 
@@ -170,11 +210,10 @@ final function DisplayLoadout(const IRILoadoutStruct Loadout, XComGameState_Unit
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
 		SpawnedItem.InitListItem();
-		SpawnedItem.ItemState = ItemState;
-		SpawnedItem.InventorySlot = LoadoutItem.InventorySlot;
-		SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), ItemStatus), "", true);
+		SpawnedItem.LoadoutItem = LoadoutItem;
+		SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), ItemStatus), "", true);
 
-		PreviousSlot = ItemState.InventorySlot;
+		PreviousSlot = LoadoutItem.InventorySlot;
 	}
 
 	if (List.ItemCount > 0)
@@ -196,7 +235,7 @@ private function XComGameState_Item GetItemOfTemplate(const name TemplateName)
 	return ItemState;
 }
 
-private function EUIState GetItemStatus(XComGameState_Item ItemState, IRILoadoutItemStruct LoadoutItem, XComGameState_Unit UnitState)
+private function EUIState GetItemStatus(X2ItemTemplate ItemTemplate, IRILoadoutItemStruct LoadoutItem)
 {
 	//local XComGameState_Item		EquippedItem;
 	//local array<XComGameState_Item> EquippedItems;
