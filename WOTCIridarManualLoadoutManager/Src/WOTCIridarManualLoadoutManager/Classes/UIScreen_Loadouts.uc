@@ -16,8 +16,8 @@ var bool				bForSaving;
 var config(UI) int NewX;
 var config(UI) int ListItemWidthMod;
 
-var private UILargeButton EquipLoadoutButton;
-var private string CachedNewLoadoutName;
+var private UILargeButton	EquipLoadoutButton;
+var private string			CachedNewLoadoutName;
 
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
@@ -105,10 +105,6 @@ private function OnEquipLoadoutClicked(UIButton Button)
 
 	EquipItems(LoadoutItems);
 	CloseScreen();
-}
-
-private function EquipItems(array<IRILoadoutItemStruct> ItemStates)
-{
 }
 
 simulated function PopulateData()
@@ -282,6 +278,7 @@ private function OnCreateLoadoutClicked()
 simulated function CloseScreen()
 {
 	UIArmoryLoadoutScreen.Show();
+	UIArmoryLoadoutScreen.UpdateData(true);
 	super.CloseScreen();
 }
 
@@ -394,97 +391,156 @@ private function SelectListItem(const int ItemIndex)
 	}
 }
 
-/*
-private function DisplayAbilities(const out array<SoldierClassAbilityType> Abilities)
+private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 {
-	local UIListItemAbility_Bounty	ListItem;
-	local X2AbilityTemplateManager	AbilityMgr;
-	local X2AbilityTemplate			AbilityTemplate;
-	local SoldierClassAbilityType	AbilityType;
-	local int i;
+	local IRILoadoutItemStruct				LoadoutItem;
+	local XComGameState						NewGameState;
+	local bool								bChangedSomething;
+	local XComGameState_Item				ItemState;
+	local X2ItemTemplate					ItemTemplate;
+	local XComGameState_Item				EquippedItem;
+	local array<XComGameState_Item>			EquippedItems;
 
-	AbilityMgr = class'X2AbilityTemplateManager'.static.GetAbilityTemplateManager();
+	History = `XCOMHISTORY;
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Loading Loadout For Unit" @ UnitState.GetFullName());
+	XComHQ = class'Help'.static.GetAndPrepXComHQ(NewGameState);
+	UnitState = XComGameState_Unit(NewGameState.ModifyStateObject(UnitState.Class, UnitState.ObjectID));
 
-	LeftPanelBG = Spawn(class'UIBGBox', self);
-    LeftPanelBG.LibID = class'UIUtilities_Controls'.const.MC_X2Background;
-    LeftPanelBG.InitBG('ShowLeftPanelText_LeftPanelText_BG');
-	LeftPanelBG.SetPosition(default.LeftPanelX, default.LeftPanelY);
-    LeftPanelBG.SetSize(default.LeftPanelW, default.LeftPanelH);
-
-	 //setup the text panel to the same size and position
-    LeftPanelText = Spawn(class'UIPanel', self);
-	LeftPanelText.bAnimateOnInit = false;
-    LeftPanelText.InitPanel('ShowLeftPanelText_LeftPanelText');
-	LeftPanelText.SetPosition(default.LeftPanelX, default.LeftPanelY);
-    LeftPanelText.SetSize(default.LeftPanelW, default.LeftPanelH);
-
-	LeftPanelList = Spawn(class'UIList', self);
-	LeftPanelList.InitList('List', default.LeftPanelX +10, default.LeftPanelY + 70, default.LeftPanelW -40, default.LeftPanelH -90, false, false, '' );
-	LeftPanelList.ItemPadding = 8;
-	LeftPanelList.bStickyHighlight = false; //so the elements only highlight when over
-	LeftPanelBG.ProcessMouseEvents(LeftPanelList.OnChildMouseEvent);	//so the list scrolls
-
-	//setup the text panel title
-	LeftPanelTextHeader = Spawn(class'UIX2PanelHeader', LeftPanelText);
-	LeftPanelTextHeader.bAnimateOnInit = false;
-	LeftPanelTextHeader.InitPanelHeader('ShowLeftPanelText_LeftPanelTextTitle', "", "");
-	LeftPanelTextHeader.SetHeaderWidth(LeftPanelText.Width - 20);
-	LeftPanelTextHeader.bRealizeOnSetText = true;	//allows recolouring of the title
-	LeftPanelTextHeader.SetText(class'UIUtilities_Text'.static.GetColoredText(class'XLocalizedData'.default.TacticalTextAbilitiesHeader, eUIState_Warning, 28), "");
-	LeftPanelTextHeader.SetPosition(LeftPanelTextHeader.X + 10, LeftPanelTextHeader.Y + 10);
-
-	//setup a 'linebreak'
-	LeftPanelSplitLine = Spawn(class'UIPanel', LeftPanelText);
-	LeftPanelSplitLine.InitPanel('', class'UIUtilities_Controls'.const.MC_GenericPixel);
-    LeftPanelSplitLine.SetColor( class'UIUtilities_Colors'.const.NORMAL_HTML_COLOR );
-	LeftPanelSplitLine.SetSize( 420, 2 );
-    LeftPanelSplitLine.SetAlpha( 15 );
-	LeftPanelSplitLine.SetPosition(LeftPanelTextHeader.X + 5, LeftPanelTextHeader.Y + 40);
-
-	i = 0;
-	`AMLOG("Running for abilities:" @ Abilities.Length);
-	foreach Abilities(AbilityType)
+	foreach LoadoutItems(LoadoutItem)
 	{
-		
-		AbilityTemplate = AbilityMgr.FindAbilityTemplate(AbilityType.AbilityName);
-		if (AbilityTemplate == none)
+		`AMLOG("Loadout Item:" @ LoadoutItem.TemplateName @ LoadoutItem.InventorySlot);
+
+		ItemState = GetItemStateToEquip(LoadoutItem.TemplateName, NewGameState);
+		if (ItemState == none)
 			continue;
 
-		ListItem = UIListItemAbility_Bounty(LeftPanelList.GetItem(i++));
-		if (ListItem == none)
+		`AMLOG("Found item state to equip.");
+
+		ItemTemplate = ItemState.GetMyTemplate();
+		
+		if (!UnitState.CanAddItemToInventory(ItemTemplate, LoadoutItem.InventorySlot, NewGameState, ItemState.Quantity, ItemState))
 		{
-			ListItem = Spawn(class'UIListItemAbility_Bounty', LeftPanelList.ItemContainer);
-			ListItem.InitListItemPerk();
+			`AMLOG("Can't equip the item. Assuming this is because slot is occupied.");
+
+			if (class'CHItemSlot'.static.SlotIsMultiItem(LoadoutItem.InventorySlot))
+			{
+				EquippedItems = UnitState.GetAllItemsInSlot(LoadoutItem.InventorySlot, NewGameState,, true);
+				if (EquippedItems.Length > 0)
+				{
+					EquippedItem = EquippedItems[EquippedItems.Length - 1];
+					`AMLOG("This is a multi slot, attempting to replace the last item:" @ EquippedItem.GetMyTemplateName());
+				}
+			}
+			else
+			{
+				EquippedItem = UnitState.GetItemInSlot(LoadoutItem.InventorySlot, NewGameState);
+			}
 		}
 
-		ListItem.SetAbility(AbilityTemplate);
+		// If we found an item to replace with the restored equipment, it will be stored in ItemState, and we need to put it back into the inventory
+		if (EquippedItem != none)
+		{
+			`AMLOG("Slot is already occupied by:" @ EquippedItem.GetMyTemplateName());
+			EquippedItem = XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', EquippedItem.ObjectID));
+					
+			// Try to remove the item we want to replace from our inventory
+			if (!UnitState.RemoveItemFromInventory(EquippedItem, NewGameState))
+			{
+				// Removing the item failed, so add our restored item back to the HQ inventory
+				`AMLOG("Failed to remove the item occupying the slot. Skipping to next loadout item.");
+				XComHQ.PutItemInInventory(NewGameState, ItemState);
+				continue;
+			}
+		}
+
+		// If we still can't add the restored item to our inventory, put it back into the HQ inventory where we found it and move on
+		if (!UnitState.CanAddItemToInventory(ItemTemplate, LoadoutItem.InventorySlot, NewGameState, ItemState.Quantity, ItemState))
+		{
+			`AMLOG("Still can't equip the item. Putting it back into HQ inventory.");
+			XComHQ.PutItemInInventory(NewGameState, ItemState);
+
+			if (EquippedItem != none)
+			{
+				`AMLOG("Slot was previously occupied by:" @ EquippedItem.GetMyTemplateName() @ "attempting to equip it back.");
+				if (UnitState.AddItemToInventory(EquippedItem, LoadoutItem.InventorySlot, NewGameState))
+				{
+					`AMLOG("Success");
+				}
+				else
+				{
+					`AMLOG("Epic fail.");
+				}
+			}
+			
+			`AMLOG("Skipping to next loadout item.");
+			continue;
+		}
+
+		// Add the restored item to our inventory
+		if (UnitState.AddItemToInventory(ItemState, LoadoutItem.InventorySlot, NewGameState))
+		{
+			`AMLOG("Successfully equipped loadout item.");
+			if (X2WeaponTemplate(ItemTemplate) != none)
+			{
+				if (LoadoutItem.InventorySlot == eInvSlot_PrimaryWeapon)
+					ItemState.ItemLocation = eSlot_RightHand;
+				else
+					ItemState.ItemLocation = X2WeaponTemplate(ItemTemplate).StowedLocation;
+			}
+
+			if (EquippedItem != none)
+			{	
+				`AMLOG("Slot was previously occupied by:" @ EquippedItem.GetMyTemplateName() @ "Putting it into HQ inventory.");
+				XComHQ.PutItemInInventory(NewGameState, EquippedItem);
+				EquippedItem = none;
+			}
+			bChangedSomething = true;
+		}		
+		else
+		{
+			`AMLOG("Failed to equip the loadout item! Putting it back to HQ inventory.");
+			XComHQ.PutItemInInventory(NewGameState, ItemState);
+
+			`AMLOG("Attempting to equip previously equipped item.");
+			if (UnitState.AddItemToInventory(EquippedItem, LoadoutItem.InventorySlot, NewGameState))
+			{
+				`AMLOG("Success");
+			}
+			else
+			{
+				`AMLOG("Epic fail.");
+			}
+		}
 	}
 
-	SetTimer(0.1f,, nameof(OnLeftPanelItemRealized), self);
-	//OnLeftPanelItemRealized();
-}
-*/
-//update list size elements
-// (correct padding between list elements to account for ability description length)
-/*
-simulated function OnLeftPanelItemRealized()
-{
-	local UIListItemAbility_Bounty ListItem;
-	local int i;
-
-	for (i = 0 ; i < LeftPanelList.GetItemCount() ; i++)
+	if (bChangedSomething)
 	{
-		ListItem = UIListItemAbility_Bounty(LeftPanelList.GetItem(i));
-		if(!ListItem.bSizeRealized) 
+		`GAMERULES.SubmitGameState(NewGameState);
+	}
+	else
+	{
+		History.CleanupPendingGameState(NewGameState);
+	}
+}
+
+private function XComGameState_Item GetItemStateToEquip(const name TemplateName, XComGameState NewGameState)
+{
+	local StateObjectReference	ItemRef;
+	local XComGameState_Item	ItemState;
+
+	foreach XComHQ.Inventory(ItemRef)
+	{
+		ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+
+		if (ItemState.GetMyTemplateName() == TemplateName && !ItemState.HasBeenModified())
 		{
-			SetTimer(0.1f,, nameof(OnLeftPanelItemRealized), self);
-			return; 
+			XComHQ.GetItemFromInventory(NewGameState, ItemRef, ItemState);
+			break;
 		}
 	}
 
-	LeftPanelList.RealizeItems();
-	LeftPanelList.RealizeList();
-}*/
+	return ItemState;
+}
 
 defaultproperties
 {

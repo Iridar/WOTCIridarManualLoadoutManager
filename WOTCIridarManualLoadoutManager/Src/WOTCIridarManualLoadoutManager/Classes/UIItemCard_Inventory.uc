@@ -50,11 +50,23 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 
 simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 {
-	local UIMechaListItem_LoadoutItem SpawnedItem;
+	local UIMechaListItem_LoadoutItem	SpawnedItem;
+	local X2ItemTemplate				ItemTemplate;
 
 	SpawnedItem = UIMechaListItem_LoadoutItem(ContainerList.GetSelectedItem());
 
-	SetItemImages(SpawnedItem.ItemState.GetMyTemplate(), SpawnedItem.ItemState.GetReference());
+	if (SpawnedItem.ItemState != none)
+	{
+		SetItemImages(SpawnedItem.ItemState.GetMyTemplate(), SpawnedItem.ItemState.GetReference());
+	}
+	else
+	{
+		ItemTemplate = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(SpawnedItem.LoadoutItem.TemplateName);
+		if (ItemTemplate != none)
+		{
+			SetItemImages(ItemTemplate);
+		}
+	}	
 }
 
 final function array<UIMechaListItem_LoadoutItem> GetCheckedItemStatess()
