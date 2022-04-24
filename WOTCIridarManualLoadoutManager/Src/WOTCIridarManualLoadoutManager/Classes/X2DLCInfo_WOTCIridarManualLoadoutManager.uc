@@ -1,5 +1,12 @@
 class X2DLCInfo_WOTCIridarManualLoadoutManager extends X2DownloadableContentInfo;
 
+static exec function SetPos(int NewPosX, int NewPosY)
+{
+	class'UIScreen_Loadouts'.default.LeftListOffset = NewPosX;
+	class'UIScreen_Loadouts'.default.RightListOffset = NewPosY;
+}
+
+
 /*
 static exec function SetPos(int NewPosX, int NewPosY)
 {

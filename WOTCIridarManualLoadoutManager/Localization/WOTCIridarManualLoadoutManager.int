@@ -3,8 +3,11 @@ strSaveLoadout = "SAVE LOADOUT"
 strLockLoadout = "LOAD LOADOUT"
 
 [Help]
-LoadoutListTitle = "SELECT LOADOUT"
-LoadoutListSubTitle = "PREPARING TO SAVE SOLDIER LOADOUT"
+LoadoutListTitleSave = "SELECT LOADOUT"
+LoadoutListTitleLoad = "SELECT LOADOUT"
+
+LoadoutListSubTitleSave = "PREPARING TO SAVE SOLDIER LOADOUT"
+LoadoutListSubTitleLoad = "PREPARING TO EQUIP SOLDIER LOADOUT"
 
 CreateNewLoadoutButton = "SAVE AS NEW LOADOUT"
 ;SelectLoadoutTitle = "SELECT LOADOUT"

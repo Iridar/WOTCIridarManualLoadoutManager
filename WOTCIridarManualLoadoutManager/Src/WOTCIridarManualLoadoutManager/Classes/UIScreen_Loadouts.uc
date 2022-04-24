@@ -13,7 +13,8 @@ var UIArmory_Loadout	UIArmoryLoadoutScreen;
 var XComGameState_Unit	UnitState;
 var bool				bForSaving;
 
-var config(UI) int NewX;
+var config(UI) int LeftListOffset;
+var config(UI) int RightListOffset;
 var config(UI) int ListItemWidthMod;
 
 var private UILargeButton	EquipLoadoutButton;
@@ -23,27 +24,30 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 {
 	super(UIInventory).InitScreen(InitController, InitMovie, InitName);
 
-	self.SetX(self.X - NewX);
+	self.SetX(self.X + LeftListOffset);
 	
 	SetCategory("");
 	
 	SetInventoryLayout();
 	PopulateData();
-	/*
-	if (XComHQPresentationLayer(Movie.Pres) != none)
-	{
-		class'UIUtilities'.static.DisplayUI3D(DisplayTag, CameraTag, 0);
-		MC.FunctionVoid("setArchiveLayout");
-		`XCOMGRI.DoRemoteEvent('RewardsRecap');
-	}*/
+
 	UIArmoryLoadoutScreen.Hide();
 	UIArmoryLoadoutScreen.NavHelp.Show();
+
+	UIMouseGuard_RotatePawn(MouseGuardInst).SetActorPawn(UIArmoryLoadoutScreen.ActorPawn);
 }
 
 simulated function BuildScreen()
 {
 	TitleHeader = Spawn(class'UIX2PanelHeader', self);
-	TitleHeader.InitPanelHeader('TitleHeader', `GetLocalizedString('LoadoutListTitle'), `GetLocalizedString('LoadoutListSubTitle'));
+	if (bForSaving)
+	{
+		TitleHeader.InitPanelHeader('TitleHeader', `GetLocalizedString('LoadoutListTitleSave'), `GetLocalizedString('LoadoutListSubTitleSave'));
+	}
+	else
+	{
+		TitleHeader.InitPanelHeader('TitleHeader', `GetLocalizedString('LoadoutListTitleLoad'), `GetLocalizedString('LoadoutListSubTitleLoad'));
+	}
 	TitleHeader.SetHeaderWidth( 580 );
 	//if( m_strTitle == "" && m_strSubTitleTitle == "" )
 	//	TitleHeader.Hide();
@@ -51,7 +55,7 @@ simulated function BuildScreen()
 	ListContainer = Spawn(class'UIPanel', self).InitPanel('InventoryContainer');
 
 	ItemCard = Spawn(class'UIItemCard_Inventory', ListContainer).InitItemCard('ItemCard');
-	ItemCard.SetX(ItemCard.X + 1200);
+	ItemCard.SetX(ItemCard.X + RightListOffset);
 	UIItemCard_Inventory(ItemCard).UnitState = UnitState;
 
 	ListBG = Spawn(class'UIPanel', ListContainer);
@@ -276,9 +280,9 @@ private function OnCreateLoadoutClicked()
 }
 
 simulated function CloseScreen()
-{
-	UIArmoryLoadoutScreen.Show();
+{	
 	UIArmoryLoadoutScreen.UpdateData(true);
+	UIArmoryLoadoutScreen.Show();
 	super.CloseScreen();
 }
 
@@ -400,6 +404,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	local X2ItemTemplate					ItemTemplate;
 	local XComGameState_Item				EquippedItem;
 	local array<XComGameState_Item>			EquippedItems;
+	local bool								bSoundPlayed;
 
 	History = `XCOMHISTORY;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Loading Loadout For Unit" @ UnitState.GetFullName());
@@ -480,6 +485,12 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 		if (UnitState.AddItemToInventory(ItemState, LoadoutItem.InventorySlot, NewGameState))
 		{
 			`AMLOG("Successfully equipped loadout item.");
+			if (!bSoundPlayed && X2EquipmentTemplate(ItemTemplate).EquipSound != "")
+			{
+				`XSTRATEGYSOUNDMGR.PlaySoundEvent(X2EquipmentTemplate(ItemTemplate).EquipSound);
+				bSoundPlayed = true;
+			}
+
 			if (X2WeaponTemplate(ItemTemplate) != none)
 			{
 				if (LoadoutItem.InventorySlot == eInvSlot_PrimaryWeapon)
@@ -547,4 +558,5 @@ defaultproperties
 	bIsIn3D = true
 	DisplayTag = "UIBlueprint_Promotion"
 	CameraTag = "UIBlueprint_Promotion"
+	MouseGuardClass = class'UIMouseGuard_RotatePawn';
 }
