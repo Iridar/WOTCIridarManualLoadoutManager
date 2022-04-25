@@ -11,6 +11,7 @@ struct IRILoadoutItemStruct
 {
 	var name TemplateName;
 	var EInventorySlot InventorySlot;
+	var XComGameState_Item ItemState; // Temporary storage for passing items between ItemCard and EquipItems()
 };
 struct IRILoadoutStruct
 {

@@ -20,6 +20,9 @@ var config(UI) int ListItemWidthMod;
 
 var private UILargeButton	EquipLoadoutButton;
 var private string			CachedNewLoadoutName;
+var private X2ItemTemplateManager	ItemMgr;
+
+`include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
@@ -418,6 +421,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	local bool								bSoundPlayed;
 
 	History = `XCOMHISTORY;
+	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Loading Loadout For Unit" @ UnitState.GetFullName());
 	XComHQ = class'Help'.static.GetAndPrepXComHQ(NewGameState);
 	UnitState = XComGameState_Unit(NewGameState.ModifyStateObject(UnitState.Class, UnitState.ObjectID));
@@ -426,7 +430,8 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	{
 		`AMLOG("Loadout Item:" @ LoadoutItem.TemplateName @ LoadoutItem.InventorySlot);
 
-		ItemState = GetItemStateToEquip(LoadoutItem.TemplateName, NewGameState);
+		ItemState = LoadoutItem.ItemState;
+		XComHQ.GetItemFromInventory(NewGameState, ItemState.GetReference(), ItemState);
 		if (ItemState == none)
 			continue;
 
@@ -545,24 +550,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	}
 }
 
-private function XComGameState_Item GetItemStateToEquip(const name TemplateName, XComGameState NewGameState)
-{
-	local StateObjectReference	ItemRef;
-	local XComGameState_Item	ItemState;
 
-	foreach XComHQ.Inventory(ItemRef)
-	{
-		ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
-
-		if (ItemState.GetMyTemplateName() == TemplateName && !ItemState.HasBeenModified())
-		{
-			XComHQ.GetItemFromInventory(NewGameState, ItemRef, ItemState);
-			break;
-		}
-	}
-
-	return ItemState;
-}
 
 defaultproperties
 {

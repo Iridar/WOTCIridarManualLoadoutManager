@@ -15,4 +15,6 @@
 `define GetConfigArrayInt(VarName) class'ConfigEngine'.static.GetConfigArrayInt(`VarName)
 `define GetConfigArrayFloat(VarName) class'ConfigEngine'.static.GetConfigArrayFloat(`VarName)
 
-`define GETMCMVAR(MCMVAR)  `{MCM_SCREEN_CLASS_STATIC}get`{MCMVAR} ()
+
+
+

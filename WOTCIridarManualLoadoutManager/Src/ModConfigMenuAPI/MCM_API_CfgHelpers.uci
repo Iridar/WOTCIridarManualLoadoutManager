@@ -15,7 +15,6 @@ Although if you already have a [UnrealEd.EditorEngine] section, you probably alr
 
 // Contains helper functions for doing proper user-configurable save data. See documentation for patterns on how to do it.
 
-
 `define MCM_DEFAULT_CLASS class'WOTCIridarManualLoadoutManager_Defaults'
 `define MCM_SCREEN_CLASS class'WOTCIridarManualLoadoutManager_MCMScreen'
 
@@ -43,4 +42,4 @@ Although if you already have a [UnrealEd.EditorEngine] section, you probably alr
 `endif
 
 `define MCM_CH_GetCompositeVersion()  `{MCM_SCREEN_CLASS_STATIC}MCM_CH_IMPL_VersionMax()
-
+`define GETMCMVAR(MCMVAR)  `{MCM_SCREEN_CLASS_STATIC}get`{MCMVAR} ()

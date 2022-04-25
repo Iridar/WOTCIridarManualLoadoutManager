@@ -30,8 +30,6 @@ class-specific loadouts (toggleable in NavHelp, default configurable in MCM)
 squad loadout items list (conflate by weapon category configurable in MCM)
 TODO: Allow PCS as part of loadout?
 mcm toggles:
-- simple header
-- allow modified items
 - look for replacements
 
 

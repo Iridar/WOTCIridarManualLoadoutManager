@@ -16,6 +16,8 @@ var private XComGameState_HeadquartersXCom	XComHQ;
 var private IRILoadoutStruct				Loadout;
 var private X2ItemTemplateManager			ItemMgr;
 
+`include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
+
 simulated function UIItemCard InitItemCard(optional name InitName)
 {
 	super.InitItemCard(InitName);
@@ -178,8 +180,9 @@ final function array<IRILoadoutItemStruct> GetSelectedLoadoutItems()
 	for (i = 0; i < List.ItemCount; i++)
 	{
 		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
-		if (ListItem != none && ListItem.Checkbox.bChecked)
+		if (ListItem != none && ListItem.Checkbox.bChecked && ListItem.ItemState != none)
 		{
+			ListItem.LoadoutItem.ItemState = ListItem.ItemState;
 			ReturnArray.AddItem(ListItem.LoadoutItem);
 		}
 	}
@@ -192,7 +195,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 	local UIMechaListItem_LoadoutItem	SpawnedItem;
 	local UIInventory_HeaderListItem	HeaderItem;
 	local EInventorySlot				PreviousSlot;
-	local EUIState						ItemStatus;
+	local XComGameState_Item			ItemState;
 	local bool							bImageDisplayed;
 	local X2ItemTemplate				ItemTemplate;
 
@@ -214,36 +217,79 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 
 		if (LoadoutItem.InventorySlot != PreviousSlot)
 		{
-			HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
-			HeaderItem.bIsNavigable = false;
-			HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot));
+			if (!`GETMCMVAR(USE_SIMPLE_HEADERS))
+			{
+				HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
+				HeaderItem.bIsNavigable = false;
+				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot));
+			}
+			else
+			{
+				SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
+				SpawnedItem.bIsNavigable = false;
+				SpawnedItem.bAnimateOnInit = false;
+				SpawnedItem.InitListItem();
+				SpawnedItem.UpdateDataDescription(class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot));
+				SpawnedItem.SetDisabled(true);
+			}
 		}
 
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
 		SpawnedItem.InitListItem();
 		SpawnedItem.LoadoutItem = LoadoutItem;
+		SpawnedItem.bProcessesMouseEvents = true;
+		SpawnedItem.bIsNavigable = true;
 
-		ItemStatus = GetItemStatus(ItemTemplate, LoadoutItem);
-		switch (ItemStatus)
+
+		if (ItemTemplate == none)
 		{
-		case eUIState_Disabled: // Item Template doesn't exist.
-			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(`GetLocalizedString('MissingItemTemplate') @ "'" $ LoadoutItem.TemplateName $ "'", ItemStatus));
-			SpawnedItem.SetTooltipText("Tooltip test text");
-			break;
-		case eUIState_Good: // Item already equipped.
-			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), ItemStatus));
-			SpawnedItem.SetTooltipText("Tooltip test text");
-			break;
-		case eUIState_Bad: // Item cannot be equipped (according to CanAddItemToInventory(), which is not necessarily always correct)
-			SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), ItemStatus), "", false);
-			SpawnedItem.SetTooltipText("Tooltip test text");
-			break;
-		case eUIState_Normal:
-		default:
-			SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), ItemStatus), "", true);
-			SpawnedItem.SetTooltipText("Tooltip test text");
-			break;
+			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(`GetLocalizedString('MissingItemTemplate') @ "'" $ LoadoutItem.TemplateName $ "'", eUIState_Disabled));
+			SpawnedItem.SetTooltipText("Item template not found.");
+		}
+		else if (ItemIsAlreadyEquipped(ItemTemplate, LoadoutItem.InventorySlot))
+		{
+			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Good));
+			SpawnedItem.SetTooltipText("This item is already equipped.");
+		}
+		else 
+		{
+			ItemState = GetDesiredItemState(ItemTemplate.DataName, LoadoutItem.InventorySlot);
+			if (ItemState == none)
+			{
+				if (`GETMCMVAR(ALLOW_REPLACEMENT_ITEMS))
+				{
+					ItemState = GetReplacementItemState(ItemTemplate.DataName, LoadoutItem.InventorySlot);
+					if (ItemState == none)
+					{
+						SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Bad));
+						SpawnedItem.SetTooltipText("Desired item not found. Replacement item not found.");
+					}
+					else
+					{
+						SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats() @ "->" @ ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), eUIState_Warning), "", false);
+						SpawnedItem.SetTooltipText("Desired item not found, but you may try this replacement.");
+						SpawnedItem.ItemState = ItemState;
+					}
+				}
+				else
+				{
+					SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Bad));
+					SpawnedItem.SetTooltipText("Desired item not found. Replacements are not allowed.");
+				}
+			}
+			else if (!CanAddItemToInventory(ItemTemplate, LoadoutItem.InventorySlot, ItemState))
+			{
+				SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Warning), "", false);
+				SpawnedItem.SetTooltipText("This unit cannot equip this item, but you may still try.");
+				SpawnedItem.ItemState = ItemState;
+			}
+			else
+			{
+				SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Normal), "", true);
+				SpawnedItem.SetTooltipText("All normal, item will be equipped.");
+				SpawnedItem.ItemState = ItemState;
+			}
 		}
 
 		PreviousSlot = LoadoutItem.InventorySlot;
@@ -257,35 +303,6 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 		List.RealizeItems();
 		List.RealizeList();
 	}
-}
-
-private function XComGameState_Item GetItemOfTemplate(const name TemplateName)
-{
-	local XComGameState_Item ItemState;
-
-	ItemState = XComHQ.GetItemByName(TemplateName);
-
-	return ItemState;
-}
-
-private function EUIState GetItemStatus(X2ItemTemplate ItemTemplate, IRILoadoutItemStruct LoadoutItem)
-{	
-	if (ItemTemplate == none)
-	{
-		return eUIState_Disabled;
-	}
-
-	if (ItemIsAlreadyEquipped(ItemTemplate, LoadoutItem.InventorySlot))
-	{
-		return eUIState_Good;
-	}
-	
-	if (!CanAddItemToInventory(ItemTemplate, LoadoutItem.InventorySlot))
-	{
-		return eUIState_Bad;
-	}
-
-	return eUIState_Normal;
 }
 
 private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, const EInventorySlot Slot)
@@ -312,7 +329,7 @@ private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, c
 	return false;
 }
 
-simulated function bool CanAddItemToInventory(const X2ItemTemplate ItemTemplate, const EInventorySlot Slot)
+private function bool CanAddItemToInventory(const X2ItemTemplate ItemTemplate, const EInventorySlot Slot, optional XComGameState_Item ItemState)
 {
 	local X2WeaponTemplate					WeaponTemplate;
 	local X2GrenadeTemplate					GrenadeTemplate;
@@ -325,7 +342,7 @@ simulated function bool CanAddItemToInventory(const X2ItemTemplate ItemTemplate,
 	DLCInfos = `ONLINEEVENTMGR.GetDLCInfos(false);
 	for (i = 0; i < DLCInfos.Length; ++i)
 	{
-		if (!DLCInfos[i].CanAddItemToInventory_CH_Improved(UnusedOutInt, Slot, ItemTemplate, 1, UnitState, , DLCReason, none))
+		if (!DLCInfos[i].CanAddItemToInventory_CH_Improved(UnusedOutInt, Slot, ItemTemplate, 1, UnitState, , DLCReason, ItemState))
 		{
 			return false;
 		}
@@ -397,4 +414,150 @@ private function bool LoadoutContainsArmorThatGrantsHeavyWeaponSlot()
 		}
 	}
 	return false;
+}
+
+
+private function XComGameState_Item GetDesiredItemState(const name TemplateName, EInventorySlot Slot)
+{
+	local StateObjectReference	ItemRef;
+	local XComGameState_Item	ItemState;
+
+	foreach XComHQ.Inventory(ItemRef)
+	{
+		ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+
+		if (ItemState.GetMyTemplateName() == TemplateName && !ItemState.HasBeenModified())
+		{
+			return ItemState;
+		}
+	}
+
+	if (`GETMCMVAR(ALLOW_MODIFIED_ITEMS))
+	{
+		foreach XComHQ.Inventory(ItemRef)
+		{
+			ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+
+			if (ItemState.GetMyTemplateName() == TemplateName)
+			{
+				return ItemState;
+			}
+		}
+	}	
+
+	return ItemState;
+}
+
+private function XComGameState_Item GetReplacementItemState(const name TemplateName, EInventorySlot Slot)
+{
+	local XComGameState_Item	ItemState;
+
+	ItemState = FindBestReplacementItemForUnit(ItemMgr.FindItemTemplate(TemplateName), Slot);
+	if (ItemState == none && `GETMCMVAR(ALLOW_MODIFIED_ITEMS))
+	{
+		ItemState = FindBestReplacementItemForUnit(ItemMgr.FindItemTemplate(TemplateName), Slot, true);
+	}
+	
+	return ItemState;
+}
+
+private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemTemplate OrigItemTemplate, const EInventorySlot eSlot, optional bool bAllowModified)
+{
+	local X2WeaponTemplate		OrigWeaponTemplate;
+	local X2WeaponTemplate		WeaponTemplate;
+	local X2ArmorTemplate		OrigArmorTemplate;
+	local X2ArmorTemplate		ArmorTemplate;
+	local X2EquipmentTemplate	OrigEquipmentTemplate;
+	local X2EquipmentTemplate	EquipmentTemplate;
+	local int					HighestTier;
+	local XComGameState_Item	ItemState;
+	local XComGameState_Item	BestItemState;
+	local StateObjectReference	ItemRef;
+
+	HighestTier = -999;
+
+	OrigWeaponTemplate = X2WeaponTemplate(OrigItemTemplate);
+	if (OrigWeaponTemplate != none)
+	{
+		foreach XComHQ.Inventory(ItemRef)
+		{
+			ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+			if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified)
+				continue;
+
+			WeaponTemplate = X2WeaponTemplate(ItemState.GetMyTemplate());
+
+			if (WeaponTemplate != none)
+			{
+				if (WeaponTemplate.WeaponCat == OrigWeaponTemplate.WeaponCat && /*WeaponTemplate.InventorySlot == OrigWeaponTemplate.InventorySlot && */	//	Removing this for the sake of compatibility with new PS. CanAddItemToInventory should handle this, in theory.
+					CanAddItemToInventory(WeaponTemplate, eSlot, ItemState))
+				{
+					if (WeaponTemplate.Tier > HighestTier)
+					{
+						HighestTier = WeaponTemplate.Tier;
+						BestItemState = ItemState;
+					}
+				}
+			}
+		}
+	}
+	OrigArmorTemplate = X2ArmorTemplate(OrigItemTemplate);
+	if (OrigArmorTemplate != none)
+	{
+		foreach XComHQ.Inventory(ItemRef)
+		{
+			ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+			if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified)
+				continue;
+
+			ArmorTemplate = X2ArmorTemplate(ItemState.GetMyTemplate());
+
+			if (ArmorTemplate != none)
+			{
+				if (ArmorTemplate.ArmorCat == OrigArmorTemplate.ArmorCat && ArmorTemplate.ArmorClass == OrigArmorTemplate.ArmorClass &&
+					ArmorTemplate.bInfiniteItem &&
+					CanAddItemToInventory(WeaponTemplate, eSlot, ItemState))
+				{
+					if (ArmorTemplate.Tier > HighestTier)
+					{
+						HighestTier = ArmorTemplate.Tier;
+						BestItemState = ItemState;
+					}
+				}
+			}
+		}
+	}
+	OrigEquipmentTemplate = X2EquipmentTemplate(OrigItemTemplate);
+	if (OrigEquipmentTemplate != none)
+	{
+		foreach XComHQ.Inventory(ItemRef)
+		{
+			ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+			if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified)
+				continue;
+
+			EquipmentTemplate = X2EquipmentTemplate(ItemState.GetMyTemplate());
+
+			if (EquipmentTemplate != none)
+			{
+				if (EquipmentTemplate.ItemCat == OrigEquipmentTemplate.ItemCat && EquipmentTemplate.bInfiniteItem &&
+					CanAddItemToInventory(WeaponTemplate, eSlot, ItemState))
+				{
+					if (EquipmentTemplate.Tier > HighestTier)
+					{
+						HighestTier = EquipmentTemplate.Tier;
+						BestItemState = ItemState;
+					}
+				}
+			}
+		}
+	}
+	if (HighestTier != -999)
+	{
+		return BestItemState;
+	}
+	else
+	{
+		return none;
+	}
 }
