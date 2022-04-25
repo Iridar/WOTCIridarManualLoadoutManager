@@ -1,4 +1,4 @@
-`define AMLOG(msg) `LOG(GetFuncName() @ `msg, /* class'WOTCIridarManualLoadoutManager_Defaults'.default.VERSION_CFG > class'WOTCIridarManualLoadoutManager_MCMScreen'.default.VERSION_CFG ? class'WOTCIridarManualLoadoutManager_Defaults'.default.DEBUG_LOGGING : class'WOTCIridarManualLoadoutManager_MCMScreen'.default.DEBUG_LOGGING */, 'WOTCIridarManualLoadoutManager')
+`define AMLOG(msg) `LOG(GetFuncName() @ `msg, class'WOTCIridarManualLoadoutManager_Defaults'.default.VERSION_CFG > class'WOTCIridarManualLoadoutManager_MCMScreen'.default.VERSION_CFG ? class'WOTCIridarManualLoadoutManager_Defaults'.default.DEBUG_LOGGING : class'WOTCIridarManualLoadoutManager_MCMScreen'.default.DEBUG_LOGGING, 'WOTCIridarManualLoadoutManager')
 
 `define CAPS(VarName) class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`VarName)
 
@@ -15,3 +15,4 @@
 `define GetConfigArrayInt(VarName) class'ConfigEngine'.static.GetConfigArrayInt(`VarName)
 `define GetConfigArrayFloat(VarName) class'ConfigEngine'.static.GetConfigArrayFloat(`VarName)
 
+`define GETMCMVAR(MCMVAR)  `{MCM_SCREEN_CLASS_STATIC}get`{MCMVAR} ()

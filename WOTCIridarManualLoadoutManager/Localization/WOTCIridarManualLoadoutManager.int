@@ -32,3 +32,5 @@ NoItemsInLoadoutText_Equip  = "No items in the loadout are selected. Loadout wil
 
 ConfirmOverwriteLoadoutTitle = "CONFIRM OVERWRITE"
 ConfirmOverwriteLoadoutText = "Are you sure you want to overwrite loadout %LoadoutName%?"
+
+MissingItemTemplate = "Missing Item Template:"

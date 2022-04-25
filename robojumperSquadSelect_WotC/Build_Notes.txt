@@ -1,0 +1,6 @@
+Vanilla ModID: 880807907
+Package ID: robojumperSquadSelect.XComMod
+
+
+WotC ModID: 1122974240
+PackageID: robojumperSquadSelect_WotC.XComMod

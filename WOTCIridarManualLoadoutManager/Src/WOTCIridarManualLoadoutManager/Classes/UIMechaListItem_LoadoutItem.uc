@@ -6,9 +6,11 @@ class UIMechaListItem_LoadoutItem extends UIMechaListItem;
 var IRILoadoutStruct		Loadout;		// Used when displaying a list of loadouts in the UIScreen_Loadouts on the left.
 var XComGameState_Item		ItemState;		// Used when displaying items equipped on the unit in the UIScreen_Loadouts on the right when saving a loadout.
 var IRILoadoutItemStruct	LoadoutItem;	// Used when displaying items in a previously saved loadout in the UIScreen_Loadouts on the right when loading a loadout.
+var XComGameState_Unit		UnitState;		// Used when displaying a "Load Loadout" shortcut in squad select.
 
 // Bandaid fix for incoherent list width.
-var int					ListItemWidthMod;
+var int						ListItemWidthMod;
+
 simulated function SetWidth(float NewWidth)
 {
 	NewWidth += ListItemWidthMod;
@@ -18,6 +20,34 @@ simulated function SetWidth(float NewWidth)
 	if (BG != none) BG.SetWidth(NewWidth);
 	if (Checkbox != none) Checkbox.SetX(NewWidth - 34);
 	if (Desc != none) Desc.SetWidth(NewWidth - 36);
+}
+
+final function UpdateDataDescriptionShortcut(XComGameState_Unit _UnitState)
+{
+	UnitState = _UnitState;
+	UpdateDataDescription(`GetLocalizedString('EquipLoadout'), OnEquipLoadoutShortcutClicked);
+}
+
+private function OnEquipLoadoutShortcutClicked()
+{
+	local XComHQPresentationLayer	HQPresLayer;
+	local UIScreen_Loadouts			SaveLoadout;
+	local UIArmory_Loadout			ArmoryScreen;
+
+	`XSTRATEGYSOUNDMGR.PlaySoundEvent("Play_MenuSelect");
+	HQPresLayer = `HQPRES;
+
+	HQPresLayer.UIArmory_Loadout(UnitState.GetReference());
+
+	// Bandaid hack. The UIArmory_Loadout screen is pushed to display unit pawn, and then immediately get replaced by UIScreen_Loadouts, so only the pawn remains.
+	// And we tell the UIScreen_Loadouts to automatically close UIArmory_Loadout when it itself is closed.
+	ArmoryScreen = UIArmory_Loadout(HQPresLayer.ScreenStack.GetFirstInstanceOf(class'UIArmory_Loadout'));
+
+	SaveLoadout = HQPresLayer.Spawn(class'UIScreen_Loadouts', HQPresLayer);
+	SaveLoadout.UnitState = UnitState;
+	SaveLoadout.UIArmoryLoadoutScreen = ArmoryScreen;
+	SaveLoadout.bCloseArmoryScreenWhenClosing = true;
+	HQPresLayer.ScreenStack.Push(SaveLoadout, HQPresLayer.Get3DMovie());
 }
 /*
 simulated function UIMechaListItem UpdateDataButton(string _Desc,

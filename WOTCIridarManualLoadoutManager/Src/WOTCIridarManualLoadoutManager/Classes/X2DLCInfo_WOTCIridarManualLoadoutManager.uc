@@ -1,10 +1,11 @@
 class X2DLCInfo_WOTCIridarManualLoadoutManager extends X2DownloadableContentInfo;
 
+/*
 static exec function SetPos(int NewPosX, int NewPosY)
 {
 	class'UIScreen_Loadouts'.default.LeftListOffset = NewPosX;
 	class'UIScreen_Loadouts'.default.RightListOffset = NewPosY;
-}
+}*/
 
 
 /*
@@ -24,12 +25,13 @@ static exec function SetWidth(int NewWidth)
 	class'UIScreen_Loadouts'.default.LeftPanelW = NewWidth;
 }
 */
+/*
 static exec function SetListItemWidth(int NewWidth)
 {
-	class'UIScreen_Loadouts'.default.ListItemWidthMod = NewWidth;
+	class'X2EventListener_MLM'.default.ListItemWidthMod = NewWidth;
 }
 
-
+*/
 /// <summary>
 /// This method is run if the player loads a saved game that was created prior to this DLC / Mod being installed, and allows the 
 /// DLC / Mod to perform custom processing in response. This will only be called once the first time a player loads a save that was

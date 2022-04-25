@@ -10,6 +10,7 @@ class UIScreen_Loadouts extends UIInventory_XComDatabase;
 // The big "equip loadout" green button appears on this screen.
 
 var UIArmory_Loadout	UIArmoryLoadoutScreen;
+var bool				bCloseArmoryScreenWhenClosing;
 var XComGameState_Unit	UnitState;
 var bool				bForSaving;
 
@@ -281,8 +282,18 @@ private function OnCreateLoadoutClicked()
 
 simulated function CloseScreen()
 {	
-	UIArmoryLoadoutScreen.UpdateData(true);
-	UIArmoryLoadoutScreen.Show();
+	if (UIArmoryLoadoutScreen != none)
+	{
+		if (bCloseArmoryScreenWhenClosing)
+		{
+			UIArmoryLoadoutScreen.CloseScreen();
+		}
+		else
+		{
+			UIArmoryLoadoutScreen.UpdateData(true);
+			UIArmoryLoadoutScreen.Show();
+		}
+	}
 	super.CloseScreen();
 }
 

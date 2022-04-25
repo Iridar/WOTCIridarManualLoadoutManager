@@ -12,7 +12,9 @@ var config int RightPanelW;
 var config int RightPanelH;
 var config int ListItemWidth;
 
-var private XComGameState_HeadquartersXCom XComHQ;
+var private XComGameState_HeadquartersXCom	XComHQ;
+var private IRILoadoutStruct				Loadout;
+var private X2ItemTemplateManager			ItemMgr;
 
 simulated function UIItemCard InitItemCard(optional name InitName)
 {
@@ -184,7 +186,7 @@ final function array<IRILoadoutItemStruct> GetSelectedLoadoutItems()
 	return ReturnArray;
 }
 
-final function PopulateLoadoutFromStruct(const IRILoadoutStruct Loadout)
+final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 {
 	local IRILoadoutItemStruct			LoadoutItem;
 	local UIMechaListItem_LoadoutItem	SpawnedItem;
@@ -192,19 +194,17 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct Loadout)
 	local EInventorySlot				PreviousSlot;
 	local EUIState						ItemStatus;
 	local bool							bImageDisplayed;
-	local X2ItemTemplateManager			ItemMgr;
 	local X2ItemTemplate				ItemTemplate;
 
-	List.ClearItems();
+	Loadout = _Loadout;
 	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+	List.ClearItems();
 
 	foreach Loadout.LoadoutItems(LoadoutItem)
 	{
 		ItemTemplate = ItemMgr.FindItemTemplate(LoadoutItem.TemplateName);
 		if (ItemTemplate == none)
 			continue;
-
-		ItemStatus = GetItemStatus(ItemTemplate, LoadoutItem);
 
 		if (!bImageDisplayed)
 		{
@@ -223,7 +223,28 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct Loadout)
 		SpawnedItem.bAnimateOnInit = false;
 		SpawnedItem.InitListItem();
 		SpawnedItem.LoadoutItem = LoadoutItem;
-		SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), ItemStatus), "", true);
+
+		ItemStatus = GetItemStatus(ItemTemplate, LoadoutItem);
+		switch (ItemStatus)
+		{
+		case eUIState_Disabled: // Item Template doesn't exist.
+			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(`GetLocalizedString('MissingItemTemplate') @ "'" $ LoadoutItem.TemplateName $ "'", ItemStatus));
+			SpawnedItem.SetTooltipText("Tooltip test text");
+			break;
+		case eUIState_Good: // Item already equipped.
+			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), ItemStatus));
+			SpawnedItem.SetTooltipText("Tooltip test text");
+			break;
+		case eUIState_Bad: // Item cannot be equipped (according to CanAddItemToInventory(), which is not necessarily always correct)
+			SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), ItemStatus), "", false);
+			SpawnedItem.SetTooltipText("Tooltip test text");
+			break;
+		case eUIState_Normal:
+		default:
+			SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), ItemStatus), "", true);
+			SpawnedItem.SetTooltipText("Tooltip test text");
+			break;
+		}
 
 		PreviousSlot = LoadoutItem.InventorySlot;
 	}
@@ -248,11 +269,132 @@ private function XComGameState_Item GetItemOfTemplate(const name TemplateName)
 }
 
 private function EUIState GetItemStatus(X2ItemTemplate ItemTemplate, IRILoadoutItemStruct LoadoutItem)
-{
-	//local XComGameState_Item		EquippedItem;
-	//local array<XComGameState_Item> EquippedItems;
+{	
+	if (ItemTemplate == none)
+	{
+		return eUIState_Disabled;
+	}
 
-	//if (UnitState.GetItemInSlot(LoadoutItem.InventorySlot)
+	if (ItemIsAlreadyEquipped(ItemTemplate, LoadoutItem.InventorySlot))
+	{
+		return eUIState_Good;
+	}
+	
+	if (!CanAddItemToInventory(ItemTemplate, LoadoutItem.InventorySlot))
+	{
+		return eUIState_Bad;
+	}
 
 	return eUIState_Normal;
+}
+
+private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, const EInventorySlot Slot)
+{
+	local XComGameState_Item		EquippedItem;
+	local array<XComGameState_Item>	EquippedItems;
+
+	if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
+	{
+		EquippedItems = UnitState.GetAllItemsInSlot(Slot,, true);
+		foreach EquippedItems(EquippedItem)
+		{
+			if (EquippedItem.GetMyTemplateName() == ItemTemplate.DataName)
+			{
+				return true;
+			}
+		}
+	}
+	else
+	{
+		EquippedItem = UnitState.GetItemInSlot(Slot);
+		return EquippedItem != none && EquippedItem.GetMyTemplateName() == ItemTemplate.DataName;
+	}
+	return false;
+}
+
+simulated function bool CanAddItemToInventory(const X2ItemTemplate ItemTemplate, const EInventorySlot Slot)
+{
+	local X2WeaponTemplate					WeaponTemplate;
+	local X2GrenadeTemplate					GrenadeTemplate;
+	local X2ArmorTemplate					ArmorTemplate;
+	local array<X2DownloadableContentInfo>	DLCInfos;
+	local string							DLCReason;
+	local int UnusedOutInt;
+	local int i;
+
+	DLCInfos = `ONLINEEVENTMGR.GetDLCInfos(false);
+	for (i = 0; i < DLCInfos.Length; ++i)
+	{
+		if (!DLCInfos[i].CanAddItemToInventory_CH_Improved(UnusedOutInt, Slot, ItemTemplate, 1, UnitState, , DLCReason, none))
+		{
+			return false;
+		}
+	}
+	
+	WeaponTemplate = X2WeaponTemplate(ItemTemplate);
+	ArmorTemplate = X2ArmorTemplate(ItemTemplate);
+	GrenadeTemplate = X2GrenadeTemplate(ItemTemplate);
+
+	if (class'X2TacticalGameRulesetDataStructures'.static.InventorySlotIsEquipped(Slot))
+	{
+		if (WeaponTemplate != none)
+		{
+			if (!UnitState.GetSoldierClassTemplate().IsWeaponAllowedByClass(WeaponTemplate)) // TODO: Replace with IsWeaponAllowedByClass_CH
+				return false;
+		}
+
+		if (ArmorTemplate != none)
+		{
+			if (!UnitState.GetSoldierClassTemplate().IsArmorAllowedByClass(ArmorTemplate))
+				return false;
+		}
+
+		if (!UnitState.IsMPCharacter() && !UnitState.RespectsUniqueRule(ItemTemplate, Slot))
+			return false;
+	}
+
+	switch(Slot)
+	{
+	case eInvSlot_Loot:
+	case eInvSlot_Backpack: 
+	case eInvSlot_Mission:
+		return true;
+	case eInvSlot_Utility:
+		return UnitState.GetCurrentStat(eStat_UtilityItems) > 0;
+	case eInvSlot_GrenadePocket:
+		return GrenadeTemplate != none && UnitState.HasGrenadePocket();
+	case eInvSlot_AmmoPocket:
+		return ItemTemplate.ItemCat == 'ammo' && UnitState.HasAmmoPocket();
+	case eInvSlot_HeavyWeapon:
+		return WeaponTemplate != none && 
+			(UnitState.GetNumHeavyWeapons() > 0 || 
+			LoadoutContainsArmorThatGrantsHeavyWeaponSlot() ||
+			UnitState.HasAnyOfTheAbilitiesFromAnySource(class'X2AbilityTemplateManager'.default.AbilityUnlocksHeavyWeapon));
+	case eInvSlot_CombatSim:
+		return ItemTemplate.ItemCat == 'combatsim' && UnitState.GetCurrentStat(eStat_CombatSims) > 0;
+	default:
+		if (class'CHItemSlot'.static.SlotIsTemplated(Slot))
+		{
+			return class'CHItemSlot'.static.GetTemplateForSlot(Slot).CanAddItemToSlot(UnitState, ItemTemplate);
+		}
+		return true;
+	}
+	
+	return false;
+}
+
+private function bool LoadoutContainsArmorThatGrantsHeavyWeaponSlot()
+{
+	local X2ArmorTemplate		ArmorTemplate;
+	local IRILoadoutItemStruct	LoadoutItem;
+
+	foreach Loadout.LoadoutItems(LoadoutItem)
+	{
+		ArmorTemplate = X2ArmorTemplate(ItemMgr.FindItemTemplate(LoadoutItem.TemplateName));
+		if (ArmorTemplate != none)
+		{
+			return ArmorTemplate.bHeavyWeapon;
+		}
+	}
+	return false;
 }

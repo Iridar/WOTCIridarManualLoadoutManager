@@ -23,6 +23,18 @@ check if items with preinstalled weapon upgrades work
 delete button too big, too left, and obscures text
 
 figure out automatic list item size realization maybe
+mod preview image
+localization pass
+
+class-specific loadouts (toggleable in NavHelp, default configurable in MCM)
+squad loadout items list (conflate by weapon category configurable in MCM)
+TODO: Allow PCS as part of loadout?
+mcm toggles:
+- simple header
+- allow modified items
+- look for replacements
+
+
 
 One day:
 Use Tac Armory UI inventory images

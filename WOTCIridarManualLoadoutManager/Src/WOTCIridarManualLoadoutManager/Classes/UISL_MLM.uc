@@ -136,7 +136,6 @@ private function SaveLoadoutButtonClicked(UIButton btn_clicked)
 {
 	local UIArmory_Loadout			UIArmoryLoadoutScreen;
 	local XComGameState_Unit		Unit;
-	local XComHQPresentationLayer	HQPresLayer;
 	local UIScreen_Loadouts			SaveLoadout;
 
 	UIArmoryLoadoutScreen = UIArmory_Loadout(btn_clicked.Screen);
@@ -146,13 +145,13 @@ private function SaveLoadoutButtonClicked(UIButton btn_clicked)
 		Unit = UIArmoryLoadoutScreen.GetUnit();
 		if (Unit != none)
 		{
+			
 			`XSTRATEGYSOUNDMGR.PlaySoundEvent("Play_MenuSelect");
-			HQPresLayer = `HQPRES;
-			SaveLoadout = HQPresLayer.Spawn(class'UIScreen_Loadouts', HQPresLayer);
+			SaveLoadout = UIArmoryLoadoutScreen.Movie.Pres.Spawn(class'UIScreen_Loadouts', UIArmoryLoadoutScreen.Movie.Pres);
 			SaveLoadout.UnitState = Unit;
 			SaveLoadout.UIArmoryLoadoutScreen = UIArmoryLoadoutScreen;
 			SaveLoadout.bForSaving = true;
-			HQPresLayer.ScreenStack.Push(SaveLoadout, HQPresLayer.Get3DMovie());
+			UIArmoryLoadoutScreen.Movie.Pres.ScreenStack.Push(SaveLoadout, UIArmoryLoadoutScreen.Movie.Pres.Get3DMovie());
 		}
 	}
 }
@@ -162,7 +161,6 @@ private function ToggleLoadoutButtonClicked(UIButton btn_clicked)
 {
 	local UIArmory_Loadout			UIArmoryLoadoutScreen;
 	local XComGameState_Unit		Unit;
-	local XComHQPresentationLayer	HQPresLayer;
 	local UIScreen_Loadouts			SaveLoadout;
 
 	UIArmoryLoadoutScreen = UIArmory_Loadout(btn_clicked.Screen);
@@ -174,11 +172,10 @@ private function ToggleLoadoutButtonClicked(UIButton btn_clicked)
 		{
 			//class'X2LoadoutSafe'.static.EquipLoadut_Static('SomeName', Unit);
 			`XSTRATEGYSOUNDMGR.PlaySoundEvent("Play_MenuSelect");
-			HQPresLayer = `HQPRES;
-			SaveLoadout = HQPresLayer.Spawn(class'UIScreen_Loadouts', HQPresLayer);
+			SaveLoadout = UIArmoryLoadoutScreen.Movie.Pres.Spawn(class'UIScreen_Loadouts', UIArmoryLoadoutScreen.Movie.Pres);
 			SaveLoadout.UnitState = Unit;
 			SaveLoadout.UIArmoryLoadoutScreen = UIArmoryLoadoutScreen;
-			HQPresLayer.ScreenStack.Push(SaveLoadout, HQPresLayer.Get3DMovie());
+			UIArmoryLoadoutScreen.Movie.Pres.ScreenStack.Push(SaveLoadout, UIArmoryLoadoutScreen.Movie.Pres.Get3DMovie());
 		}
 	}
 }
