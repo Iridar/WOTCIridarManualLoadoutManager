@@ -4,24 +4,13 @@ var private array<IRILoadoutStruct> Loadouts;
 
 const FilePath = "\\Documents\\my games\\XCOM2 War of the Chosen\\XComGame\\X2ManualLoadoutManager.bin";
 
-
-
-static final function SaveLoadut_Static(const string LoadoutName, const array<XComGameState_Item> ItemStates)
+static final function SaveLoadut_Static(const string LoadoutName, const array<XComGameState_Item> ItemStates, XComGameState_Unit UnitState)
 {
 	local X2LoadoutSafe Safe;
 
 	Safe = LoadSafe();
-	Safe.SaveLoadout(LoadoutName, ItemStates);
+	Safe.SaveLoadout(LoadoutName, ItemStates, UnitState);
 	Safe.SaveSafe();
-}
-
-static final function EquipLoadut_Static(const name LoadoutName, XComGameState_Unit UnitState)
-{
-	local X2LoadoutSafe Safe;
-
-	Safe = LoadSafe();
-
-	Safe.EquipLoadut(LoadoutName, UnitState);
 }
 
 static final function DeleteLoadut_Static(const string LoadoutName)
@@ -76,7 +65,7 @@ static final function array<IRILoadoutStruct> GetLoadouts()
 	return Safe.Loadouts;
 }
 
-private function SaveLoadout(const string LoadoutName, array<XComGameState_Item> ItemStates)
+private function SaveLoadout(const string LoadoutName, array<XComGameState_Item> ItemStates, XComGameState_Unit UnitState)
 {
 	local XComGameState_Item	ItemState;
 	local IRILoadoutItemStruct	LoadoutItem;
@@ -84,6 +73,7 @@ private function SaveLoadout(const string LoadoutName, array<XComGameState_Item>
 	local int Index;
 
 	NewLoadout.LoadoutName = LoadoutName;
+	NewLoadout.SoldierClassTemplate = UnitState.GetSoldierClassTemplateName();
 
 	foreach ItemStates(ItemState)
 	{	
@@ -103,9 +93,6 @@ private function SaveLoadout(const string LoadoutName, array<XComGameState_Item>
 	}
 }
 
-private function EquipLoadut(const name LoadoutName, XComGameState_Unit UnitState)
-{
-}
 
 private function DeleteLoadout(const string LoadoutName)
 {

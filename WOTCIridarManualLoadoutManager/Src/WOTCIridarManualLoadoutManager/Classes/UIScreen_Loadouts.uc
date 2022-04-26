@@ -21,6 +21,7 @@ var config(UI) int ListItemWidthMod;
 var private UILargeButton	EquipLoadoutButton;
 var private string			CachedNewLoadoutName;
 var private X2ItemTemplateManager	ItemMgr;
+var private string			SearchText;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
@@ -40,6 +41,49 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 
 	UIMouseGuard_RotatePawn(MouseGuardInst).SetActorPawn(UIArmoryLoadoutScreen.ActorPawn);
 }
+
+simulated function UpdateNavHelp()
+{
+	local UINavigationHelp NavHelp;
+	
+	super.UpdateNavHelp();
+
+	NavHelp = `HQPRES.m_kAvengerHUD.NavHelp;
+	
+	NavHelp.AddRightHelp(SearchText == "" ? `GetLocalizedString('SearchButtonTitle') : `GetLocalizedString('SearchButtonTitle') $ ": " $ SearchText,			
+				class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_RT_R2, 
+				OnSearchButtonClicked,
+				false,
+				`GetLocalizedString('SearchButtonTooltip'),
+				class'UIUtilities'.const.ANCHOR_BOTTOM_CENTER);
+}
+
+simulated private function OnSearchButtonClicked()
+{
+	local TInputDialogData kData;
+
+	if (SearchText != "")
+	{
+		SearchText = "";
+		PopulateData();
+	}
+	else
+	{
+		kData.strTitle = `GetLocalizedString('SearchFieldTitle');
+		kData.iMaxChars = 99;
+		kData.strInputBoxText = SearchText;
+		kData.fnCallback = OnSearchInputBoxAccepted;
+
+		Movie.Pres.UIInputDialog(kData);
+	}
+}
+
+function OnSearchInputBoxAccepted(string text)
+{
+	SearchText = text;
+	PopulateData();
+}
+
 
 simulated function BuildScreen()
 {
@@ -138,6 +182,9 @@ simulated function PopulateData()
 	Loadouts = class'X2LoadoutSafe'.static.GetLoadouts();
 	foreach Loadouts(Loadout)
 	{
+		if (SearchText != "" && InStr(Loadout.LoadoutName, SearchText,, true) == INDEX_NONE)
+			continue;
+
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
 		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
@@ -258,7 +305,7 @@ private function OnOverwriteLoadoutClickedCallback(Name eAction)
 	if (eAction == 'eUIAction_Accept')
 	{
 		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItemStates();
-		class'X2LoadoutSafe'.static.SaveLoadut_Static(CachedNewLoadoutName, ItemStates);
+		class'X2LoadoutSafe'.static.SaveLoadut_Static(CachedNewLoadoutName, ItemStates, UnitState);
 		CloseScreen();
 	}
 }
@@ -345,7 +392,7 @@ private function OnCreateLoadoutInputBoxAccepted(string LoadoutName)
 	else
 	{
 		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItemStates();
-		class'X2LoadoutSafe'.static.SaveLoadut_Static(LoadoutName, ItemStates);
+		class'X2LoadoutSafe'.static.SaveLoadut_Static(LoadoutName, ItemStates, UnitState);
 		CloseScreen();
 	}
 }
@@ -357,7 +404,7 @@ private function OnCreateLoadoutClickedCallback(Name eAction)
 	if (eAction == 'eUIAction_Accept')
 	{
 		ItemStates = UIItemCard_Inventory(ItemCard).GetSelectedItemStates();
-		class'X2LoadoutSafe'.static.SaveLoadut_Static(CachedNewLoadoutName, ItemStates);
+		class'X2LoadoutSafe'.static.SaveLoadut_Static(CachedNewLoadoutName, ItemStates, UnitState);
 		CloseScreen();
 	}
 }

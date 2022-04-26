@@ -15,7 +15,8 @@ struct IRILoadoutItemStruct
 };
 struct IRILoadoutStruct
 {
-	var string LoadoutName;
+	var string	LoadoutName;
+	var name	SoldierClassTemplate;
 	var array<IRILoadoutItemStruct> LoadoutItems;
 };
 

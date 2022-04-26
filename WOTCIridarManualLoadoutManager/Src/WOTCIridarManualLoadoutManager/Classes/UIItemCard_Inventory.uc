@@ -258,16 +258,15 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 		SpawnedItem.bProcessesMouseEvents = true;
 		SpawnedItem.bIsNavigable = true;
 
-
 		if (ItemTemplate == none)
 		{
 			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(`GetLocalizedString('MissingItemTemplate') @ "'" $ LoadoutItem.TemplateName $ "'", eUIState_Disabled));
-			SpawnedItem.SetTooltipText("Item template not found.");
+			SpawnedItem.SetTooltipText("Item template not found.",,,,,,, 0);
 		}
 		else if (ItemIsAlreadyEquipped(ItemTemplate, LoadoutItem.InventorySlot))
 		{
 			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Good));
-			SpawnedItem.SetTooltipText("This item is already equipped.");
+			SpawnedItem.SetTooltipText("This item is already equipped.",,,,,,, 0);
 		}
 		else 
 		{
@@ -280,19 +279,19 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 					if (ItemState == none)
 					{
 						SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Bad));
-						SpawnedItem.SetTooltipText("Desired item not found. Replacement item not found.");
+						SpawnedItem.SetTooltipText("Desired item not found. Replacement item not found.",,,,,,, 0);
 					}
 					else
 					{
 						SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats() @ "->" @ ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), eUIState_Warning), "", false);
-						SpawnedItem.SetTooltipText("Desired item not found, but you may try this replacement.");
+						SpawnedItem.SetTooltipText("Desired item not found, but you may try this replacement.",,,,,,, 0);
 						SpawnedItem.ItemState = ItemState;
 					}
 				}
 				else
 				{
 					SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Bad));
-					SpawnedItem.SetTooltipText("Desired item not found. Replacements are not allowed.");
+					SpawnedItem.SetTooltipText("Desired item not found. Replacements are not allowed.",,,,,,, 0);
 				}
 			}
 			else 
@@ -301,12 +300,12 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 				if (DisabledReason != "")
 				{
 					SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Warning));
-					SpawnedItem.SetTooltipText("This unit cannot equip this item:" @ DisabledReason);
+					SpawnedItem.SetTooltipText("This unit cannot equip this item:" @ DisabledReason,,,,,,, 0);
 				}
 				else
 				{
 					SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Normal), "", true);
-					SpawnedItem.SetTooltipText("All normal, item will be equipped.");
+					SpawnedItem.SetTooltipText("All normal, item will be equipped.",,,,,,, 0);
 					SpawnedItem.ItemState = ItemState;
 				}
 			}

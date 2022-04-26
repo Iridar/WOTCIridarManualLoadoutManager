@@ -15,23 +15,24 @@ TODO:
 Saving as config
 File autobackup
 
-item status
 delete button too big, too left, and obscures text
-search button
-IAM integration
-XSkin integration?
+
+class-specific loadouts (toggleable in NavHelp, default configurable in MCM)
+
 
 figure out automatic list item size realization maybe
 mod preview image
 localization pass
 
 
-class-specific loadouts (toggleable in NavHelp, default configurable in MCM)
+
 squad loadout items list (conflate by weapon category configurable in MCM)
 TODO: Allow PCS as part of loadout?
 
 
 One day:
+IAM integration
+XSkin integration?
 Use Tac Armory UI inventory images
 Different layout so there's more space for the soldier's inventory list
 Hide shortcut when removing a soldier from squad

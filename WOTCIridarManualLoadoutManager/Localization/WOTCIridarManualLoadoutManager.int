@@ -35,9 +35,11 @@ ConfirmOverwriteLoadoutText = "Are you sure you want to overwrite loadout %Loado
 
 MissingItemTemplate = "Missing Item Template:"
 
+SearchFieldTitle = "Enter partial loadout name"
+SearchButtonTooltip = "Search loadouts with specified text in their name."
+SearchButtonTitle = "SEARCH"
+
 [WOTCIridarManualLoadoutManager_MCMScreen]
-
-
 ModName = "Loadout Manager"
 PageTitle = "Iridar's Loadout Manager"
 GroupHeader = "General Settings"
@@ -56,3 +58,5 @@ ALLOW_REPLACEMENT_ITEMS_Tip = "If enabled, the loadout manager will look for the
 
 USE_SQUAD_SELECT_SHORTCUT_Label = "Display shortcut in Squad Select"
 USE_SQUAD_SELECT_SHORTCUT_Tip = "If enabled, there will be an \"Equip Loadout\" shortcut under each soldier in Squad Select."
+
+
