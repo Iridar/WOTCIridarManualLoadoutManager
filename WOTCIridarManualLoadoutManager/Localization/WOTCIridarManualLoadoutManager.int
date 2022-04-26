@@ -34,6 +34,13 @@ ConfirmOverwriteLoadoutTitle = "CONFIRM OVERWRITE"
 ConfirmOverwriteLoadoutText = "Are you sure you want to overwrite loadout %LoadoutName%?"
 
 MissingItemTemplate = "Missing Item Template:"
+MissingItemTemplate_Tooltip = "Template for this item is not available. This item currently doesn't exist in your game. Most likely you are missing a mod that added this item previously."
+ItemAlreadyEquipped = "This item is already equipped on this unit in this slot."
+ItemNotFoundInInventory = "This item is currently not available."
+ItemNotFoundInInventoryAndNoReplacement = "This item is currently not available and there are no suitable replacements."
+ItemNotFoundInInventoryButReplacementFound = "This item is currently not available, but you can try using the suggested replacement."
+UnitCannotEquipItem = "This unit cannot equip this item."
+ItemWillBeEquipped = "Everything is OK. This item will be equipped on the unit if the checkbox is checked."
 
 SearchFieldTitle = "Enter partial loadout name"
 SearchButtonTooltip = "Search loadouts with specified text in their name."

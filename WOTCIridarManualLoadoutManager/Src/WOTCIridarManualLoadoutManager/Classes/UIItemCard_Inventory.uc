@@ -75,23 +75,6 @@ simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 	}	
 }
 
-final function array<UIMechaListItem_LoadoutItem> GetCheckedItemStatess()
-{
-	local UIMechaListItem_LoadoutItem			ListItem;
-	local array<UIMechaListItem_LoadoutItem>	ReturnArray;
-	local int i;
-
-	for (i = 0; i < List.ItemCount; i++)
-	{
-		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
-		if (ListItem != none && ListItem.Checkbox.bChecked)
-		{
-			ReturnArray.AddItem(ListItem);
-		}
-	}
-	return ReturnArray;
-}
-
 simulated function PopulateLoadoutFromUnit()
 {
 	local UIMechaListItem_LoadoutItem	SpawnedItem;
@@ -189,7 +172,7 @@ final function array<XComGameState_Item> GetSelectedItemStates()
 final function array<IRILoadoutItemStruct> GetSelectedLoadoutItems()
 {
 	local UIMechaListItem_LoadoutItem	ListItem;
-	local array<IRILoadoutItemStruct>		ReturnArray;
+	local array<IRILoadoutItemStruct>	ReturnArray;
 	local int i;
 
 	for (i = 0; i < List.ItemCount; i++)
@@ -219,13 +202,13 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
 	List.ClearItems();
 
+	`AMLOG("==== BEGIN =====");
+	`AMLOG("Loadout:" @ Loadout.LoadoutName @ ", items:" @ Loadout.LoadoutItems.Length);
+
 	foreach Loadout.LoadoutItems(LoadoutItem)
 	{
 		ItemTemplate = ItemMgr.FindItemTemplate(LoadoutItem.TemplateName);
-		if (ItemTemplate == none)
-			continue;
-
-		if (!bImageDisplayed)
+		if (ItemTemplate != none && !bImageDisplayed)
 		{
 			SetItemImages(ItemTemplate);
 			bImageDisplayed = true;
@@ -239,6 +222,8 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 				HeaderItem.bIsNavigable = false;
 				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot));
 				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent);
+
+				`AMLOG("Adding fancy header for inventory slot:" @ LoadoutItem.InventorySlot);
 			}
 			else
 			{
@@ -248,6 +233,8 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 				SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
 				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot), eUIState_Disabled));
 				SpawnedItem.SetDisabled(true);
+
+				`AMLOG("Adding simple header for inventory slot:" @ LoadoutItem.InventorySlot);
 			}
 		}
 
@@ -255,57 +242,58 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 		SpawnedItem.bAnimateOnInit = false;
 		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
 		SpawnedItem.LoadoutItem = LoadoutItem;
-		SpawnedItem.bProcessesMouseEvents = true;
 		SpawnedItem.bIsNavigable = true;
 
 		if (ItemTemplate == none)
 		{
 			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(`GetLocalizedString('MissingItemTemplate') @ "'" $ LoadoutItem.TemplateName $ "'", eUIState_Disabled));
-			SpawnedItem.SetTooltipText("Item template not found.",,,,,,, 0);
+			SpawnedItem.SetTooltipText(`GetLocalizedString('MissingItemTemplate_Tooltip'),,,,,,, 0);
 		}
 		else if (ItemIsAlreadyEquipped(ItemTemplate, LoadoutItem.InventorySlot))
 		{
 			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Good));
-			SpawnedItem.SetTooltipText("This item is already equipped.",,,,,,, 0);
+			SpawnedItem.SetTooltipText(`GetLocalizedString('ItemAlreadyEquipped'),,,,,,, 0);
 		}
 		else 
 		{
 			ItemState = GetDesiredItemState(ItemTemplate.DataName, LoadoutItem.InventorySlot);
 			if (ItemState == none)
 			{
+				`AMLOG("Did not find desired item state:" @ ItemTemplate.DataName @ ", replacements allowed:" @ `GETMCMVAR(ALLOW_REPLACEMENT_ITEMS));
 				if (`GETMCMVAR(ALLOW_REPLACEMENT_ITEMS))
 				{
 					ItemState = GetReplacementItemState(ItemTemplate.DataName, LoadoutItem.InventorySlot);
 					if (ItemState == none)
 					{
 						SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Bad));
-						SpawnedItem.SetTooltipText("Desired item not found. Replacement item not found.",,,,,,, 0);
+						SpawnedItem.SetTooltipText(`GetLocalizedString('ItemNotFoundInInventoryAndNoReplacement'),,,,,,, 0);
 					}
 					else
 					{
 						SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats() @ "->" @ ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), eUIState_Warning), "", false);
-						SpawnedItem.SetTooltipText("Desired item not found, but you may try this replacement.",,,,,,, 0);
+						SpawnedItem.SetTooltipText(`GetLocalizedString('ItemNotFoundInInventoryButReplacementFound'),,,,,,, 0);
 						SpawnedItem.ItemState = ItemState;
 					}
 				}
 				else
 				{
 					SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Bad));
-					SpawnedItem.SetTooltipText("Desired item not found. Replacements are not allowed.",,,,,,, 0);
+					SpawnedItem.SetTooltipText(`GetLocalizedString('ItemNotFoundInInventory'),,,,,,, 0);
 				}
 			}
 			else 
 			{
 				DisabledReason = GetDisabledReason(ItemTemplate, LoadoutItem.InventorySlot, ItemState);
+				`AMLOG("Found desired item state:" @ ItemState.GetMyTemplateName() @ `ShowVar(DisabledReason));
 				if (DisabledReason != "")
 				{
-					SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Warning));
-					SpawnedItem.SetTooltipText("This unit cannot equip this item:" @ DisabledReason,,,,,,, 0);
+					SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats() $ ": " $ DisabledReason, eUIState_Warning));
+					SpawnedItem.SetTooltipText(`GetLocalizedString('UnitCannotEquipItem'),,,,,,, 0);
 				}
 				else
 				{
 					SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Normal), "", true);
-					SpawnedItem.SetTooltipText("All normal, item will be equipped.",,,,,,, 0);
+					SpawnedItem.SetTooltipText(`GetLocalizedString('ItemWillBeEquipped'),,,,,,, 0);
 					SpawnedItem.ItemState = ItemState;
 				}
 			}
@@ -322,6 +310,8 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 		List.RealizeItems();
 		List.RealizeList();
 	}
+
+	`AMLOG("==== END =====");
 }
 
 private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, const EInventorySlot Slot)
@@ -503,23 +493,6 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	return DisabledReason;
 }
 
-private function bool LoadoutContainsArmorThatGrantsHeavyWeaponSlot()
-{
-	local X2ArmorTemplate		ArmorTemplate;
-	local IRILoadoutItemStruct	LoadoutItem;
-
-	foreach Loadout.LoadoutItems(LoadoutItem)
-	{
-		ArmorTemplate = X2ArmorTemplate(ItemMgr.FindItemTemplate(LoadoutItem.TemplateName));
-		if (ArmorTemplate != none)
-		{
-			return ArmorTemplate.bHeavyWeapon;
-		}
-	}
-	return false;
-}
-
-
 private function XComGameState_Item GetDesiredItemState(const name TemplateName, EInventorySlot Slot)
 {
 	local StateObjectReference	ItemRef;
@@ -553,9 +526,10 @@ private function XComGameState_Item GetDesiredItemState(const name TemplateName,
 
 private function XComGameState_Item GetReplacementItemState(const name TemplateName, EInventorySlot Slot)
 {
-	local XComGameState_Item	ItemState;
+	local XComGameState_Item ItemState;
 
 	ItemState = FindBestReplacementItemForUnit(ItemMgr.FindItemTemplate(TemplateName), Slot);
+
 	if (ItemState == none && `GETMCMVAR(ALLOW_MODIFIED_ITEMS))
 	{
 		ItemState = FindBestReplacementItemForUnit(ItemMgr.FindItemTemplate(TemplateName), Slot, true);
@@ -664,3 +638,38 @@ private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemT
 		return none;
 	}
 }
+
+
+/*
+private function bool LoadoutContainsArmorThatGrantsHeavyWeaponSlot()
+{
+	local X2ArmorTemplate		ArmorTemplate;
+	local IRILoadoutItemStruct	LoadoutItem;
+
+	foreach Loadout.LoadoutItems(LoadoutItem)
+	{
+		ArmorTemplate = X2ArmorTemplate(ItemMgr.FindItemTemplate(LoadoutItem.TemplateName));
+		if (ArmorTemplate != none)
+		{
+			return ArmorTemplate.bHeavyWeapon;
+		}
+	}
+	return false;
+}*/
+/*
+final function array<UIMechaListItem_LoadoutItem> GetCheckedListItems()
+{
+	local UIMechaListItem_LoadoutItem			ListItem;
+	local array<UIMechaListItem_LoadoutItem>	ReturnArray;
+	local int i;
+
+	for (i = 0; i < List.ItemCount; i++)
+	{
+		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
+		if (ListItem != none && ListItem.Checkbox.bChecked)
+		{
+			ReturnArray.AddItem(ListItem);
+		}
+	}
+	return ReturnArray;
+}*/

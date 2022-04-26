@@ -30,25 +30,23 @@ var private X2SoldierClassTemplate	SoldierClassTemplate;
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
 	LoadoutFilterStatus = `GETMCMVAR(LOADOUT_FILTER_STATUS);
+	if (LoadoutFilterStatus > eLFS_ButtonHidden)
+	{
+		SoldierClassTemplate = UnitState.GetSoldierClassTemplate();
+	}
+	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
 
 	super(UIInventory).InitScreen(InitController, InitMovie, InitName);
 
 	self.SetX(self.X + LeftListOffset);
 	
 	SetCategory("");
-	
 	SetInventoryLayout();
 	PopulateData();
 
 	UIArmoryLoadoutScreen.Hide();
 	UIArmoryLoadoutScreen.NavHelp.Show();	
-
-	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
-	if (LoadoutFilterStatus > eLFS_ButtonHidden)
-	{
-		SoldierClassTemplate = UnitState.GetSoldierClassTemplate();
-	}
-
+	
 	UIMouseGuard_RotatePawn(MouseGuardInst).SetActorPawn(UIArmoryLoadoutScreen.ActorPawn);
 }
 
@@ -265,16 +263,22 @@ private function bool LoadoutPassesFilters(const IRILoadoutStruct Loadout)
 	if (SearchText != "" && InStr(Loadout.LoadoutName, SearchText,, true) == INDEX_NONE)
 		return false;
 
+	`AMLOG("Filter status:" @ LoadoutFilterStatus @ Loadout.LoadoutName @ Loadout.SoldierClassTemplate);
+
 	switch (LoadoutFilterStatus)
 	{
+	case eLFS_NoFilter:
+		break;
 	case eLFS_Class:
 		if (Loadout.SoldierClassTemplate != UnitState.GetSoldierClassTemplateName())
 			return false;
 		break;
-
 	case eLFS_Weapons:
 		if (!WeaponCategoryCheck(Loadout, eInvSlot_PrimaryWeapon) || !WeaponCategoryCheck(Loadout, eInvSlot_SecondaryWeapon))
+		{
+			`AMLOG("Doesn't pass primary check:" @ !WeaponCategoryCheck(Loadout, eInvSlot_PrimaryWeapon) @ ", doesn't pass secondary check:" @ !WeaponCategoryCheck(Loadout, eInvSlot_SecondaryWeapon));
 			return false;
+		}
 		break;
 	case eLFS_PrimaryWeapon:
 		if (!WeaponCategoryCheck(Loadout, eInvSlot_PrimaryWeapon))
@@ -302,6 +306,7 @@ private function bool WeaponCategoryCheck(const IRILoadoutStruct Loadout, const 
 		{
 			if (!IsWeaponAllowedByClassInSlot(LoadoutItem.TemplateName, Slot))
 			{
+				`AMLOG(LoadoutItem.TemplateName @ "is not allowed in slot:" @ Slot @ "by soldier class:" @ SoldierClassTemplate.DataName);
 				return false;
 			}
 		}
@@ -446,6 +451,7 @@ simulated function CloseScreen()
 		{
 			UIArmoryLoadoutScreen.UpdateData(true);
 			UIArmoryLoadoutScreen.Show();
+			UIMouseGuard_RotatePawn(UIArmoryLoadoutScreen.MouseGuardInst).SetActorPawn(UIArmoryLoadoutScreen.ActorPawn);
 		}
 	}
 	super.CloseScreen();
@@ -576,9 +582,12 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	XComHQ = class'Help'.static.GetAndPrepXComHQ(NewGameState);
 	UnitState = XComGameState_Unit(NewGameState.ModifyStateObject(UnitState.Class, UnitState.ObjectID));
 
+	`AMLOG("==== BEGIN ====");
+	`AMLOG("Loadout Items:" @ LoadoutItems.Length @ "and unit:" @ UnitState.GetFullName() @ UnitState.GetSoldierClassTemplateName());
+
 	foreach LoadoutItems(LoadoutItem)
 	{
-		`AMLOG("Loadout Item:" @ LoadoutItem.TemplateName @ LoadoutItem.InventorySlot);
+		`AMLOG("Loadout Item:" @ LoadoutItem.ItemState.GetMyTemplateName() @ LoadoutItem.InventorySlot);
 
 		ItemState = LoadoutItem.ItemState;
 		XComHQ.GetItemFromInventory(NewGameState, ItemState.GetReference(), ItemState);
@@ -698,6 +707,8 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	{
 		History.CleanupPendingGameState(NewGameState);
 	}
+
+	`AMLOG("==== END ====");
 }
 
 

@@ -17,18 +17,16 @@ File autobackup
 
 delete button too big, too left, and obscures text
 
-class-specific loadouts (toggleable in NavHelp, default configurable in MCM)
-
-
 figure out automatic list item size realization maybe
 mod preview image
 localization pass
 
-
-
 squad loadout items list (conflate by weapon category configurable in MCM)
 TODO: Allow PCS as part of loadout?
 
+check armor allowed by class
+
+utility items that are already equipped do not display as equipped?
 
 One day:
 IAM integration
