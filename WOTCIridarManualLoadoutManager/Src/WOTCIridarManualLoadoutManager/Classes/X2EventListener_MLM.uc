@@ -6,8 +6,10 @@ static function array<X2DataTemplate> CreateTemplates()
 {
 	local array<X2DataTemplate> Templates;
 
-	Templates.AddItem(SquadSelectListener());
-
+	//if (!`ISCONTROLLERACTIVE)
+	//{
+		Templates.AddItem(SquadSelectListener());
+	//}
 	return Templates;
 }
 
@@ -29,59 +31,104 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 {
 	local UISquadSelect						SquadSelect;
 	local UISquadSelect_ListItem			ListItem;
-	local array<UIPanel>					ChildrenPanels;
-	local UIPanel							ChildPanel;
 	local XComGameState_Unit				UnitState;
 	local XComGameState_HeadquartersXCom	XComHQ;
 	local XComGameStateHistory				History;
 	local UIMechaListItem_LoadoutItem		Shortcut;
+	local int j;
 
 	SquadSelect = UISquadSelect(EventSource);
 	if (SquadSelect == none)
 		return ELR_NoInterrupt;
+
+	`AMLOG("Running with Item Count:" @ SquadSelect.m_kSlotList.ItemCount @ "Total slots:" @ SquadSelect.GetTotalSlots());
 
 	History = `XCOMHISTORY;
 	XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class'XComGameState_HeadquartersXCom', true));
 	if (XComHQ == none)
 		return ELR_NoInterrupt;
 
-	SquadSelect.GetChildrenOfType(class'UISquadSelect_ListItem', ChildrenPanels);
-
-	`AMLOG("Running");
-
-	foreach ChildrenPanels(ChildPanel)
+	if (SquadSelect.IsA('robojumper_UISquadSelect') || SquadSelect.m_kSlotList.ItemCount == 0) // Latter is an alternative chceck for RJSS in case some funny mod author reuploads RJSS with different class name.
 	{
-		ListItem = UISquadSelect_ListItem(ChildPanel);
-		//if (ListItem.SlotIndex < 0 || ListItem.SlotIndex > XComHQ.Squad.Length || XComHQ.Squad[ListItem.SlotIndex].ObjectID == 0)
-		//	continue;
-
-		if (ListItem.GetChildByName('IRI_MLM_LoadLoadout_SquadSelect_Shortcut') != none || ListItem.bDisabled)
-			continue;
-
-		UnitState = XComGameState_Unit(History.GetGameStateForObjectID(ListItem.GetUnitRef().ObjectID));
-		//UnitState = XComGameState_Unit(History.GetGameStateForObjectID(XComHQ.Squad[ListItem.SlotIndex].ObjectID));
-		if (UnitState == none)
-			continue;
-
-		`AMLOG("Looking at soldier:" @ UnitState.GetFullName());
-
-		Shortcut = ListItem.Spawn(class'UIMechaListItem_LoadoutItem', ListItem);
-		Shortcut.bAnimateOnInit = false;
-		Shortcut.InitListItem('IRI_MLM_LoadLoadout_SquadSelect_Shortcut');
-		Shortcut.UpdateDataDescriptionShortcut(UnitState);
-		Shortcut.SetWidth(default.ListItemWidth);
-		Shortcut.Desc.SetWidth(Shortcut.Width - 10);
-
-		if (ListItem.IsA('robojumper_UISquadSelect_ListItem'))
+		for (j = 0; j < SquadSelect.GetTotalSlots(); ++j)
 		{
-			Shortcut.SetY(ListItem.Height + robojumper_UISquadSelect_ListItem(ListItem).GetExtraHeight());
-			ListItem.SetY(ListItem.Y - Shortcut.Height - 10);
-		}
-		else
-		{
-			Shortcut.SetY(362);
-			ListItem.SetY(ListItem.Y - Shortcut.Height);
+			ListItem = UISquadSelect_ListItem(robojumper_UISquadSelect(SquadSelect).SquadList.GetItem(j));
+			if (ListItem == none || ListItem.bDisabled || !ListItem.bIsVisible)
+				continue;
+
+			UnitState = robojumper_UISquadSelect_ListItem(ListItem).GetUnit();
+
+			`AMLOG("Looking at soldier:" @ UnitState.GetFullName());
+
+			// In RJSS, list items don't get init'ed instantly, and we need to check for a pre-existing shortcut.
+			Shortcut = UIMechaListItem_LoadoutItem(ListItem.GetChildByName('IRI_MLM_LoadLoadout_SquadSelect_Shortcut', false));
+			if (Shortcut != none)
+			{
+				if (UnitState == none)
+				{
+					Shortcut.Hide();
+				}
+				else
+				{
+					Shortcut.UpdateDataDescriptionShortcut(UnitState);
+					Shortcut.SetWidth(default.ListItemWidth);
+					Shortcut.Desc.SetWidth(Shortcut.Width - 10);
+					Shortcut.Show();
+				}
+			}
+			else if (UnitState != none)
+			{
+				Shortcut = ListItem.Spawn(class'UIMechaListItem_LoadoutItem', ListItem);
+				Shortcut.InitListItem('IRI_MLM_LoadLoadout_SquadSelect_Shortcut').bAnimateOnInit = false;
+				Shortcut.UpdateDataDescriptionShortcut(UnitState);
+				Shortcut.SetWidth(default.ListItemWidth);
+				Shortcut.Desc.SetWidth(Shortcut.Width - 10);
+
+				Shortcut.SetY(ListItem.Height + robojumper_UISquadSelect_ListItem(ListItem).GetExtraHeight());
+				ListItem.SetY(ListItem.Y - Shortcut.Height - 10);
+			}			
 		}
 	}
+	else
+	{
+		for (j = 0; j < SquadSelect.m_kSlotList.ItemCount; ++j)
+		{
+			ListItem = UISquadSelect_ListItem(SquadSelect.m_kSlotList.GetItem(j));
+			if (ListItem == none || ListItem.bDisabled || !ListItem.bIsVisible)
+				continue;
+
+			UnitState = XComGameState_Unit(History.GetGameStateForObjectID(ListItem.GetUnitRef().ObjectID));
+
+			`AMLOG("Looking at soldier:" @ UnitState.GetFullName());
+
+			Shortcut = UIMechaListItem_LoadoutItem(ListItem.GetChildByName('IRI_MLM_LoadLoadout_SquadSelect_Shortcut', false));
+			if (Shortcut != none)
+			{
+				if (UnitState == none)
+				{
+					Shortcut.Hide();
+				}
+				else
+				{
+					Shortcut.UpdateDataDescriptionShortcut(UnitState);
+					Shortcut.SetWidth(default.ListItemWidth);
+					Shortcut.Desc.SetWidth(Shortcut.Width - 10);
+					Shortcut.Show();
+				}
+			}
+			else if (UnitState != none)
+			{
+				Shortcut = ListItem.Spawn(class'UIMechaListItem_LoadoutItem', ListItem);
+				Shortcut.InitListItem('IRI_MLM_LoadLoadout_SquadSelect_Shortcut').bAnimateOnInit = false;
+				Shortcut.UpdateDataDescriptionShortcut(UnitState);
+				Shortcut.SetWidth(default.ListItemWidth);
+				Shortcut.Desc.SetWidth(Shortcut.Width - 10);
+
+				Shortcut.SetY(362);
+				ListItem.SetY(ListItem.Y - Shortcut.Height);
+			}
+		}
+	}
+
 	return ELR_NoInterrupt;
 }

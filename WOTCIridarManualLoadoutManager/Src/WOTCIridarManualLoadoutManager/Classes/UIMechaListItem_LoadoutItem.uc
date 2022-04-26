@@ -12,7 +12,7 @@ var XComGameState_Unit		UnitState;		// Used when displaying a "Load Loadout" sho
 // Bandaid fix for incoherent list width.
 var int						ListItemWidthMod;
 
-var private UITextContainer	Tooltip;
+//var private UITextContainer	Tooltip;
 
 simulated function SetWidth(float NewWidth)
 {
@@ -45,6 +45,8 @@ private function OnEquipLoadoutShortcutClicked()
 	// Bandaid hack. The UIArmory_Loadout screen is pushed to display unit pawn, and then immediately get replaced by UIScreen_Loadouts, so only the pawn remains.
 	// And we tell the UIScreen_Loadouts to automatically close UIArmory_Loadout when it itself is closed.
 	ArmoryScreen = UIArmory_Loadout(HQPresLayer.ScreenStack.GetFirstInstanceOf(class'UIArmory_Loadout'));
+
+	`AMLOG(UnitState.GetFullName() @ ArmoryScreen.GetUnit().GetFullName());
 
 	SaveLoadout = HQPresLayer.Spawn(class'UIScreen_Loadouts', HQPresLayer);
 	SaveLoadout.UnitState = UnitState;
@@ -89,6 +91,7 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	return super.OnUnrealCommand(cmd, arg);
 }
 */
+/*
 private function OnMouseEventFn(UIPanel Panel, int Cmd)
 {
 	`AMLOG(cmd);
@@ -144,10 +147,13 @@ simulated function SetTooltipText(string Text,
 	OnMouseEventDelegate = OnMouseEventFn;
 
 	Tooltip = Spawn(class'UITextContainer', self); 
-	Tooltip.InitTextContainer('', Text, -310, 0, 300, 75, true, /*class'UIUtilities_Controls'.const.MC_X2Background*/, true);
+	Tooltip.InitTextContainer('', Text, -310, 0, 300, 75, true,, true);
+	//Tooltip.InitTextContainer('', Text, -310, 0, 300, 75, true, class'UIUtilities_Controls'.const.MC_X2Background, true);
 	//Tooltip.SetHTMLText(class'UIUtilities_Text'.static.GetColoredText(, , 10));
 	Tooltip.Hide();
 }
+
+*/
 
 
 /*
