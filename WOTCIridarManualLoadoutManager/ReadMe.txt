@@ -36,6 +36,7 @@ XSkin integration?
 Use Tac Armory UI inventory images
 Different layout so there's more space for the soldier's inventory list
 Hide shortcut when removing a soldier from squad
+Replace IsWeaponAllowedByClass by IsWeaponAllowedByClass_CH
 
 KNOWN ISSUES
 When using vanilla squad select, the EQUIP LOADOUT shortcut will remain on screen even after the soldier is removed from that slot.

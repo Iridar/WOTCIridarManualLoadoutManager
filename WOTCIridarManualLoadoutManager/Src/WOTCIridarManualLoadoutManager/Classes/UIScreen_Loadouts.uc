@@ -9,24 +9,28 @@ class UIScreen_Loadouts extends UIInventory_XComDatabase;
 // The ItemCard on the right shows items in that loadout, allowing to select which of those items should be equipped on the unit.
 // The big "equip loadout" green button appears on this screen.
 
-var UIArmory_Loadout	UIArmoryLoadoutScreen;
-var bool				bCloseArmoryScreenWhenClosing;
-var XComGameState_Unit	UnitState;
-var bool				bForSaving;
+var UIArmory_Loadout		UIArmoryLoadoutScreen;
+var bool					bCloseArmoryScreenWhenClosing;
+var XComGameState_Unit		UnitState;
+var bool					bForSaving;
 
 var config(UI) int LeftListOffset;
 var config(UI) int RightListOffset;
 var config(UI) int ListItemWidthMod;
 
-var private UILargeButton	EquipLoadoutButton;
-var private string			CachedNewLoadoutName;
+var private UILargeButton			EquipLoadoutButton;
+var private string					CachedNewLoadoutName;
 var private X2ItemTemplateManager	ItemMgr;
-var private string			SearchText;
+var private string					SearchText;
+var private int						LoadoutFilterStatus;
+var private X2SoldierClassTemplate	SoldierClassTemplate;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
+	LoadoutFilterStatus = `GETMCMVAR(LOADOUT_FILTER_STATUS);
+
 	super(UIInventory).InitScreen(InitController, InitMovie, InitName);
 
 	self.SetX(self.X + LeftListOffset);
@@ -37,7 +41,13 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	PopulateData();
 
 	UIArmoryLoadoutScreen.Hide();
-	UIArmoryLoadoutScreen.NavHelp.Show();
+	UIArmoryLoadoutScreen.NavHelp.Show();	
+
+	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+	if (LoadoutFilterStatus > eLFS_ButtonHidden)
+	{
+		SoldierClassTemplate = UnitState.GetSoldierClassTemplate();
+	}
 
 	UIMouseGuard_RotatePawn(MouseGuardInst).SetActorPawn(UIArmoryLoadoutScreen.ActorPawn);
 }
@@ -49,16 +59,43 @@ simulated function UpdateNavHelp()
 	super.UpdateNavHelp();
 
 	NavHelp = `HQPRES.m_kAvengerHUD.NavHelp;
-	
-	NavHelp.AddRightHelp(SearchText == "" ? `GetLocalizedString('SearchButtonTitle') : `GetLocalizedString('SearchButtonTitle') $ ": " $ SearchText,			
+
+	`AMLOG(LoadoutFilterStatus @ `ShowVar(LoadoutFilterStatus));
+
+	if (LoadoutFilterStatus > eLFS_ButtonHidden)
+	{
+		`AMLOG("Adding right help:" @ class'WOTCIridarManualLoadoutManager_MCMScreen'.default.LOADOUT_FILTER_STATUS_Strings[LoadoutFilterStatus] @ class'WOTCIridarManualLoadoutManager_MCMScreen'.default.LOADOUT_FILTER_STATUS_Tooltips[LoadoutFilterStatus]);
+
+		NavHelp.AddRightHelp(`GetLocalizedString('FilterButtonTitle') $ ": " $ class'WOTCIridarManualLoadoutManager_MCMScreen'.default.LOADOUT_FILTER_STATUS_Strings[LoadoutFilterStatus],
 				class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_RT_R2, 
-				OnSearchButtonClicked,
+				OnFilterButtonClicked,
 				false,
-				`GetLocalizedString('SearchButtonTooltip'),
+				class'WOTCIridarManualLoadoutManager_MCMScreen'.default.LOADOUT_FILTER_STATUS_Tooltips[LoadoutFilterStatus],
 				class'UIUtilities'.const.ANCHOR_BOTTOM_CENTER);
+	}
+
+	NavHelp.AddRightHelp(SearchText == "" ? `GetLocalizedString('SearchButtonTitle') : `GetLocalizedString('SearchButtonTitle') $ ": " $ SearchText,			
+			class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_RT_R2, 
+			OnSearchButtonClicked,
+			false,
+			`GetLocalizedString('SearchButtonTooltip'),
+			class'UIUtilities'.const.ANCHOR_BOTTOM_CENTER);
 }
 
-simulated private function OnSearchButtonClicked()
+private function OnFilterButtonClicked()
+{
+	LoadoutFilterStatus++; 
+
+	if (LoadoutFilterStatus >= eLFS_MAX)
+	{
+		LoadoutFilterStatus = eLFS_ButtonHidden + 1;
+	}
+	`AMLOG("New LoadoutFilterStatus:" @ LoadoutFilterStatus);
+	UpdateNavHelp();
+	PopulateData();
+}
+
+private function OnSearchButtonClicked()
 {
 	local TInputDialogData kData;
 
@@ -182,7 +219,7 @@ simulated function PopulateData()
 	Loadouts = class'X2LoadoutSafe'.static.GetLoadouts();
 	foreach Loadouts(Loadout)
 	{
-		if (SearchText != "" && InStr(Loadout.LoadoutName, SearchText,, true) == INDEX_NONE)
+		if (!LoadoutPassesFilters(Loadout))
 			continue;
 
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
@@ -221,6 +258,73 @@ simulated function PopulateData()
 		List.RealizeItems();
 		List.RealizeList();
 	}
+}
+
+private function bool LoadoutPassesFilters(const IRILoadoutStruct Loadout)
+{
+	if (SearchText != "" && InStr(Loadout.LoadoutName, SearchText,, true) == INDEX_NONE)
+		return false;
+
+	switch (LoadoutFilterStatus)
+	{
+	case eLFS_Class:
+		if (Loadout.SoldierClassTemplate != UnitState.GetSoldierClassTemplateName())
+			return false;
+		break;
+
+	case eLFS_Weapons:
+		if (!WeaponCategoryCheck(Loadout, eInvSlot_PrimaryWeapon) || !WeaponCategoryCheck(Loadout, eInvSlot_SecondaryWeapon))
+			return false;
+		break;
+	case eLFS_PrimaryWeapon:
+		if (!WeaponCategoryCheck(Loadout, eInvSlot_PrimaryWeapon))
+			return false;
+		break;
+	case eLFS_SecondaryWeapon:
+		if (!WeaponCategoryCheck(Loadout, eInvSlot_SecondaryWeapon))
+			return false;
+		break;
+	default:
+		`AMLOG("WARNING :: Unrecognized filter status:" @ LoadoutFilterStatus);
+		break;
+	}
+
+	return true;
+}
+
+private function bool WeaponCategoryCheck(const IRILoadoutStruct Loadout, const EInventorySlot Slot)
+{
+	local IRILoadoutItemStruct LoadoutItem;
+
+	foreach Loadout.LoadoutItems(LoadoutItem)
+	{
+		if (LoadoutItem.InventorySlot == Slot)
+		{
+			if (!IsWeaponAllowedByClassInSlot(LoadoutItem.TemplateName, Slot))
+			{
+				return false;
+			}
+		}
+	}
+	return true;
+}
+
+private function bool IsWeaponAllowedByClassInSlot(const name TemplateName, const EInventorySlot Slot)
+{
+	local X2WeaponTemplate	WeaponTemplate;
+	local EInventorySlot	OriginalSlot;
+	local bool				bCheckPassed;
+	
+	WeaponTemplate = X2WeaponTemplate(ItemMgr.FindItemTemplate(TemplateName));
+	if	(WeaponTemplate != none)
+	{
+		OriginalSlot = WeaponTemplate.InventorySlot;
+		WeaponTemplate.InventorySlot = Slot; // HAAAAX: Temporarily replace inventory slot in the template so that IsWeaponAllowedByClass can support PS / TPS
+		bCheckPassed = SoldierClassTemplate.IsWeaponAllowedByClass(WeaponTemplate); // TODO: Replace by IsWeaponAllowedByClass_CH
+		WeaponTemplate.InventorySlot = OriginalSlot;
+	}
+
+	return bCheckPassed;
 }
 
 private function CheckboxMouseEvent(UIPanel Panel, int Cmd)
@@ -468,7 +572,6 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	local bool								bSoundPlayed;
 
 	History = `XCOMHISTORY;
-	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Loading Loadout For Unit" @ UnitState.GetFullName());
 	XComHQ = class'Help'.static.GetAndPrepXComHQ(NewGameState);
 	UnitState = XComGameState_Unit(NewGameState.ModifyStateObject(UnitState.Class, UnitState.ObjectID));

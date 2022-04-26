@@ -39,6 +39,8 @@ SearchFieldTitle = "Enter partial loadout name"
 SearchButtonTooltip = "Search loadouts with specified text in their name."
 SearchButtonTitle = "SEARCH"
 
+FilterButtonTitle = "FILTER"
+
 [WOTCIridarManualLoadoutManager_MCMScreen]
 ModName = "Loadout Manager"
 PageTitle = "Iridar's Loadout Manager"
@@ -59,4 +61,19 @@ ALLOW_REPLACEMENT_ITEMS_Tip = "If enabled, the loadout manager will look for the
 USE_SQUAD_SELECT_SHORTCUT_Label = "Display shortcut in Squad Select"
 USE_SQUAD_SELECT_SHORTCUT_Tip = "If enabled, there will be an \"Equip Loadout\" shortcut under each soldier in Squad Select."
 
+LOADOUT_FILTER_STATUS_Label = "Default loadout filter status"
+LOADOUT_FILTER_STATUS_Tip = "If enabled, there will be an \"Equip Loadout\" shortcut under each soldier in Squad Select."
 
+LOADOUT_FILTER_STATUS_Strings[0] = "Disabled"
+LOADOUT_FILTER_STATUS_Strings[1] = "No filter"
+LOADOUT_FILTER_STATUS_Strings[2] = "Primary and Secondary"
+LOADOUT_FILTER_STATUS_Strings[3] = "Class"
+LOADOUT_FILTER_STATUS_Strings[4] = "Primary Weapon"
+LOADOUT_FILTER_STATUS_Strings[5] = "Secondary Weapon"
+
+LOADOUT_FILTER_STATUS_Tooltips[0] = "Disabled"
+LOADOUT_FILTER_STATUS_Tooltips[1] = "No filter"
+LOADOUT_FILTER_STATUS_Tooltips[2] = "Primary and Secondary"
+LOADOUT_FILTER_STATUS_Tooltips[3] = "Class"
+LOADOUT_FILTER_STATUS_Tooltips[4] = "Primary Weapon"
+LOADOUT_FILTER_STATUS_Tooltips[5] = "Secondary Weapon"

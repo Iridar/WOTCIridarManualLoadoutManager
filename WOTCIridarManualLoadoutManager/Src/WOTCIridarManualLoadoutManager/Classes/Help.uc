@@ -20,6 +20,16 @@ struct IRILoadoutStruct
 	var array<IRILoadoutItemStruct> LoadoutItems;
 };
 
+enum eLoadoutFilterStatus
+{
+	eLFS_ButtonHidden,
+	eLFS_NoFilter,
+	eLFS_Weapons,
+	eLFS_Class,
+	eLFS_PrimaryWeapon,
+	eLFS_SecondaryWeapon
+};
+
 /*
 
 ### Creating and Submitting a Game State
