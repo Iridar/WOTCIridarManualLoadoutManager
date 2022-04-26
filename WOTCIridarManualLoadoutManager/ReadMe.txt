@@ -21,6 +21,9 @@ item status
 don't equip already equipped items
 check if items with preinstalled weapon upgrades work
 delete button too big, too left, and obscures text
+search button
+IAM integration
+XSkin integration?
 
 figure out automatic list item size realization maybe
 mod preview image

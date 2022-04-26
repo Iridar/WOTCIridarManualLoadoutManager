@@ -127,7 +127,7 @@ simulated function PopulateData()
 	{
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem();
+		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
 		SpawnedItem.Loadout = Loadout;
 		SpawnedItem.ListItemWidthMod = ListItemWidthMod;
 		SpawnedItem.UpdateDataDescription(`GetLocalizedString('CreateNewLoadoutButton'), OnCreateLoadoutClicked);
@@ -140,7 +140,7 @@ simulated function PopulateData()
 	{
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem();
+		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
 		SpawnedItem.Loadout = Loadout;
 		SpawnedItem.ListItemWidthMod = ListItemWidthMod;
 

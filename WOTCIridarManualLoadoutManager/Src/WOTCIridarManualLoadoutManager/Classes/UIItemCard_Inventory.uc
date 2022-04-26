@@ -15,6 +15,7 @@ var config int ListItemWidth;
 var private XComGameState_HeadquartersXCom	XComHQ;
 var private IRILoadoutStruct				Loadout;
 var private X2ItemTemplateManager			ItemMgr;
+var private XGParamTag						LocTag;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
@@ -48,6 +49,7 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 	ListBG.ProcessMouseEvents(List.OnChildMouseEvent);
 
 	XComHQ = `XCOMHQ;
+	LocTag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
 
 	return self;
 }
@@ -112,14 +114,27 @@ simulated function PopulateLoadoutFromUnit()
 
 		if (ItemState.InventorySlot != PreviousSlot)
 		{
-			HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
-			HeaderItem.bIsNavigable = false;
-			HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot));
+			if (!`GETMCMVAR(USE_SIMPLE_HEADERS))
+			{
+				HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
+				HeaderItem.bIsNavigable = false;
+				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot));
+				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent);
+			}
+			else
+			{	
+				SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
+				SpawnedItem.bIsNavigable = false;
+				SpawnedItem.bAnimateOnInit = false;
+				SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
+				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot), eUIState_Disabled));
+				SpawnedItem.SetDisabled(true);
+			}
 		}
 
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem();
+		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
 		SpawnedItem.ItemState = ItemState;
 		SpawnedItem.UpdateDataCheckbox(ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", true);
 
@@ -198,6 +213,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 	local XComGameState_Item			ItemState;
 	local bool							bImageDisplayed;
 	local X2ItemTemplate				ItemTemplate;
+	local string						DisabledReason;
 
 	Loadout = _Loadout;
 	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
@@ -222,21 +238,22 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 				HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
 				HeaderItem.bIsNavigable = false;
 				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot));
+				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent);
 			}
 			else
 			{
 				SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
 				SpawnedItem.bIsNavigable = false;
 				SpawnedItem.bAnimateOnInit = false;
-				SpawnedItem.InitListItem();
-				SpawnedItem.UpdateDataDescription(class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot));
+				SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
+				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot), eUIState_Disabled));
 				SpawnedItem.SetDisabled(true);
 			}
 		}
 
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem();
+		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
 		SpawnedItem.LoadoutItem = LoadoutItem;
 		SpawnedItem.bProcessesMouseEvents = true;
 		SpawnedItem.bIsNavigable = true;
@@ -278,17 +295,20 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 					SpawnedItem.SetTooltipText("Desired item not found. Replacements are not allowed.");
 				}
 			}
-			else if (!CanAddItemToInventory(ItemTemplate, LoadoutItem.InventorySlot, ItemState))
+			else 
 			{
-				SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Warning), "", false);
-				SpawnedItem.SetTooltipText("This unit cannot equip this item, but you may still try.");
-				SpawnedItem.ItemState = ItemState;
-			}
-			else
-			{
-				SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Normal), "", true);
-				SpawnedItem.SetTooltipText("All normal, item will be equipped.");
-				SpawnedItem.ItemState = ItemState;
+				DisabledReason = GetDisabledReason(ItemTemplate, LoadoutItem.InventorySlot, ItemState);
+				if (DisabledReason != "")
+				{
+					SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Warning));
+					SpawnedItem.SetTooltipText("This unit cannot equip this item:" @ DisabledReason);
+				}
+				else
+				{
+					SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Normal), "", true);
+					SpawnedItem.SetTooltipText("All normal, item will be equipped.");
+					SpawnedItem.ItemState = ItemState;
+				}
 			}
 		}
 
@@ -329,75 +349,159 @@ private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, c
 	return false;
 }
 
-private function bool CanAddItemToInventory(const X2ItemTemplate ItemTemplate, const EInventorySlot Slot, optional XComGameState_Item ItemState)
+private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EInventorySlot SelectedSlot, XComGameState_Item Item)
 {
-	local X2WeaponTemplate					WeaponTemplate;
-	local X2GrenadeTemplate					GrenadeTemplate;
-	local X2ArmorTemplate					ArmorTemplate;
-	local array<X2DownloadableContentInfo>	DLCInfos;
-	local string							DLCReason;
+	local string					DisabledReason;
+	local X2AmmoTemplate			AmmoTemplate;
+	local X2WeaponTemplate			WeaponTemplate;
+	local X2ArmorTemplate			ArmorTemplate;
+	local X2SoldierClassTemplate	AllowedSoldierClassTemplate;
+	local X2SoldierClassTemplate	SoldierClassTemplate;
+	local XComGameState_Item		EquippedItemState;
+	local array<XComGameState_Item>	EquippedItemStates;
+	local XComOnlineProfileSettings	ProfileSettings;
+	local int						HighScore;
+	local int						BronzeScore;	
+	local string					DLCReason;
+	local array<X2DownloadableContentInfo> DLCInfos;
 	local int UnusedOutInt;
 	local int i;
-
+	
 	DLCInfos = `ONLINEEVENTMGR.GetDLCInfos(false);
-	for (i = 0; i < DLCInfos.Length; ++i)
-	{
-		if (!DLCInfos[i].CanAddItemToInventory_CH_Improved(UnusedOutInt, Slot, ItemTemplate, 1, UnitState, , DLCReason, ItemState))
-		{
-			return false;
-		}
-	}
 	
+	// Disable the weapon cannot be equipped by the current soldier class
 	WeaponTemplate = X2WeaponTemplate(ItemTemplate);
-	ArmorTemplate = X2ArmorTemplate(ItemTemplate);
-	GrenadeTemplate = X2GrenadeTemplate(ItemTemplate);
-
-	if (class'X2TacticalGameRulesetDataStructures'.static.InventorySlotIsEquipped(Slot))
+	if(WeaponTemplate != none)
 	{
-		if (WeaponTemplate != none)
+		SoldierClassTemplate = UnitState.GetSoldierClassTemplate();
+		if(SoldierClassTemplate != none && !SoldierClassTemplate.IsWeaponAllowedByClass(WeaponTemplate))
 		{
-			if (!UnitState.GetSoldierClassTemplate().IsWeaponAllowedByClass(WeaponTemplate)) // TODO: Replace with IsWeaponAllowedByClass_CH
-				return false;
+			AllowedSoldierClassTemplate = class'UIUtilities_Strategy'.static.GetAllowedClassForWeapon(WeaponTemplate);
+			if(AllowedSoldierClassTemplate == none)
+			{
+				DisabledReason = class'UIArmory_Loadout'.default.m_strMissingAllowedClass;
+			}
+			else if(AllowedSoldierClassTemplate.DataName == class'X2SoldierClassTemplateManager'.default.DefaultSoldierClass)
+			{
+				LocTag.StrValue0 = SoldierClassTemplate.DisplayName;
+				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strUnavailableToClass));
+			}
+			else
+			{
+				LocTag.StrValue0 = AllowedSoldierClassTemplate.DisplayName;
+				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strNeedsSoldierClass));
+			}
 		}
 
-		if (ArmorTemplate != none)
+		// TLE Weapons are locked out unless ladder 1 is completed to a BronzeMedal
+		if ((DisabledReason == "") && (WeaponTemplate.ClassThatCreatedUs.Name == 'X2Item_TLE_Weapons'))
 		{
-			if (!UnitState.GetSoldierClassTemplate().IsArmorAllowedByClass(ArmorTemplate))
-				return false;
-		}
+			ProfileSettings = `XPROFILESETTINGS;
+			BronzeScore = class'XComGameState_LadderProgress'.static.GetLadderMedalThreshold( 1, 0 );
+			HighScore = ProfileSettings.Data.GetLadderHighScore( 1 );
 
-		if (!UnitState.IsMPCharacter() && !UnitState.RespectsUniqueRule(ItemTemplate, Slot))
-			return false;
+			if (BronzeScore > HighScore)
+			{
+				LocTag.StrValue0 = class'XComGameState_LadderProgress'.default.NarrativeLadderNames[ 1 ];
+				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strNeedsLadderUnlock));
+			}
+		}
 	}
 
-	switch(Slot)
+	ArmorTemplate = X2ArmorTemplate(ItemTemplate);
+	if (ArmorTemplate != none)
 	{
-	case eInvSlot_Loot:
-	case eInvSlot_Backpack: 
-	case eInvSlot_Mission:
-		return true;
-	case eInvSlot_Utility:
-		return UnitState.GetCurrentStat(eStat_UtilityItems) > 0;
-	case eInvSlot_GrenadePocket:
-		return GrenadeTemplate != none && UnitState.HasGrenadePocket();
-	case eInvSlot_AmmoPocket:
-		return ItemTemplate.ItemCat == 'ammo' && UnitState.HasAmmoPocket();
-	case eInvSlot_HeavyWeapon:
-		return WeaponTemplate != none && 
-			(UnitState.GetNumHeavyWeapons() > 0 || 
-			LoadoutContainsArmorThatGrantsHeavyWeaponSlot() ||
-			UnitState.HasAnyOfTheAbilitiesFromAnySource(class'X2AbilityTemplateManager'.default.AbilityUnlocksHeavyWeapon));
-	case eInvSlot_CombatSim:
-		return ItemTemplate.ItemCat == 'combatsim' && UnitState.GetCurrentStat(eStat_CombatSims) > 0;
-	default:
-		if (class'CHItemSlot'.static.SlotIsTemplated(Slot))
+		SoldierClassTemplate = UnitState.GetSoldierClassTemplate();
+		if (SoldierClassTemplate != none && !SoldierClassTemplate.IsArmorAllowedByClass(ArmorTemplate))
 		{
-			return class'CHItemSlot'.static.GetTemplateForSlot(Slot).CanAddItemToSlot(UnitState, ItemTemplate);
+			AllowedSoldierClassTemplate = class'UIUtilities_Strategy'.static.GetAllowedClassForArmor(ArmorTemplate);
+			if (AllowedSoldierClassTemplate == none)
+			{
+				DisabledReason = class'UIArmory_Loadout'.default.m_strMissingAllowedClass;
+			}
+			else if (AllowedSoldierClassTemplate.DataName == class'X2SoldierClassTemplateManager'.default.DefaultSoldierClass)
+			{
+				LocTag.StrValue0 = SoldierClassTemplate.DisplayName;
+				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strUnavailableToClass));
+			}
+			else
+			{
+				LocTag.StrValue0 = AllowedSoldierClassTemplate.DisplayName;
+				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strNeedsSoldierClass));
+			}
 		}
-		return true;
+
+		// TLE Armor is locked unless ladder 2 is completed to a Bronze Medal
+		if ((DisabledReason == "") && (ArmorTemplate.ClassThatCreatedUs.Name == 'X2Item_TLE_Armor'))
+		{
+			ProfileSettings = `XPROFILESETTINGS;
+			BronzeScore = class'XComGameState_LadderProgress'.static.GetLadderMedalThreshold( 2, 0 );
+			HighScore = ProfileSettings.Data.GetLadderHighScore( 2 );
+
+			if (BronzeScore > HighScore)
+			{
+				LocTag.StrValue0 = class'XComGameState_LadderProgress'.default.NarrativeLadderNames[ 2 ];
+				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strNeedsLadderUnlock));
+			}
+		}
+	}
+
+	// Disable if the ammo is incompatible with the current primary weapon
+	AmmoTemplate = X2AmmoTemplate(ItemTemplate);
+	if(AmmoTemplate != none)
+	{
+		WeaponTemplate = X2WeaponTemplate(UnitState.GetItemInSlot(eInvSlot_PrimaryWeapon).GetMyTemplate());
+		if (WeaponTemplate != none && !X2AmmoTemplate(ItemTemplate).IsWeaponValidForAmmo(WeaponTemplate))
+		{
+			LocTag.StrValue0 = UnitState.GetPrimaryWeapon().GetMyTemplate().GetItemFriendlyName();
+			DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strAmmoIncompatible));
+		}
 	}
 	
-	return false;
+	//start of Issue #50: add hook to UI to show disabled reason, if possible
+	//start of Issue #114: added ItemState of what's being looked at for more expansive disabling purposes
+	//issue #127: hook now fires all the time instead of a specific use case scenario
+	for(i = 0; i < DLCInfos.Length; ++i)
+	{
+		if(!DLCInfos[i].CanAddItemToInventory_CH_Improved(UnusedOutInt, SelectedSlot, ItemTemplate, Item.Quantity, UnitState, , DLCReason, Item))
+		{
+			DisabledReason = DLCReason;
+		}
+	}
+	//end of Issue #50
+	//end of issue #114
+	
+	// If this is a utility item, and cannot be equipped, it must be disabled because of one item per category restriction
+	// Issue #118, taking the Utility slot restriction out -- RespectsUniqueRule does everything we need
+	// Proof of correctness -- by taking this out, we potentially disallow more equipment, but that would have been a bug in vanilla anyway,
+	// because the unit state would have rejected the item due to the Unique Rule
+	if(DisabledReason == "" /*&& SelectedSlot == eInvSlot_Utility*/)
+	{
+		if (class'CHItemSlot'.static.SlotIsMultiItem(SelectedSlot))
+		{
+			EquippedItemStates = UnitState.GetAllItemsInSlot(SelectedSlot,, true);
+			foreach EquippedItemStates(EquippedItemState)
+			{
+				if (!UnitState.RespectsUniqueRule(ItemTemplate, SelectedSlot, , EquippedItemState.ObjectID))
+				{
+					LocTag.StrValue0 = ItemTemplate.GetLocalizedCategory();
+					DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strCategoryRestricted));
+					break;
+				}
+			}
+		}
+		else
+		{
+			EquippedItemState = UnitState.GetItemInSlot(SelectedSlot);
+			if (EquippedItemState != none && !UnitState.RespectsUniqueRule(ItemTemplate, SelectedSlot, , EquippedItemState.ObjectID))
+			{
+				LocTag.StrValue0 = ItemTemplate.GetLocalizedCategory();
+				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strCategoryRestricted));
+			}
+		}
+	}
+	
+	return DisabledReason;
 }
 
 private function bool LoadoutContainsArmorThatGrantsHeavyWeaponSlot()
@@ -426,7 +530,7 @@ private function XComGameState_Item GetDesiredItemState(const name TemplateName,
 	{
 		ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
 
-		if (ItemState.GetMyTemplateName() == TemplateName && !ItemState.HasBeenModified())
+		if (ItemState != none && ItemState.GetMyTemplateName() == TemplateName && !ItemState.HasBeenModified())
 		{
 			return ItemState;
 		}
@@ -438,7 +542,7 @@ private function XComGameState_Item GetDesiredItemState(const name TemplateName,
 		{
 			ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
 
-			if (ItemState.GetMyTemplateName() == TemplateName)
+			if (ItemState != none && ItemState.GetMyTemplateName() == TemplateName)
 			{
 				return ItemState;
 			}
@@ -489,8 +593,8 @@ private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemT
 
 			if (WeaponTemplate != none)
 			{
-				if (WeaponTemplate.WeaponCat == OrigWeaponTemplate.WeaponCat && /*WeaponTemplate.InventorySlot == OrigWeaponTemplate.InventorySlot && */	//	Removing this for the sake of compatibility with new PS. CanAddItemToInventory should handle this, in theory.
-					CanAddItemToInventory(WeaponTemplate, eSlot, ItemState))
+				if (WeaponTemplate.WeaponCat == OrigWeaponTemplate.WeaponCat && 
+					GetDisabledReason(WeaponTemplate, eSlot, ItemState) == "")
 				{
 					if (WeaponTemplate.Tier > HighestTier)
 					{
@@ -516,7 +620,7 @@ private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemT
 			{
 				if (ArmorTemplate.ArmorCat == OrigArmorTemplate.ArmorCat && ArmorTemplate.ArmorClass == OrigArmorTemplate.ArmorClass &&
 					ArmorTemplate.bInfiniteItem &&
-					CanAddItemToInventory(WeaponTemplate, eSlot, ItemState))
+					GetDisabledReason(WeaponTemplate, eSlot, ItemState) == "")
 				{
 					if (ArmorTemplate.Tier > HighestTier)
 					{
@@ -541,7 +645,7 @@ private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemT
 			if (EquipmentTemplate != none)
 			{
 				if (EquipmentTemplate.ItemCat == OrigEquipmentTemplate.ItemCat && EquipmentTemplate.bInfiniteItem &&
-					CanAddItemToInventory(WeaponTemplate, eSlot, ItemState))
+					GetDisabledReason(WeaponTemplate, eSlot, ItemState) == "")
 				{
 					if (EquipmentTemplate.Tier > HighestTier)
 					{
