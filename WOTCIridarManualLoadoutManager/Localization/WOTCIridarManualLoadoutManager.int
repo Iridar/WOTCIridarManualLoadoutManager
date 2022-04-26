@@ -54,3 +54,5 @@ ALLOW_MODIFIED_ITEMS_Tip = "If enabled, the loadout manager will equip a modifie
 ALLOW_REPLACEMENT_ITEMS_Label = "Allow replacement items"
 ALLOW_REPLACEMENT_ITEMS_Tip = "If enabled, the loadout manager will look for the best possible replacement for a loadout item that is currently not available."
 
+USE_SQUAD_SELECT_SHORTCUT_Label = "Display shortcut in Squad Select"
+USE_SQUAD_SELECT_SHORTCUT_Tip = "If enabled, there will be an \"Equip Loadout\" shortcut under each soldier in Squad Select."

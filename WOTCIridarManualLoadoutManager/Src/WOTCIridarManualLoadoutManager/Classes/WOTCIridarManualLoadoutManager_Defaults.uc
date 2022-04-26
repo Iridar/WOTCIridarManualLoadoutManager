@@ -6,3 +6,4 @@ var config bool DEBUG_LOGGING;
 var config bool USE_SIMPLE_HEADERS;
 var config bool ALLOW_MODIFIED_ITEMS;
 var config bool ALLOW_REPLACEMENT_ITEMS;
+var config bool USE_SQUAD_SELECT_SHORTCUT;

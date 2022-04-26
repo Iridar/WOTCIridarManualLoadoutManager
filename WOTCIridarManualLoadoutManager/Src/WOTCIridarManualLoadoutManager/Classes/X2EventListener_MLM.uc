@@ -2,6 +2,8 @@ class X2EventListener_MLM extends X2EventListener config(UI);
 
 var config int ListItemWidth;
 
+`include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
+
 static function array<X2DataTemplate> CreateTemplates()
 {
 	local array<X2DataTemplate> Templates;
@@ -23,7 +25,8 @@ static function CHEventListenerTemplate SquadSelectListener()
 	Template.RegisterInStrategy = true;
 
 	Template.AddCHEvent('UISquadSelect_NavHelpUpdate', OnSquadSelectNavHelpUpdate, ELD_Immediate, 50);
-	
+	Template.AddCHEvent('rjSquadSelect_UpdateData', OnSquadSelectNavHelpUpdate, ELD_Immediate, 50);
+
 	return Template;
 }
 
@@ -37,7 +40,15 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 	local UIMechaListItem_LoadoutItem		Shortcut;
 	local int j;
 
+	if (!`GETMCMVAR(USE_SQUAD_SELECT_SHORTCUT))
+		return ELR_NoInterrupt;
+
 	SquadSelect = UISquadSelect(EventSource);
+	if (SquadSelect == none)
+	{
+		// When running for 'rjSquadSelect_UpdateData'
+		SquadSelect = UISquadSelect(`SCREENSTACK.GetFirstInstanceOf(class'UISquadSelect'));
+	}
 	if (SquadSelect == none)
 		return ELR_NoInterrupt;
 

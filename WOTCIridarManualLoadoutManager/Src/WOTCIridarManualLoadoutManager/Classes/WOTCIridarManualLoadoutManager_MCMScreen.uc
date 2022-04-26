@@ -12,6 +12,7 @@ var localized string GroupHeader;
 `MCM_API_AutoCheckBoxVars(ALLOW_MODIFIED_ITEMS);
 `MCM_API_AutoCheckBoxVars(USE_SIMPLE_HEADERS);
 `MCM_API_AutoCheckBoxVars(ALLOW_REPLACEMENT_ITEMS);
+`MCM_API_AutoCheckBoxVars(USE_SQUAD_SELECT_SHORTCUT);
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
@@ -19,6 +20,7 @@ var localized string GroupHeader;
 `MCM_API_AutoCheckBoxFns(ALLOW_MODIFIED_ITEMS, 1);
 `MCM_API_AutoCheckBoxFns(USE_SIMPLE_HEADERS, 1);
 `MCM_API_AutoCheckBoxFns(ALLOW_REPLACEMENT_ITEMS, 1);
+`MCM_API_AutoCheckBoxFns(USE_SQUAD_SELECT_SHORTCUT, 1);
 
 event OnInit(UIScreen Screen)
 {
@@ -43,6 +45,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	`MCM_API_AutoAddCheckBox(Group, USE_SIMPLE_HEADERS);
 	`MCM_API_AutoAddCheckBox(Group, ALLOW_MODIFIED_ITEMS);
 	`MCM_API_AutoAddCheckBox(Group, ALLOW_REPLACEMENT_ITEMS);
+	`MCM_API_AutoAddCheckBox(Group, USE_SQUAD_SELECT_SHORTCUT);
 	`MCM_API_AutoAddCheckBox(Group, DEBUG_LOGGING);
 
 
@@ -56,6 +59,7 @@ simulated function LoadSavedSettings()
 	ALLOW_MODIFIED_ITEMS = `GETMCMVAR(ALLOW_MODIFIED_ITEMS);
 	ALLOW_REPLACEMENT_ITEMS = `GETMCMVAR(ALLOW_REPLACEMENT_ITEMS);
 	DEBUG_LOGGING = `GETMCMVAR(DEBUG_LOGGING);
+	USE_SQUAD_SELECT_SHORTCUT = `GETMCMVAR(USE_SQUAD_SELECT_SHORTCUT);
 }
 
 simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
@@ -64,6 +68,7 @@ simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 	`MCM_API_AutoReset(ALLOW_MODIFIED_ITEMS);
 	`MCM_API_AutoReset(ALLOW_REPLACEMENT_ITEMS);
 	`MCM_API_AutoReset(DEBUG_LOGGING);
+	`MCM_API_AutoReset(USE_SQUAD_SELECT_SHORTCUT);
 }
 
 simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
