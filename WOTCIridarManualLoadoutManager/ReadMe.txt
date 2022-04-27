@@ -24,7 +24,6 @@ localization pass
 squad loadout items list (conflate by weapon category configurable in MCM)
 
 take num. utility slots into account when not equipping armor that grants the required extra slot
-cannot click on checkboxes in the items list?!
 
 One day:
 PCS support
@@ -33,7 +32,7 @@ IAM integration
 XSkin integration?
 Use Tac Armory UI inventory images
 Different layout so there's more space for the soldier's inventory list
-Hide shortcut when removing a soldier from squad
+Hide shortcut when removing a soldier from squad in vanilla squad select
 Replace IsWeaponAllowedByClass by IsWeaponAllowedByClass_CH
 
 KNOWN ISSUES

@@ -30,6 +30,28 @@ enum eLoadoutFilterStatus
 	eLFS_SecondaryWeapon
 };
 
+static final function array<XComGameState_Unit> GetSquadUnitStates()
+{
+	local XComGameState_HeadquartersXCom	XComHQ;
+	local StateObjectReference				SquadUnitRef;
+	local array<XComGameState_Unit>			UnitStates;
+	local XComGameState_Unit				UnitState;
+	local XComGameStateHistory				History;
+
+	XComHQ = `XCOMHQ;
+	History = `XCOMHISTORY;
+	foreach XComHQ.Squad(SquadUnitRef)
+	{
+		UnitState = XComGameState_Unit(History.GetGameStateForObjectID(SquadUnitRef.ObjectID));
+		if (UnitState != none)
+		{
+			UnitStates.AddItem(UnitState);
+		}
+	}
+	return UnitStates;
+}
+
+
 static final function bool IsItemUniqueEquipInSlot(X2ItemTemplateManager ItemMgr, const X2ItemTemplate ItemTemplate, const EInventorySlot Slot)
 {
 	local X2WeaponTemplate WeaponTemplate;

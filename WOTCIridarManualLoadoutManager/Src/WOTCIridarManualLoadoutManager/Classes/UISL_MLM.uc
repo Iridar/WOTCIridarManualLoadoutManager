@@ -2,6 +2,19 @@ class UISL_MLM extends UIStrategyScreenListener config(UI);
 
 // Add Save Loadout and Load Loadout buttons to UIArmory_Loadout. 
 
+struct IRIDisplayLoadoutItemStruct
+{
+	var name			TemplateName;
+	var string			LocalizedName;
+	var int				Quantity;
+	var array<string>	SoldierNames;
+
+	structdefaultproperties
+	{
+		Quantity = 1;
+	}
+};
+
 var config int SaveLoadout_OffsetX;
 var config int SaveLoadout_OffsetY;
 
@@ -11,14 +24,45 @@ var config int LockLoadout_OffsetY;
 var localized string strSaveLoadout;
 var localized string strLockLoadout;
 
-var bool bCHLPresent;
+var private bool bCHLPresent;
+var private bool bLoadoutVisible;
+var private bool bLoadoutSpawned;
+var private string PathToButton;
+var private bool bRJSSPresent;
+
+private function AddDisplayItem(out array<IRIDisplayLoadoutItemStruct> Items, const out IRIDisplayLoadoutItemStruct Item)
+{
+	local int Index;
+
+	Index = Items.Find('TemplateName', Item.TemplateName);
+	if (Index != INDEX_NONE)
+	{
+		Items[Index].Quantity++;
+		Items[Index].SoldierNames.AddItem(Item.SoldierNames[0]);
+	}
+	else
+	{
+		Items.AddItem(Item);
+	}
+}
+
+private function IRIDisplayLoadoutItemStruct ConvertStatesIntoStruct(const XComGameState_Item ItemState, const XComGameState_Unit UnitState)
+{
+	local IRIDisplayLoadoutItemStruct Item;
+
+	Item.TemplateName = ItemState.GetMyTemplateName();
+	Item.LocalizedName = ItemState.GetMyTemplate().GetItemFriendlyNameNoStats();
+	Item.SoldierNames.AddItem(UnitState.GetName(eNameType_FullNick));
+
+	return Item;
+}
 
 // This event is triggered after a screen is initialized
 event OnInit(UIScreen Screen)
 {
 	if (UIArmory_Loadout(Screen) != none)
 	{
-		AddButtons(UIArmory_Loadout(Screen));
+		AddLoadoutButtons(UIArmory_Loadout(Screen));
 
 		if (bCHLPresent)
 		{
@@ -33,14 +77,303 @@ event OnInit(UIScreen Screen)
 			}
 		}
 	}
+	else if (UISquadSelect(Screen) != none)
+	{
+		AddSquadButtons(UISquadSelect(Screen));
+	}
 }
+
+event OnRemoved(UIScreen screen)
+{
+	if (UISquadSelect(Screen) != none)
+	{
+		bLoadoutSpawned = false;
+	}
+}
+
+private function AddSquadButtons(UISquadSelect Screen)
+{
+	local UIButton SquadLoadoutButton;
+
+	SquadLoadoutButton = Screen.Spawn(class'UIButton', Screen).InitButton('IRI_SquadLoadoutButton_Weapons', "SQUAD ITEMS", OnCategoryButtonClicked_Weapons, eUIButtonStyle_NONE); // TODO: Localize
+	if (Screen.Class != class'UISquadSelect') // Basially check if RJSS or derivatives is active.
+	{
+		bRJSSPresent = true;
+		SquadLoadoutButton.SetPosition(100, 5); 
+	}
+	else
+	{
+		SquadLoadoutButton.SetPosition(0, 5);
+	}
+	
+	SquadLoadoutButton.AnchorTopCenter();
+	SquadLoadoutButton.AnimateIn(0);	
+
+	PathToButton = PathName(SquadLoadoutButton);	
+}
+
+private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
+{
+	local UIList List;
+
+	if (!bLoadoutSpawned)
+	{
+		List = btn_clicked.Spawn(class'UIList', btn_clicked);
+		List.InitList('IRI_SquadLoadoutList_Armor', /*initX*/,/*initY*/,/*initWidth*/,/*initHeight*/,/*horizontalList*/, true, /*optional name bgLibID */);
+		List.SetPosition(-300, bRJSSPresent ? 60 : 30);
+		List.bAnimateOnInit = false;
+		FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR);
+
+		List = btn_clicked.Spawn(class'UIList', btn_clicked);
+		List.InitList('IRI_SquadLoadoutList_Weapon', /*initX*/,/*initY*/,/*initWidth*/,/*initHeight*/,/*horizontalList*/, true, /*optional name bgLibID */);
+		List.SetPosition(0, bRJSSPresent ? 60 : 30);
+		List.bAnimateOnInit = false;
+		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON);
+
+		List = btn_clicked.Spawn(class'UIList', btn_clicked);
+		List.InitList('IRI_SquadLoadoutList_Item', /*initX*/,/*initY*/,/*initWidth*/,/*initHeight*/,/*horizontalList*/, true, /*optional name bgLibID */);
+		List.SetPosition(300, bRJSSPresent ? 60 : 30);
+		List.bAnimateOnInit = false;
+		FillListOfType(List, class'CHItemSlot'.const.SLOT_ITEM);
+
+		bLoadoutSpawned = true;
+		bLoadoutVisible = true;
+
+		btn_clicked.SetTimer(1.0f, true, nameof(UpdateListData), self);
+	}
+	else
+	{
+		if (bLoadoutVisible)
+		{
+			bLoadoutVisible = false;
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor').Hide();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon').Hide();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item').Hide();
+
+			btn_clicked.ClearTimer(nameof(UpdateListData), self);
+		}
+		else
+		{
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor').Show();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon').Show();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item').Show();
+
+			bLoadoutVisible = true;
+
+			btn_clicked.SetTimer(1.0f, true, nameof(UpdateListData), self);
+		}
+	}
+}
+
+private function UpdateListData()
+{
+	local UIButton	SquadLoadoutButton;
+	local UIList	List;
+
+	SquadLoadoutButton = UIButton(FindObject(PathToButton, class'UIButton'));
+	if (SquadLoadoutButton == none)
+	{
+		`AMLOG("No button!");
+		return;
+	}
+
+	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Armor'));
+	FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR);
+
+	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon'));
+	FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON);
+
+	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Item'));
+	FillListOfType(List, class'CHItemSlot'.const.SLOT_ITEM);
+}
+
+private function FillListOfType(UIList List, const int SlotMask)
+{
+	local UIText								ListItem;
+	local array<IRIDisplayLoadoutItemStruct>	DisplayItems;
+	local IRIDisplayLoadoutItemStruct			DisplayItem;
+	local string								strText;
+	local int i;
+
+	DisplayItems = GetDisplayItemsOfType(SlotMask);
+
+	if (List.ItemCount > DisplayItems.Length)
+	{	
+		List.ClearItems();
+	}
+
+	foreach DisplayItems(DisplayItem, i)
+	{
+		ListItem = GetListItem(List, i);
+		ListItem.bAnimateOnInit = false;
+
+		strText = DisplayItem.LocalizedName;
+		if (DisplayItem.Quantity > 1)
+		{
+			strText @= "(" $ DisplayItem.Quantity $ ")";
+		}
+		ListItem.SetText(strText);
+	}	
+
+	List.RealizeList();
+	List.RealizeItems();
+}
+
+private function array<IRIDisplayLoadoutItemStruct> GetDisplayItemsOfType(const int SlotMask)
+{
+	local array<XComGameState_Unit>				UnitStates;
+	local XComGameState_Unit					UnitState;
+	local array<EInventorySlot>					Slots;
+	local EInventorySlot						Slot;
+	local array<IRIDisplayLoadoutItemStruct>	ReturnArray;
+	local IRIDisplayLoadoutItemStruct			DisplayItem;
+	local array<XComGameState_Item>				ItemStates;
+	local XComGameState_Item					ItemState;
+
+	`AMLOG("Called for SlotMask:" @ SlotMask);
+
+	class'CHItemSlot'.static.CollectSlots(SlotMask, Slots);
+	UnitStates = class'Help'.static.GetSquadUnitStates();
+	
+	foreach Slots(Slot)
+	{	
+		`AMLOG("Begin for slot:" @ Slot);
+		foreach UnitStates(UnitState)
+		{
+			if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
+			{
+				ItemStates = UnitState.GetAllItemsInSlot(Slot);
+				foreach ItemStates(ItemState)
+				{	
+					if (ItemState.GetMyTemplate().iItemSize <= 0)
+						continue;
+
+					`AMLOG(UnitState.GetFullName() @ "item in multi item slot:" @ ItemState.GetMyTemplateName());
+
+					DisplayItem = ConvertStatesIntoStruct(ItemState, UnitState);
+					AddDisplayItem(ReturnArray, DisplayItem);
+				}
+
+			}
+			else
+			{
+				ItemState = UnitState.GetItemInSlot(Slot);
+				if (ItemState != none)
+				{
+					`AMLOG(UnitState.GetFullName() @ "item in slot:" @ ItemState.GetMyTemplateName());
+
+					DisplayItem = ConvertStatesIntoStruct(ItemState, UnitState);
+					AddDisplayItem(ReturnArray, DisplayItem);
+				}
+			}
+		}
+	}
+
+	`AMLOG("Collected this many display items:" @ ReturnArray.Length);
+
+	return ReturnArray;
+}
+
+private function UIText GetListItem(UIList List, int ItemIndex)
+{
+	local UIText ListItem;
+	local UIPanel Item;
+
+	if (List.ItemCount <= ItemIndex)
+	{
+		ListItem = List.Spawn(class'UIText', List.ItemContainer);
+		ListItem.InitText();
+		ListItem.bAnimateOnInit = false;
+	}
+	else
+	{
+		Item = List.GetItem(ItemIndex);
+		ListItem = UIText(Item);
+	}
+
+	return ListItem;
+}
+
+private function array<XComGameState_Item> GetItemsOfType(const int SlotMask)
+{
+	local array<XComGameState_Unit>			UnitStates;
+	local XComGameState_Unit				UnitState;
+	local array<EInventorySlot>				Slots;
+	local EInventorySlot					Slot;
+	local array<XComGameState_Item>			ReturnArray;
+	local array<XComGameState_Item>			ItemStates;
+	local XComGameState_Item				ItemState;
+
+	class'CHItemSlot'.static.CollectSlots(SlotMask, Slots);
+
+	UnitStates = class'Help'.static.GetSquadUnitStates();
+	foreach UnitStates(UnitState)
+	{
+		foreach Slots(Slot)
+		{
+			if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
+			{
+				ItemStates = UnitState.GetAllItemsInSlot(Slot,, true);
+				MergeArrays(ReturnArray, ItemStates);
+			}
+			else
+			{
+				ItemState = UnitState.GetItemInSlot(Slot);
+				if (ItemState != none)
+				{
+					ReturnArray.AddItem(ItemState);
+				}
+			}
+		}
+	}
+	ReturnArray.Sort(SortItemsBySlot);
+
+	return ReturnArray;
+}
+
+private final function int SortItemsBySlot(XComGameState_Item ItemA, XComGameState_Item ItemB)
+{
+	if (ItemA.InventorySlot < ItemB.InventorySlot)
+	{
+		return 1;
+	}
+	else if (ItemA.InventorySlot > ItemB.InventorySlot)
+	{
+		return -1;
+	}
+	return 0;
+}
+
+private function MergeArrays(out array<XComGameState_Item> Acceptor, const array<XComGameState_Item> Donor)
+{
+	local XComGameState_Item Member;
+
+	foreach Donor(Member)
+	{
+		Acceptor.AddItem(Member);
+	}
+}
+
+private function OnCategoryButtonClicked_Armor(UIButton btn_clicked)
+{
+}
+
+private function OnCategoryButtonClicked_Items(UIButton btn_clicked)
+{
+}
+
+
+
+
+
+
 
 // This event is triggered after a screen receives focus
 event OnReceiveFocus(UIScreen Screen)
 {
 	if (UIArmory_Loadout(Screen) != none)
 	{
-		AddButtons(UIArmory_Loadout(Screen)); // Mr. Nice: Not sure this is required? It's not like NavHelp which gets flushed on pratically any kind of refresh/update...
+		AddLoadoutButtons(UIArmory_Loadout(Screen)); // Mr. Nice: Not sure this is required? It's not like NavHelp which gets flushed on pratically any kind of refresh/update...
 
 		if (bCHLPresent)
 		{
@@ -65,7 +398,7 @@ event OnRemovedFocus(UIScreen Screen)
 	}
 }
 
-private function AddButtons(UIArmory_Loadout Screen)
+private function AddLoadoutButtons(UIArmory_Loadout Screen)
 {
 	local XComGameState_Unit	Unit;
 	local UIButton				SaveLoadoutButton;
