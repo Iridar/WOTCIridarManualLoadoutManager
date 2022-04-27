@@ -22,13 +22,14 @@ mod preview image
 localization pass
 
 squad loadout items list (conflate by weapon category configurable in MCM)
-TODO: Allow PCS as part of loadout?
 
 check armor allowed by class
 
 utility items that are already equipped do not display as equipped?
 
 One day:
+PCS support
+Weapon Upgrade support
 IAM integration
 XSkin integration?
 Use Tac Armory UI inventory images

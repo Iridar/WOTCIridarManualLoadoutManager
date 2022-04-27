@@ -249,7 +249,10 @@ simulated function PopulateData()
 		else
 		{
 			SelectedItemChanged(List, 0);
-			SelectListItem(0);
+			if (List.ItemCount == 1) // Select the first loadout in the list if it's the only one.
+			{
+				SelectListItem(0);
+			}
 		}
 		List.Navigator.SelectFirstAvailable();
 
@@ -533,11 +536,37 @@ private function ShowInfoPopup(string strTitle, string strText, optional EUIDial
 
 simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 {
+	local UIMechaListItem_LoadoutItem ListItem;
+
+	ListItem = UIMechaListItem_LoadoutItem(ContainerList.GetItem(ItemIndex));
+	if (ListItem == none)
+		return;
+
 	if (bForSaving)
 	{
+		
 	}
 	else
 	{
+		if (!IsAnyLoadoutSelected())
+		{
+			UIItemCard_Inventory(ItemCard).PopulateLoadoutFromStruct(ListItem.Loadout);
+		}
+	}
+}
+
+private function bool IsAnyLoadoutSelected()
+{
+	local UIMechaListItem_LoadoutItem ListItem;
+	local int i;
+
+	for (i = 0; i < List.ItemCount; i++)
+	{
+		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
+		if (ListItem != none && ListItem.Checkbox.bChecked)
+		{ 
+			return true;
+		}
 	}
 }
 
@@ -555,8 +584,11 @@ private function SelectListItem(const int ItemIndex)
 		{
 			if (i == ItemIndex)
 			{
-				ListItem.Checkbox.SetChecked(true, false);
-				UIItemCard_Inventory(ItemCard).PopulateLoadoutFromStruct(ListItem.Loadout);
+				ListItem.Checkbox.SetChecked(!ListItem.Checkbox.bChecked, false);
+				if (ListItem.Checkbox.bChecked)
+				{
+					UIItemCard_Inventory(ItemCard).PopulateLoadoutFromStruct(ListItem.Loadout);
+				}
 			}
 			else
 			{

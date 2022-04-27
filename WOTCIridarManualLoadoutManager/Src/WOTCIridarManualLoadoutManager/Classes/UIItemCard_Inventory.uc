@@ -319,11 +319,17 @@ private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, c
 	local XComGameState_Item		EquippedItem;
 	local array<XComGameState_Item>	EquippedItems;
 
+	`AMLOG("Checking for item in slot:" @ ItemTemplate.DataName @ Slot);
+
 	if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
 	{
-		EquippedItems = UnitState.GetAllItemsInSlot(Slot,, true);
+		EquippedItems = UnitState.GetAllItemsInSlot(Slot);
+		`AMLOG("It's a multi slot with this many items equipped:" @ EquippedItems.Length);
+
 		foreach EquippedItems(EquippedItem)
 		{
+			`AMLOG("Equipped item:" @ EquippedItem.GetMyTemplateName());
+
 			if (EquippedItem.GetMyTemplateName() == ItemTemplate.DataName)
 			{
 				return true;
@@ -333,6 +339,9 @@ private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, c
 	else
 	{
 		EquippedItem = UnitState.GetItemInSlot(Slot);
+
+		`AMLOG("Equipped item:" @ EquippedItem.GetMyTemplateName());
+
 		return EquippedItem != none && EquippedItem.GetMyTemplateName() == ItemTemplate.DataName;
 	}
 	return false;
@@ -468,7 +477,7 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	{
 		if (class'CHItemSlot'.static.SlotIsMultiItem(SelectedSlot))
 		{
-			EquippedItemStates = UnitState.GetAllItemsInSlot(SelectedSlot,, true);
+			EquippedItemStates = UnitState.GetAllItemsInSlot(SelectedSlot);
 			foreach EquippedItemStates(EquippedItemState)
 			{
 				if (!UnitState.RespectsUniqueRule(ItemTemplate, SelectedSlot, , EquippedItemState.ObjectID))
