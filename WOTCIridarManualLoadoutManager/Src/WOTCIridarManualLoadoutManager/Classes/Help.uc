@@ -24,11 +24,23 @@ enum eLoadoutFilterStatus
 {
 	eLFS_ButtonHidden,
 	eLFS_NoFilter,
-	eLFS_Weapons,
 	eLFS_Class,
+	eLFS_Equipment,
 	eLFS_PrimaryWeapon,
 	eLFS_SecondaryWeapon
 };
+
+static final function bool IsItemUniqueEquipInSlot(X2ItemTemplateManager ItemMgr, const X2ItemTemplate ItemTemplate, const EInventorySlot Slot)
+{
+	local X2WeaponTemplate WeaponTemplate;
+
+	if (class'X2TacticalGameRulesetDataStructures'.static.InventorySlotBypassesUniqueRule(Slot))
+		return false;
+
+	WeaponTemplate = X2WeaponTemplate(ItemTemplate);
+
+	return ItemMgr.ItemCategoryIsUniqueEquip(ItemTemplate.ItemCat) || WeaponTemplate != none && ItemMgr.ItemCategoryIsUniqueEquip(WeaponTemplate.WeaponCat);
+}
 
 /*
 

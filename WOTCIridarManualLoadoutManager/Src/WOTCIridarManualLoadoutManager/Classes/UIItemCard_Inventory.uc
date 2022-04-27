@@ -347,7 +347,8 @@ private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, c
 	return false;
 }
 
-private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EInventorySlot SelectedSlot, XComGameState_Item Item)
+// Adjusted copy of eponymous function from UIArmory_Loadout.
+private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EInventorySlot Slot, XComGameState_Item Item)
 {
 	local string					DisabledReason;
 	local X2AmmoTemplate			AmmoTemplate;
@@ -361,6 +362,8 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	local int						HighScore;
 	local int						BronzeScore;	
 	local string					DLCReason;
+	local int						iNumMutuallyExclusiveItems;
+
 	local array<X2DownloadableContentInfo> DLCInfos;
 	local int UnusedOutInt;
 	local int i;
@@ -461,7 +464,7 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	//issue #127: hook now fires all the time instead of a specific use case scenario
 	for(i = 0; i < DLCInfos.Length; ++i)
 	{
-		if(!DLCInfos[i].CanAddItemToInventory_CH_Improved(UnusedOutInt, SelectedSlot, ItemTemplate, Item.Quantity, UnitState, , DLCReason, Item))
+		if(!DLCInfos[i].CanAddItemToInventory_CH_Improved(UnusedOutInt, Slot, ItemTemplate, Item.Quantity, UnitState, , DLCReason, Item))
 		{
 			DisabledReason = DLCReason;
 		}
@@ -469,29 +472,33 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	//end of Issue #50
 	//end of issue #114
 	
-	// If this is a utility item, and cannot be equipped, it must be disabled because of one item per category restriction
-	// Issue #118, taking the Utility slot restriction out -- RespectsUniqueRule does everything we need
-	// Proof of correctness -- by taking this out, we potentially disallow more equipment, but that would have been a bug in vanilla anyway,
-	// because the unit state would have rejected the item due to the Unique Rule
-	if(DisabledReason == "" /*&& SelectedSlot == eInvSlot_Utility*/)
+	// Here we deviate from how original GetDisabledReason() works, becaue we don't have the luxury of a specific index of the multi item slot to which want to equip the new item.
+	if(DisabledReason == "" && class'Help'.static.IsItemUniqueEquipInSlot(ItemMgr, ItemTemplate, Slot))
 	{
-		if (class'CHItemSlot'.static.SlotIsMultiItem(SelectedSlot))
+		// When dealing with multi-item slots, we can allow *one* item in that slot to be mutually exclusive with the item we want to equip, 
+		// cuz we're gonna be replacing that one when we'll be actually equipping the item (handled in UIScreen_Loadouts::EquipItems());
+		if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
 		{
-			EquippedItemStates = UnitState.GetAllItemsInSlot(SelectedSlot);
+			EquippedItemStates = UnitState.GetAllItemsInSlot(Slot);
+			iNumMutuallyExclusiveItems = 0;
 			foreach EquippedItemStates(EquippedItemState)
 			{
-				if (!UnitState.RespectsUniqueRule(ItemTemplate, SelectedSlot, , EquippedItemState.ObjectID))
+				if (!UnitState.RespectsUniqueRule(ItemTemplate, Slot, , EquippedItemState.ObjectID))
 				{
-					LocTag.StrValue0 = ItemTemplate.GetLocalizedCategory();
-					DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strCategoryRestricted));
-					break;
+					iNumMutuallyExclusiveItems++;
+					if (iNumMutuallyExclusiveItems > 1)
+					{
+						LocTag.StrValue0 = ItemTemplate.GetLocalizedCategory();
+						DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strCategoryRestricted));
+						break;
+					}
 				}
 			}
 		}
-		else
-		{
-			EquippedItemState = UnitState.GetItemInSlot(SelectedSlot);
-			if (EquippedItemState != none && !UnitState.RespectsUniqueRule(ItemTemplate, SelectedSlot, , EquippedItemState.ObjectID))
+		else // Non-multi slots are handled by base game code well enough, which just checks if the item we want to equip is mutually exclusive with any of the times equipped on the unit
+		{	 // besides the item equipped in the inventory slot itself, as *that* item will be removed from the unit before we attempt to equip a new one.
+			EquippedItemState = UnitState.GetItemInSlot(Slot);
+			if (EquippedItemState != none && !UnitState.RespectsUniqueRule(ItemTemplate, Slot, , EquippedItemState.ObjectID))
 			{
 				LocTag.StrValue0 = ItemTemplate.GetLocalizedCategory();
 				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strCategoryRestricted));
@@ -501,6 +508,8 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	
 	return DisabledReason;
 }
+
+
 
 private function XComGameState_Item GetDesiredItemState(const name TemplateName, EInventorySlot Slot)
 {
@@ -648,6 +657,10 @@ private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemT
 	}
 }
 
+final function ClearListItems()
+{
+	List.ClearItems();
+}
 
 /*
 private function bool LoadoutContainsArmorThatGrantsHeavyWeaponSlot()

@@ -238,26 +238,38 @@ simulated function PopulateData()
 		}
 	}
 
-	if (List.ItemCount > 0)
+	if (bForSaving)
 	{
-		List.SetSelectedIndex(1);
-		
-		if (bForSaving) 
-		{	
-			SelectedItemChanged(List, 1);
-		}
-		else
+		if (List.ItemCount > 0)
 		{
-			SelectedItemChanged(List, 0);
+			List.SetSelectedIndex(1); // To account for the "create new loadout" 0th list item.
+			SelectedItemChanged(List, 1);
+
+			List.RealizeItems();
+			List.RealizeList();
+		}
+	}
+	else
+	{
+		if (List.ItemCount > 0)
+		{
 			if (List.ItemCount == 1) // Select the first loadout in the list if it's the only one.
 			{
 				SelectListItem(0);
 			}
-		}
-		List.Navigator.SelectFirstAvailable();
 
-		List.RealizeItems();
-		List.RealizeList();
+			List.SetSelectedIndex(0);
+			SelectedItemChanged(List, 0);
+			EquipLoadoutButton.SetDisabled(false);
+
+			List.RealizeItems();
+			List.RealizeList();
+		}
+		else
+		{
+			UIItemCard_Inventory(ItemCard).ClearListItems(); // Clear loadout preview from the list on the right.
+			EquipLoadoutButton.SetDisabled(true);
+		}
 	}
 }
 
@@ -276,19 +288,21 @@ private function bool LoadoutPassesFilters(const IRILoadoutStruct Loadout)
 		if (Loadout.SoldierClassTemplate != UnitState.GetSoldierClassTemplateName())
 			return false;
 		break;
-	case eLFS_Weapons:
-		if (!WeaponCategoryCheck(Loadout, eInvSlot_PrimaryWeapon) || !WeaponCategoryCheck(Loadout, eInvSlot_SecondaryWeapon))
+	case eLFS_Equipment:
+		if (!LoadoutPassesClassRestrictionsForSlot(Loadout, eInvSlot_Armor) || 
+			!LoadoutPassesClassRestrictionsForSlot(Loadout, eInvSlot_PrimaryWeapon) ||
+			!LoadoutPassesClassRestrictionsForSlot(Loadout, eInvSlot_SecondaryWeapon))
 		{
-			`AMLOG("Doesn't pass primary check:" @ !WeaponCategoryCheck(Loadout, eInvSlot_PrimaryWeapon) @ ", doesn't pass secondary check:" @ !WeaponCategoryCheck(Loadout, eInvSlot_SecondaryWeapon));
+			`AMLOG("Doesn't pass primary check:" @ !LoadoutPassesClassRestrictionsForSlot(Loadout, eInvSlot_PrimaryWeapon) @ ", doesn't pass secondary check:" @ !LoadoutPassesClassRestrictionsForSlot(Loadout, eInvSlot_SecondaryWeapon));
 			return false;
 		}
 		break;
 	case eLFS_PrimaryWeapon:
-		if (!WeaponCategoryCheck(Loadout, eInvSlot_PrimaryWeapon))
+		if (!LoadoutPassesClassRestrictionsForSlot(Loadout, eInvSlot_PrimaryWeapon))
 			return false;
 		break;
 	case eLFS_SecondaryWeapon:
-		if (!WeaponCategoryCheck(Loadout, eInvSlot_SecondaryWeapon))
+		if (!LoadoutPassesClassRestrictionsForSlot(Loadout, eInvSlot_SecondaryWeapon))
 			return false;
 		break;
 	default:
@@ -299,7 +313,7 @@ private function bool LoadoutPassesFilters(const IRILoadoutStruct Loadout)
 	return true;
 }
 
-private function bool WeaponCategoryCheck(const IRILoadoutStruct Loadout, const EInventorySlot Slot)
+private function bool LoadoutPassesClassRestrictionsForSlot(const IRILoadoutStruct Loadout, const EInventorySlot Slot)
 {
 	local IRILoadoutItemStruct LoadoutItem;
 
@@ -307,7 +321,7 @@ private function bool WeaponCategoryCheck(const IRILoadoutStruct Loadout, const 
 	{
 		if (LoadoutItem.InventorySlot == Slot)
 		{
-			if (!IsWeaponAllowedByClassInSlot(LoadoutItem.TemplateName, Slot))
+			if (!IsItemAllowedByClassInSlot(LoadoutItem.TemplateName, Slot))
 			{
 				`AMLOG(LoadoutItem.TemplateName @ "is not allowed in slot:" @ Slot @ "by soldier class:" @ SoldierClassTemplate.DataName);
 				return false;
@@ -317,13 +331,20 @@ private function bool WeaponCategoryCheck(const IRILoadoutStruct Loadout, const 
 	return true;
 }
 
-private function bool IsWeaponAllowedByClassInSlot(const name TemplateName, const EInventorySlot Slot)
+private function bool IsItemAllowedByClassInSlot(const name TemplateName, const EInventorySlot Slot)
 {
+	local X2ItemTemplate	ItemTemplate;
+	local X2ArmorTemplate	ArmorTemplate;
 	local X2WeaponTemplate	WeaponTemplate;
 	local EInventorySlot	OriginalSlot;
 	local bool				bCheckPassed;
 	
-	WeaponTemplate = X2WeaponTemplate(ItemMgr.FindItemTemplate(TemplateName));
+	ItemTemplate = ItemMgr.FindItemTemplate(TemplateName);
+	if (ItemTemplate == none)
+		return false;
+
+	WeaponTemplate = X2WeaponTemplate(ItemTemplate);
+	ArmorTemplate = X2ArmorTemplate(ItemTemplate);
 	if	(WeaponTemplate != none)
 	{
 		OriginalSlot = WeaponTemplate.InventorySlot;
@@ -331,6 +352,11 @@ private function bool IsWeaponAllowedByClassInSlot(const name TemplateName, cons
 		bCheckPassed = SoldierClassTemplate.IsWeaponAllowedByClass(WeaponTemplate); // TODO: Replace by IsWeaponAllowedByClass_CH
 		WeaponTemplate.InventorySlot = OriginalSlot;
 	}
+	else if (ArmorTemplate != none)
+	{
+		bCheckPassed = SoldierClassTemplate.IsArmorAllowedByClass(ArmorTemplate);
+	}
+	else return true; // Not a weapon, not an armor, presumably not affected by soldier class restrictions
 
 	return bCheckPassed;
 }
@@ -605,6 +631,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	local bool								bChangedSomething;
 	local XComGameState_Item				ItemState;
 	local X2ItemTemplate					ItemTemplate;
+	local X2ItemTemplate					EquippedItemTemplate;
 	local XComGameState_Item				EquippedItem;
 	local array<XComGameState_Item>			EquippedItems;
 	local bool								bSoundPlayed;
@@ -634,16 +661,40 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 		{
 			`AMLOG("Can't equip the item. Assuming this is because slot is occupied.");
 
+			// For multi-item slots, 
 			if (class'CHItemSlot'.static.SlotIsMultiItem(LoadoutItem.InventorySlot))
 			{
+				// if there are any items in the slot,
 				EquippedItems = UnitState.GetAllItemsInSlot(LoadoutItem.InventorySlot, NewGameState,, true);
 				if (EquippedItems.Length > 0)
 				{
-					EquippedItem = EquippedItems[EquippedItems.Length - 1];
+					if (class'Help'.static.IsItemUniqueEquipInSlot(ItemMgr, ItemTemplate, LoadoutItem.InventorySlot))
+					{
+						foreach EquippedItems(EquippedItem)
+						{	
+							// Check if the item we want to equip is mutually exclusive with any other item in that slot
+							// I.e. it matches item category or weapon category
+							EquippedItemTemplate = EquippedItem.GetMyTemplate();
+							if (ItemTemplate.ItemCat == EquippedItemTemplate.ItemCat || 
+								X2WeaponTemplate(ItemTemplate) != none && X2WeaponTemplate(EquippedItemTemplate) != none && 
+								X2WeaponTemplate(ItemTemplate).WeaponCat == X2WeaponTemplate(EquippedItemTemplate).WeaponCat)
+							{
+								// Stop cycling when we find a match, at which point the mutually exclusive item should be in EquippedItem.
+								// Or at least it will hold the last item in the slot.
+								break;
+							}
+							
+						}
+					}
+					else
+					{
+						EquippedItem = EquippedItems[EquippedItems.Length - 1];
+					}
+					
 					`AMLOG("This is a multi slot, attempting to replace the last item:" @ EquippedItem.GetMyTemplateName());
 				}
 			}
-			else
+			else // For regular slots, just take the item that is equipped in the slot. We'll attempt to remove it below.
 			{
 				EquippedItem = UnitState.GetItemInSlot(LoadoutItem.InventorySlot, NewGameState);
 			}
@@ -658,10 +709,10 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 			// Try to remove the item we want to replace from our inventory
 			if (!UnitState.RemoveItemFromInventory(EquippedItem, NewGameState))
 			{
-				// Removing the item failed, so add our restored item back to the HQ inventory
+				// Removing the item failed, so add the item we wanted to equip back to the HQ inventory
 				`AMLOG("Failed to remove the item occupying the slot. Skipping to next loadout item.");
 				XComHQ.PutItemInInventory(NewGameState, ItemState);
-				continue;
+				continue; // Go to next loadout item
 			}
 		}
 
@@ -742,8 +793,6 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 
 	`AMLOG("==== END ====");
 }
-
-
 
 defaultproperties
 {

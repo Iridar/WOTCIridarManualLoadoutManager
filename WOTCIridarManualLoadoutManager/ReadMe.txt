@@ -23,9 +23,8 @@ localization pass
 
 squad loadout items list (conflate by weapon category configurable in MCM)
 
-check armor allowed by class
-
-utility items that are already equipped do not display as equipped?
+take num. utility slots into account when not equipping armor that grants the required extra slot
+cannot click on checkboxes in the items list?!
 
 One day:
 PCS support

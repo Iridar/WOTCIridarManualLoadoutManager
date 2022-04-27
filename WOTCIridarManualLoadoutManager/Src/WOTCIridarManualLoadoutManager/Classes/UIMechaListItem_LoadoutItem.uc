@@ -54,6 +54,8 @@ private function OnEquipLoadoutShortcutClicked()
 	SaveLoadout.bCloseArmoryScreenWhenClosing = true;
 	HQPresLayer.ScreenStack.Push(SaveLoadout, HQPresLayer.Get3DMovie());
 }
+
+
 /*
 simulated function UIMechaListItem InitListItem(optional name InitName, optional int defaultWidth = -1, optional int textWidth = 250)
 {
