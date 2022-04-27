@@ -4,7 +4,6 @@ var XComGameState_Unit UnitState;
 
 var private UIPanel ListContainer; // contains all controls bellow
 var private UIList	List;
-var private UIPanel ListBG;
 
 var config int RightPanelX;
 var config int RightPanelY;
@@ -29,11 +28,6 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 	ListContainer.SetX(ListContainer.X + RightPanelX);
 	ListContainer.SetY(ListContainer.Y + RightPanelY);
 
-	ListBG = Spawn(class'UIPanel', ListContainer);
-	ListBG.InitPanel('ItemCard_InventoryListBG'); 
-	ListBG.bShouldPlayGenericUIAudioEvents = false;
-	ListBG.Show();
-
 	List = Spawn(class'UIList', ListContainer);
 	List.InitList('ItemCard_InventoryList');
 	List.bSelectFirstAvailable = true;
@@ -46,7 +40,7 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 	List.SetHeight(RightPanelH);
 
 	// send mouse scroll events to the list
-	ListBG.ProcessMouseEvents(List.OnChildMouseEvent);
+	self.ProcessMouseEvents(List.OnChildMouseEvent);
 
 	XComHQ = `XCOMHQ;
 	LocTag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
@@ -102,14 +96,14 @@ simulated function PopulateLoadoutFromUnit()
 				HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
 				HeaderItem.bIsNavigable = false;
 				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot));
-				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent);
+				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent); // So that scrolling works.
 			}
 			else
 			{	
 				SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
 				SpawnedItem.bIsNavigable = false;
 				SpawnedItem.bAnimateOnInit = false;
-				SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
+				SpawnedItem.InitListItem();
 				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot), eUIState_Disabled));
 				SpawnedItem.SetDisabled(true);
 			}
@@ -117,7 +111,7 @@ simulated function PopulateLoadoutFromUnit()
 
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
+		SpawnedItem.InitListItem();
 		SpawnedItem.ItemState = ItemState;
 		SpawnedItem.UpdateDataCheckbox(ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", true);
 
@@ -230,7 +224,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 				SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
 				SpawnedItem.bIsNavigable = false;
 				SpawnedItem.bAnimateOnInit = false;
-				SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
+				SpawnedItem.InitListItem();
 				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot), eUIState_Disabled));
 				SpawnedItem.SetDisabled(true);
 
@@ -240,7 +234,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
+		SpawnedItem.InitListItem();
 		SpawnedItem.LoadoutItem = LoadoutItem;
 		SpawnedItem.bIsNavigable = true;
 
