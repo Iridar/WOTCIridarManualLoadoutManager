@@ -34,7 +34,7 @@ const RJSS_List_VerticalOffset = 70;
 const List_VerticalOffset = 35;
 const ListBG_Padding = 5;
 const ListBG_Alpha = 50;
-const ListBG_ItemHeight = 28.7f;
+const ListBG_ItemHeight = 28.0f;
 const ListWidth = 250;
 const HorizontalPaddingBetweenLists = 15;
 
@@ -105,7 +105,7 @@ private function AddSquadButtons(UISquadSelect Screen)
 {
 	local UIButton SquadLoadoutButton;
 
-	SquadLoadoutButton = Screen.Spawn(class'UIButton', Screen).InitButton('IRI_SquadLoadoutButton_Weapons', `GetLocalizedString('SquadItems'), OnCategoryButtonClicked_Weapons, eUIButtonStyle_NONE);
+	SquadLoadoutButton = Screen.Spawn(class'UIButton', Screen).InitButton('IRI_SquadLoadoutButton', `GetLocalizedString('SquadItems'), OnCategoryButtonClicked_Weapons, eUIButtonStyle_NONE);
 	if (Screen.Class != class'UISquadSelect') // Basially check if RJSS or derivatives is active.
 	{
 		bRJSSPresent = true;
@@ -118,8 +118,7 @@ private function AddSquadButtons(UISquadSelect Screen)
 	
 	SquadLoadoutButton.AnchorTopCenter();
 	SquadLoadoutButton.AnimateIn(0);	
-
-	PathToButton = PathName(SquadLoadoutButton);	
+	SquadLoadoutButton.SetTooltipText("Button tooltip text tastes just like raisins");
 }
 
 private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
@@ -131,12 +130,12 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 
 	if (!bLoadoutSpawned)
 	{	
-		InitX = -622;
+		InitX = 300;
 		InitY = bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset;
 
 		// Armor
-		ListBG = CreateListBG('IRI_SquadLoadoutList_Armor_BG',	InitX, InitY, btn_clicked);
-		List = CreateList('IRI_SquadLoadoutList_Armor',			InitX, InitY, btn_clicked);
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Armor_BG',	InitX, InitY, btn_clicked.ParentPanel);
+		List = CreateList('IRI_SquadLoadoutList_Armor',			InitX, InitY, btn_clicked.ParentPanel);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR,, eInvSlot_HeavyWeapon); // Apparently heavy weapons are armor as far as the game is concerned :shrug: Exclude them here, non-primary weapons will pick them up.
 		RealizeListBG(List, ListBG);
@@ -144,8 +143,8 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		// Primary Weapons
 		InitX += ListWidth + HorizontalPaddingBetweenLists;
 
-		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Primary_BG',	InitX, InitY, btn_clicked);
-		List = CreateList('IRI_SquadLoadoutList_Weapon_Primary',		InitX, InitY, btn_clicked);
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Primary_BG',	InitX, InitY, btn_clicked.ParentPanel);
+		List = CreateList('IRI_SquadLoadoutList_Weapon_Primary',		InitX, InitY, btn_clicked.ParentPanel);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON, eInvSlot_PrimaryWeapon); // Only primaries
 		RealizeListBG(List, ListBG);
@@ -153,8 +152,8 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		// Secondary and other weapons
 		InitX += ListWidth + HorizontalPaddingBetweenLists;
 
-		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Other_BG',	InitX, InitY, btn_clicked);
-		List = CreateList('IRI_SquadLoadoutList_Weapon_Other',			InitX, InitY, btn_clicked);
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Other_BG',	InitX, InitY, btn_clicked.ParentPanel);
+		List = CreateList('IRI_SquadLoadoutList_Weapon_Other',			InitX, InitY, btn_clicked.ParentPanel);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON,, eInvSlot_PrimaryWeapon); // Only non-primaries
 		RealizeListBG(List, ListBG);
@@ -162,8 +161,8 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		// Grenades and other items
 		InitX += ListWidth + HorizontalPaddingBetweenLists;
 
-		ListBG = CreateListBG('IRI_SquadLoadoutList_Item_BG',	InitX, InitY, btn_clicked);
-		List = CreateList('IRI_SquadLoadoutList_Item',			InitX, InitY, btn_clicked);
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Item_BG',	InitX, InitY, btn_clicked.ParentPanel);
+		List = CreateList('IRI_SquadLoadoutList_Item',			InitX, InitY, btn_clicked.ParentPanel);
 		
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_ITEM);
 		RealizeListBG(List, ListBG);
@@ -176,29 +175,29 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		if (bLoadoutVisible)
 		{
 			bLoadoutVisible = false;
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor').Hide();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary').Hide();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Other').Hide();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item').Hide();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Armor').Hide();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary').Hide();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Weapon_Other').Hide();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Item').Hide();
 
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor_BG').Hide();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG').Hide();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG').Hide();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item_BG').Hide();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Armor_BG').Hide();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG').Hide();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG').Hide();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Item_BG').Hide();
 		}
 		else
 		{
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor_BG').Show();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG').Show();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG').Show();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item_BG').Show();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Armor_BG').Show();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG').Show();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG').Show();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Item_BG').Show();
 
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor').Show();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary').Show();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Other').Show();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item').Show();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Armor').Show();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary').Show();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Weapon_Other').Show();
+			btn_clicked.ParentPanel.GetChildByName('IRI_SquadLoadoutList_Item').Show();
 
-			UpdateListData();
+			UpdateListData(UISquadSelect(btn_clicked.ParentPanel));
 
 			bLoadoutVisible = true;
 		}
@@ -231,46 +230,38 @@ private function UIBGBox CreateListBG(name InitName, float initX, float initY, U
 
 private function RealizeListBG(UIList List, UIBGBox ListBG)
 {
-	ListBG.SetHeight(List.ItemCount * ListBG_ItemHeight);
+	ListBG.SetHeight(10 + List.ItemCount * ListBG_ItemHeight);
 }
 
-private function UpdateListData()
+private function UpdateListData(UISquadSelect Screen)
 {
-	local UIButton	SquadLoadoutButton;
 	local UIList	List;
 	local UIBGBox	ListBG;
 
-	SquadLoadoutButton = UIButton(FindObject(PathToButton, class'UIButton'));
-	if (SquadLoadoutButton == none)
-	{
-		`AMLOG("No button!");
-		return;
-	}
-
 	// Armor
-	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Armor'));
-	ListBG = UIBGBox(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Armor_BG'));
+	List = UIList(Screen.GetChildByName('IRI_SquadLoadoutList_Armor'));
+	ListBG = UIBGBox(Screen.GetChildByName('IRI_SquadLoadoutList_Armor_BG'));
 
 	FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR,, eInvSlot_HeavyWeapon);
 	RealizeListBG(List, ListBG);
 
 	// Primary Weapons
-	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary'));
-	ListBG = UIBGBox(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG'));
+	List = UIList(Screen.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary'));
+	ListBG = UIBGBox(Screen.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG'));
 
 	FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON, eInvSlot_PrimaryWeapon);
 	RealizeListBG(List, ListBG);
 
 	// Secondary and other weapons
-	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon_Other'));
-	ListBG = UIBGBox(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG'));
+	List = UIList(Screen.GetChildByName('IRI_SquadLoadoutList_Weapon_Other'));
+	ListBG = UIBGBox(Screen.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG'));
 
 	FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON,, eInvSlot_PrimaryWeapon);
 	RealizeListBG(List, ListBG);
 
 	// Grenades and other items
-	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Item'));
-	ListBG = UIBGBox(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Item_BG'));
+	List = UIList(Screen.GetChildByName('IRI_SquadLoadoutList_Item'));
+	ListBG = UIBGBox(Screen.GetChildByName('IRI_SquadLoadoutList_Item_BG'));
 
 	FillListOfType(List, class'CHItemSlot'.const.SLOT_ITEM);
 	RealizeListBG(List, ListBG);
@@ -307,7 +298,8 @@ private function FillListOfType(UIList List, const int SlotMask, optional EInven
 		}
 		`AMLOG("Setting display text:" @ strText);
 		ListItem.SetText(strText);
-		ListItem.SetTooltipText(DisplayItem.SoldierNames[0]);
+		ListItem.SetTextAlign("left");
+		ListItem.SetTooltipText(JoinStrings(DisplayItem.SoldierNames, "\n, "));
 	}	
 
 	`AMLOG("All done. Realizing list.");
@@ -315,6 +307,23 @@ private function FillListOfType(UIList List, const int SlotMask, optional EInven
 
 	`AMLOG("All done. Realizing items.");
 	List.RealizeItems();
+}
+
+private function string JoinStrings(array<string> Arr, string Delim)
+{
+	local string ReturnString;
+	local int i;
+
+	// Handle it this way so there's no delim after the final member.
+	for (i = 0; i < Arr.Length - 1; i++)
+	{
+		ReturnString $= Arr[i] $ Delim;
+	}
+	if (Arr.Length > 0)
+	{
+		ReturnString $= Arr[Arr.Length - 1];
+	}
+	return ReturnString;
 }
 
 private function array<IRIDisplayLoadoutItemStruct> GetDisplayItemsOfType(const int SlotMask, optional EInventorySlot ForceSlot = eInvSlot_Unknown, optional EInventorySlot ExcludeSlot = eInvSlot_Unknown)
@@ -386,9 +395,12 @@ private function UIButton GetListItem(UIList List, int ItemIndex)
 	if (List.ItemCount <= ItemIndex)
 	{
 		ListItem = List.Spawn(class'UIButton', List.ItemContainer);
-		ListItem.InitButton();
+		ListItem.InitButton(,,, eUIButtonStyle_NONE);
 		ListItem.bAnimateOnInit = false;
-		//ListItem.SetHeight(ListItem.Height - 5);
+		ListItem.SetHeight(ListItem.Height - 5);
+		ListItem.SetTextAlign("left");
+		ListItem.ShowBG(false);
+		ListItem.bIsNavigable = false;
 	}
 	else
 	{
@@ -414,7 +426,7 @@ event OnReceiveFocus(UIScreen Screen)
 	}
 	else if (UISquadSelect(Screen) != none && bLoadoutVisible)
 	{
-		UpdateListData();
+		UpdateListData(UISquadSelect(Screen));
 	}
 }
 
