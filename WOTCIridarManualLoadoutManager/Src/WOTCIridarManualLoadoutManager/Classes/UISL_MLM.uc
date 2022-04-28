@@ -278,7 +278,7 @@ private function UpdateListData()
 
 private function FillListOfType(UIList List, const int SlotMask, optional EInventorySlot ForceSlot = eInvSlot_Unknown, optional EInventorySlot ExcludeSlot = eInvSlot_Unknown)
 {
-	local UIText								ListItem;
+	local UIButton								ListItem;
 	local array<IRIDisplayLoadoutItemStruct>	DisplayItems;
 	local IRIDisplayLoadoutItemStruct			DisplayItem;
 	local string								strText;
@@ -307,6 +307,7 @@ private function FillListOfType(UIList List, const int SlotMask, optional EInven
 		}
 		`AMLOG("Setting display text:" @ strText);
 		ListItem.SetText(strText);
+		ListItem.SetTooltipText(DisplayItem.SoldierNames[0]);
 	}	
 
 	`AMLOG("All done. Realizing list.");
@@ -377,22 +378,22 @@ private function array<IRIDisplayLoadoutItemStruct> GetDisplayItemsOfType(const 
 	return ReturnArray;
 }
 
-private function UIText GetListItem(UIList List, int ItemIndex)
+private function UIButton GetListItem(UIList List, int ItemIndex)
 {
-	local UIText ListItem;
+	local UIButton ListItem;
 	local UIPanel Item;
 
 	if (List.ItemCount <= ItemIndex)
 	{
-		ListItem = List.Spawn(class'UIText', List.ItemContainer);
-		ListItem.InitText();
+		ListItem = List.Spawn(class'UIButton', List.ItemContainer);
+		ListItem.InitButton();
 		ListItem.bAnimateOnInit = false;
-		ListItem.SetHeight(ListItem.Height - 5);
+		//ListItem.SetHeight(ListItem.Height - 5);
 	}
 	else
 	{
 		Item = List.GetItem(ItemIndex);
-		ListItem = UIText(Item);
+		ListItem = UIButton(Item);
 	}
 
 	return ListItem;
