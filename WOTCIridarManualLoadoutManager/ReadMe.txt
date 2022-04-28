@@ -12,20 +12,23 @@ https://github.com/Iridar/EnhancedModProjectTemplate
 
 TODO: 
 
-Saving as config
-File autobackup
 
-delete button too big, too left, and obscures text
+Loadouts:
+- File autobackup
+- Utility item doesn't get equipped.
+- heavy weapons show as equippable even if there's no slots on the unit and armor that adds them cannot be equipped, even if it's not in the loadout.
+- take num. utility slots into account when not equipping armor that grants the required extra slot
+- armor needs sorting too
+- delete button too big, too left, and obscures text
+- figure out automatic list item size realization maybe
 
-figure out automatic list item size realization maybe
-mod preview image
-localization pass
 
 Squad item list:
-- sorting?
 - max. height and scrolling.
+- scrolling text on the squad loadout gets cut off in the middle
 
-take num. utility slots into account when not equipping armor that grants the required extra slot
+localization pass
+mod preview image
 
 One day:
 PCS support

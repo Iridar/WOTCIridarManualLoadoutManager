@@ -9,14 +9,14 @@ var localized string strDummy;
 
 struct IRILoadoutItemStruct
 {
-	var name TemplateName;
-	var EInventorySlot InventorySlot;
-	var XComGameState_Item ItemState; // Temporary storage for passing items between ItemCard and EquipItems()
+	var name				Item;
+	var EInventorySlot		Slot;
+	var XComGameState_Item	ItemState; // Temporary storage for passing items between ItemCard and EquipItems()
 };
 struct IRILoadoutStruct
 {
-	var string	LoadoutName;
-	var name	SoldierClassTemplate;
+	var string						LoadoutName;
+	var name						SoldierClass;
 	var array<IRILoadoutItemStruct> LoadoutItems;
 };
 

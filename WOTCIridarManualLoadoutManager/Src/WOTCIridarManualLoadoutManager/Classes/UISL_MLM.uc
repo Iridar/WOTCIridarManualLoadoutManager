@@ -273,8 +273,8 @@ private function FillListOfType(UIList List, const int SlotMask, optional EInven
 			strText @= "(" $ DisplayItem.Quantity $ ")";
 		}
 		`AMLOG("Setting display text:" @ strText);
-		ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(strText, eUIState_Normal));
-		ListItem.SetTooltipText(JoinStrings(DisplayItem.SoldierNames, "\n, "),,,,,,, 0);
+		ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(strText, eUIState_Normal)); // This is the default color used anyway, but specifying it directly prevents flash from changing it to black when hovering over the list item.
+		ListItem.SetTooltipText(JoinStrings(DisplayItem.SoldierNames, "\n"),,,,,,, 0);
 	}	
 
 	`AMLOG("All done. Realizing list.");

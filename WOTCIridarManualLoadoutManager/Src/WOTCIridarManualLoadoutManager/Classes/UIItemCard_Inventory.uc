@@ -78,7 +78,7 @@ simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 	}
 	else
 	{
-		ItemTemplate = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(SpawnedItem.LoadoutItem.TemplateName);
+		ItemTemplate = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(SpawnedItem.LoadoutItem.Item);
 		if (ItemTemplate != none)
 		{
 			SetItemImages(ItemTemplate);
@@ -218,23 +218,23 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 
 	foreach Loadout.LoadoutItems(LoadoutItem)
 	{
-		ItemTemplate = ItemMgr.FindItemTemplate(LoadoutItem.TemplateName);
+		ItemTemplate = ItemMgr.FindItemTemplate(LoadoutItem.Item);
 		if (ItemTemplate != none && !bImageDisplayed)
 		{
 			SetItemImages(ItemTemplate);
 			bImageDisplayed = true;
 		}
 
-		if (LoadoutItem.InventorySlot != PreviousSlot)
+		if (LoadoutItem.Slot != PreviousSlot)
 		{
 			if (!`GETMCMVAR(USE_SIMPLE_HEADERS))
 			{
 				HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
 				HeaderItem.bIsNavigable = false;
-				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot));
+				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(LoadoutItem.Slot));
 				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent);
 
-				`AMLOG("Adding fancy header for inventory slot:" @ LoadoutItem.InventorySlot);
+				`AMLOG("Adding fancy header for inventory slot:" @ LoadoutItem.Slot);
 			}
 			else
 			{
@@ -242,10 +242,10 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 				SpawnedItem.bIsNavigable = false;
 				SpawnedItem.bAnimateOnInit = false;
 				SpawnedItem.InitListItem();
-				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(LoadoutItem.InventorySlot), eUIState_Disabled));
+				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(LoadoutItem.Slot), eUIState_Disabled));
 				SpawnedItem.SetDisabled(true);
 
-				`AMLOG("Adding simple header for inventory slot:" @ LoadoutItem.InventorySlot);
+				`AMLOG("Adding simple header for inventory slot:" @ LoadoutItem.Slot);
 			}
 		}
 
@@ -257,23 +257,23 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 
 		if (ItemTemplate == none)
 		{
-			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(`GetLocalizedString('MissingItemTemplate') @ "'" $ LoadoutItem.TemplateName $ "'", eUIState_Disabled));
+			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(`GetLocalizedString('MissingItemTemplate') @ "'" $ LoadoutItem.Item $ "'", eUIState_Disabled));
 			SpawnedItem.SetTooltipText(`GetLocalizedString('MissingItemTemplate_Tooltip'),,,,,,, 0);
 		}
-		else if (ItemIsAlreadyEquipped(ItemTemplate, LoadoutItem.InventorySlot))
+		else if (ItemIsAlreadyEquipped(ItemTemplate, LoadoutItem.Slot))
 		{
 			SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Good));
 			SpawnedItem.SetTooltipText(`GetLocalizedString('ItemAlreadyEquipped'),,,,,,, 0);
 		}
 		else 
 		{
-			ItemState = GetDesiredItemState(ItemTemplate.DataName, LoadoutItem.InventorySlot);
+			ItemState = GetDesiredItemState(ItemTemplate.DataName, LoadoutItem.Slot);
 			if (ItemState == none)
 			{
 				`AMLOG("Did not find desired item state:" @ ItemTemplate.DataName @ ", replacements allowed:" @ `GETMCMVAR(ALLOW_REPLACEMENT_ITEMS));
 				if (`GETMCMVAR(ALLOW_REPLACEMENT_ITEMS))
 				{
-					ItemState = GetReplacementItemState(ItemTemplate.DataName, LoadoutItem.InventorySlot);
+					ItemState = GetReplacementItemState(ItemTemplate.DataName, LoadoutItem.Slot);
 					if (ItemState == none)
 					{
 						SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Bad));
@@ -294,7 +294,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 			}
 			else 
 			{
-				DisabledReason = GetDisabledReason(ItemTemplate, LoadoutItem.InventorySlot, ItemState);
+				DisabledReason = GetDisabledReason(ItemTemplate, LoadoutItem.Slot, ItemState);
 				`AMLOG("Found desired item state:" @ ItemState.GetMyTemplateName() @ `ShowVar(DisabledReason));
 				if (DisabledReason != "")
 				{
@@ -310,7 +310,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 			}
 		}
 
-		PreviousSlot = LoadoutItem.InventorySlot;
+		PreviousSlot = LoadoutItem.Slot;
 	}
 
 	if (List.ItemCount > 0)
@@ -681,7 +681,7 @@ private function bool LoadoutContainsArmorThatGrantsHeavyWeaponSlot()
 
 	foreach Loadout.LoadoutItems(LoadoutItem)
 	{
-		ArmorTemplate = X2ArmorTemplate(ItemMgr.FindItemTemplate(LoadoutItem.TemplateName));
+		ArmorTemplate = X2ArmorTemplate(ItemMgr.FindItemTemplate(LoadoutItem.Item));
 		if (ArmorTemplate != none)
 		{
 			return ArmorTemplate.bHeavyWeapon;

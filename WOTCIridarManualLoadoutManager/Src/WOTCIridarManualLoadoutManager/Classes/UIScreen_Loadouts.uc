@@ -278,14 +278,14 @@ private function bool LoadoutPassesFilters(const IRILoadoutStruct Loadout)
 	if (SearchText != "" && InStr(Loadout.LoadoutName, SearchText,, true) == INDEX_NONE)
 		return false;
 
-	`AMLOG("Filter status:" @ LoadoutFilterStatus @ Loadout.LoadoutName @ Loadout.SoldierClassTemplate);
+	`AMLOG("Filter status:" @ LoadoutFilterStatus @ Loadout.LoadoutName @ Loadout.SoldierClass);
 
 	switch (LoadoutFilterStatus)
 	{
 	case eLFS_NoFilter:
 		break;
 	case eLFS_Class:
-		if (Loadout.SoldierClassTemplate != UnitState.GetSoldierClassTemplateName())
+		if (Loadout.SoldierClass != UnitState.GetSoldierClassTemplateName())
 			return false;
 		break;
 	case eLFS_Equipment:
@@ -319,11 +319,11 @@ private function bool LoadoutPassesClassRestrictionsForSlot(const IRILoadoutStru
 
 	foreach Loadout.LoadoutItems(LoadoutItem)
 	{
-		if (LoadoutItem.InventorySlot == Slot)
+		if (LoadoutItem.Slot == Slot)
 		{
-			if (!IsItemAllowedByClassInSlot(LoadoutItem.TemplateName, Slot))
+			if (!IsItemAllowedByClassInSlot(LoadoutItem.Item, Slot))
 			{
-				`AMLOG(LoadoutItem.TemplateName @ "is not allowed in slot:" @ Slot @ "by soldier class:" @ SoldierClassTemplate.DataName);
+				`AMLOG(LoadoutItem.Item @ "is not allowed in slot:" @ Slot @ "by soldier class:" @ SoldierClassTemplate.DataName);
 				return false;
 			}
 		}
@@ -646,7 +646,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 
 	foreach LoadoutItems(LoadoutItem)
 	{
-		`AMLOG("Loadout Item:" @ LoadoutItem.ItemState.GetMyTemplateName() @ LoadoutItem.InventorySlot);
+		`AMLOG("Loadout Item:" @ LoadoutItem.ItemState.GetMyTemplateName() @ LoadoutItem.Slot);
 
 		ItemState = LoadoutItem.ItemState;
 		XComHQ.GetItemFromInventory(NewGameState, ItemState.GetReference(), ItemState);
@@ -657,18 +657,18 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 
 		ItemTemplate = ItemState.GetMyTemplate();
 		
-		if (!UnitState.CanAddItemToInventory(ItemTemplate, LoadoutItem.InventorySlot, NewGameState, ItemState.Quantity, ItemState))
+		if (!UnitState.CanAddItemToInventory(ItemTemplate, LoadoutItem.Slot, NewGameState, ItemState.Quantity, ItemState))
 		{
 			`AMLOG("Can't equip the item. Assuming this is because slot is occupied.");
 
 			// For multi-item slots, 
-			if (class'CHItemSlot'.static.SlotIsMultiItem(LoadoutItem.InventorySlot))
+			if (class'CHItemSlot'.static.SlotIsMultiItem(LoadoutItem.Slot))
 			{
 				// if there are any items in the slot,
-				EquippedItems = UnitState.GetAllItemsInSlot(LoadoutItem.InventorySlot, NewGameState,, true);
+				EquippedItems = UnitState.GetAllItemsInSlot(LoadoutItem.Slot, NewGameState,, true);
 				if (EquippedItems.Length > 0)
 				{
-					if (class'Help'.static.IsItemUniqueEquipInSlot(ItemMgr, ItemTemplate, LoadoutItem.InventorySlot))
+					if (class'Help'.static.IsItemUniqueEquipInSlot(ItemMgr, ItemTemplate, LoadoutItem.Slot))
 					{
 						foreach EquippedItems(EquippedItem)
 						{	
@@ -696,7 +696,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 			}
 			else // For regular slots, just take the item that is equipped in the slot. We'll attempt to remove it below.
 			{
-				EquippedItem = UnitState.GetItemInSlot(LoadoutItem.InventorySlot, NewGameState);
+				EquippedItem = UnitState.GetItemInSlot(LoadoutItem.Slot, NewGameState);
 			}
 		}
 
@@ -717,7 +717,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 		}
 
 		// If we still can't add the restored item to our inventory, put it back into the HQ inventory where we found it and move on
-		if (!UnitState.CanAddItemToInventory(ItemTemplate, LoadoutItem.InventorySlot, NewGameState, ItemState.Quantity, ItemState))
+		if (!UnitState.CanAddItemToInventory(ItemTemplate, LoadoutItem.Slot, NewGameState, ItemState.Quantity, ItemState))
 		{
 			`AMLOG("Still can't equip the item. Putting it back into HQ inventory.");
 			XComHQ.PutItemInInventory(NewGameState, ItemState);
@@ -725,7 +725,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 			if (EquippedItem != none)
 			{
 				`AMLOG("Slot was previously occupied by:" @ EquippedItem.GetMyTemplateName() @ "attempting to equip it back.");
-				if (UnitState.AddItemToInventory(EquippedItem, LoadoutItem.InventorySlot, NewGameState))
+				if (UnitState.AddItemToInventory(EquippedItem, LoadoutItem.Slot, NewGameState))
 				{
 					`AMLOG("Success");
 				}
@@ -740,7 +740,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 		}
 
 		// Add the restored item to our inventory
-		if (UnitState.AddItemToInventory(ItemState, LoadoutItem.InventorySlot, NewGameState))
+		if (UnitState.AddItemToInventory(ItemState, LoadoutItem.Slot, NewGameState))
 		{
 			`AMLOG("Successfully equipped loadout item.");
 			if (!bSoundPlayed && X2EquipmentTemplate(ItemTemplate).EquipSound != "")
@@ -751,7 +751,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 
 			if (X2WeaponTemplate(ItemTemplate) != none)
 			{
-				if (LoadoutItem.InventorySlot == eInvSlot_PrimaryWeapon)
+				if (LoadoutItem.Slot == eInvSlot_PrimaryWeapon)
 					ItemState.ItemLocation = eSlot_RightHand;
 				else
 					ItemState.ItemLocation = X2WeaponTemplate(ItemTemplate).StowedLocation;
@@ -771,7 +771,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 			XComHQ.PutItemInInventory(NewGameState, ItemState);
 
 			`AMLOG("Attempting to equip previously equipped item.");
-			if (UnitState.AddItemToInventory(EquippedItem, LoadoutItem.InventorySlot, NewGameState))
+			if (UnitState.AddItemToInventory(EquippedItem, LoadoutItem.Slot, NewGameState))
 			{
 				`AMLOG("Success");
 			}
