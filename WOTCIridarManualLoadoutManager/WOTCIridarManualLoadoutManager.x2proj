@@ -93,6 +93,9 @@
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\UISL_MLM.uc">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\UISquadLoadoutListItem.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\WOTCIridarManualLoadoutManager_Defaults.uc">
       <SubType>Content</SubType>
     </Content>

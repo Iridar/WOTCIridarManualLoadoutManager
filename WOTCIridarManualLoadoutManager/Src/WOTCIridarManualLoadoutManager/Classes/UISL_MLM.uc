@@ -8,6 +8,8 @@ struct IRIDisplayLoadoutItemStruct
 	var string			LocalizedName;
 	var int				Quantity;
 	var array<string>	SoldierNames;
+	var name			ItemCat;
+	var name			WeaponCat;
 
 	structdefaultproperties
 	{
@@ -37,33 +39,6 @@ const ListBG_Alpha = 50;
 const ListBG_ItemHeight = 28.0f;
 const ListWidth = 250;
 const HorizontalPaddingBetweenLists = 15;
-
-private function AddDisplayItem(out array<IRIDisplayLoadoutItemStruct> Items, const out IRIDisplayLoadoutItemStruct Item)
-{
-	local int Index;
-
-	Index = Items.Find('TemplateName', Item.TemplateName);
-	if (Index != INDEX_NONE)
-	{
-		Items[Index].Quantity++;
-		Items[Index].SoldierNames.AddItem(Item.SoldierNames[0]);
-	}
-	else
-	{
-		Items.AddItem(Item);
-	}
-}
-
-private function IRIDisplayLoadoutItemStruct ConvertStatesIntoStruct(const XComGameState_Item ItemState, const XComGameState_Unit UnitState)
-{
-	local IRIDisplayLoadoutItemStruct Item;
-
-	Item.TemplateName = ItemState.GetMyTemplateName();
-	Item.LocalizedName = ItemState.GetMyTemplate().GetItemFriendlyNameNoStats();
-	Item.SoldierNames.AddItem(UnitState.GetName(eNameType_FullNick));
-
-	return Item;
-}
 
 // This event is triggered after a screen is initialized
 event OnInit(UIScreen Screen)
@@ -109,7 +84,7 @@ private function AddSquadButtons(UISquadSelect Screen)
 	if (Screen.Class != class'UISquadSelect') // Basially check if RJSS or derivatives is active.
 	{
 		bRJSSPresent = true;
-		SquadLoadoutButton.SetPosition(100, 5); 
+		SquadLoadoutButton.SetPosition(-250, 5); 
 	}
 	else
 	{
@@ -130,7 +105,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 
 	if (!bLoadoutSpawned)
 	{	
-		InitX = 300;
+		InitX = 400;
 		InitY = bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset;
 
 		// Armor
@@ -211,6 +186,7 @@ private function UIList CreateList(name InitName, float initX, float initY, UIPa
 	List = ParentPanel.Spawn(class'UIList', ParentPanel);
 	List.InitList(InitName, initX, initY, ListWidth);
 	List.bAnimateOnInit = false;
+	List.ItemPadding = -10;
 
 	return List;
 }
@@ -230,7 +206,7 @@ private function UIBGBox CreateListBG(name InitName, float initX, float initY, U
 
 private function RealizeListBG(UIList List, UIBGBox ListBG)
 {
-	ListBG.SetHeight(10 + List.ItemCount * ListBG_ItemHeight);
+	ListBG.SetHeight(15 + List.ItemCount * ListBG_ItemHeight);
 }
 
 private function UpdateListData(UISquadSelect Screen)
@@ -269,7 +245,7 @@ private function UpdateListData(UISquadSelect Screen)
 
 private function FillListOfType(UIList List, const int SlotMask, optional EInventorySlot ForceSlot = eInvSlot_Unknown, optional EInventorySlot ExcludeSlot = eInvSlot_Unknown)
 {
-	local UIButton								ListItem;
+	local UISquadLoadoutListItem				ListItem;
 	local array<IRIDisplayLoadoutItemStruct>	DisplayItems;
 	local IRIDisplayLoadoutItemStruct			DisplayItem;
 	local string								strText;
@@ -297,9 +273,8 @@ private function FillListOfType(UIList List, const int SlotMask, optional EInven
 			strText @= "(" $ DisplayItem.Quantity $ ")";
 		}
 		`AMLOG("Setting display text:" @ strText);
-		ListItem.SetText(strText);
-		ListItem.SetTextAlign("left");
-		ListItem.SetTooltipText(JoinStrings(DisplayItem.SoldierNames, "\n, "));
+		ListItem.UpdateDataDescription(strText);
+		ListItem.SetTooltipText(JoinStrings(DisplayItem.SoldierNames, "\n, "),,,,,,, 0);
 	}	
 
 	`AMLOG("All done. Realizing list.");
@@ -384,33 +359,101 @@ private function array<IRIDisplayLoadoutItemStruct> GetDisplayItemsOfType(const 
 
 	`AMLOG("Collected this many display items:" @ ReturnArray.Length);
 
+	
+	ReturnArray.Sort(SortDisplayItemsByWeaponCat);
+	ReturnArray.Sort(SortDisplayItemsByItemCat);
+
 	return ReturnArray;
 }
 
-private function UIButton GetListItem(UIList List, int ItemIndex)
+private function UISquadLoadoutListItem GetListItem(UIList List, int ItemIndex)
 {
-	local UIButton ListItem;
+	local UISquadLoadoutListItem ListItem;
 	local UIPanel Item;
 
 	if (List.ItemCount <= ItemIndex)
 	{
-		ListItem = List.Spawn(class'UIButton', List.ItemContainer);
-		ListItem.InitButton(,,, eUIButtonStyle_NONE);
+		ListItem = List.Spawn(class'UISquadLoadoutListItem', List.ItemContainer);
+		ListItem.InitListItem();
 		ListItem.bAnimateOnInit = false;
-		ListItem.SetHeight(ListItem.Height - 5);
-		ListItem.SetTextAlign("left");
-		ListItem.ShowBG(false);
 		ListItem.bIsNavigable = false;
+		ListItem.BG.SetAlpha(10);
 	}
 	else
 	{
 		Item = List.GetItem(ItemIndex);
-		ListItem = UIButton(Item);
+		ListItem = UISquadLoadoutListItem(Item);
 	}
 
 	return ListItem;
 }
 
+private function AddDisplayItem(out array<IRIDisplayLoadoutItemStruct> Items, const out IRIDisplayLoadoutItemStruct Item)
+{
+	local int Index;
+
+	Index = Items.Find('TemplateName', Item.TemplateName);
+	if (Index != INDEX_NONE)
+	{
+		Items[Index].Quantity++;
+		Items[Index].SoldierNames.AddItem(Item.SoldierNames[0]);
+	}
+	else
+	{
+		Items.AddItem(Item);
+	}
+}
+
+private function IRIDisplayLoadoutItemStruct ConvertStatesIntoStruct(const XComGameState_Item ItemState, const XComGameState_Unit UnitState)
+{
+	local IRIDisplayLoadoutItemStruct Item;
+
+	Item.TemplateName = ItemState.GetMyTemplateName();
+	Item.LocalizedName = ItemState.GetMyTemplate().GetItemFriendlyNameNoStats();
+	Item.SoldierNames.AddItem(UnitState.GetName(eNameType_FullNick));
+	Item.ItemCat = ItemState.GetMyTemplate().ItemCat;
+	Item.WeaponCat = ItemState.GetWeaponCategory();
+
+	return Item;
+}
+
+private function int SortDisplayItemsByItemCat(IRIDisplayLoadoutItemStruct ItemA, IRIDisplayLoadoutItemStruct ItemB)
+{
+	if (string(ItemA.ItemCat) < string(ItemB.ItemCat))
+	{
+		return 1;
+	}
+	else if (string(ItemA.ItemCat) > string(ItemB.ItemCat))
+	{
+		return -1;
+	}
+	return 0;
+}
+private function int SortDisplayItemsByWeaponCat(IRIDisplayLoadoutItemStruct ItemA, IRIDisplayLoadoutItemStruct ItemB)
+{
+	if (string(ItemA.WeaponCat) < string(ItemB.WeaponCat))
+	{
+		return 1;
+	}
+	else if (string(ItemA.WeaponCat) > string(ItemB.WeaponCat))
+	{
+		return -1;
+	}
+	return 0;
+}
+
+private final function int SortItemsBySlot(XComGameState_Item ItemA, XComGameState_Item ItemB)
+{
+	if (ItemA.InventorySlot < ItemB.InventorySlot)
+	{
+		return 1;
+	}
+	else if (ItemA.InventorySlot > ItemB.InventorySlot)
+	{
+		return -1;
+	}
+	return 0;
+}
 
 // This event is triggered after a screen receives focus
 event OnReceiveFocus(UIScreen Screen)
@@ -528,7 +571,6 @@ private function SaveLoadoutButtonClicked(UIButton btn_clicked)
 		}
 	}
 }
-	
 
 private function ToggleLoadoutButtonClicked(UIButton btn_clicked)
 {
