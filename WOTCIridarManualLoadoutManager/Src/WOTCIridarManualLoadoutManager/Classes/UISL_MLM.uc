@@ -30,6 +30,13 @@ var private bool bLoadoutSpawned;
 var private string PathToButton;
 var private bool bRJSSPresent;
 
+const RJSS_List_VerticalOffset = 65;
+const List_VerticalOffset = 35;
+const ListBG_Padding = 5;
+const ListBG_Alpha = 50;
+const ListBG_ItemHeight = 28.8f;
+const ListWidth = 280;
+
 private function AddDisplayItem(out array<IRIDisplayLoadoutItemStruct> Items, const out IRIDisplayLoadoutItemStruct Item)
 {
 	local int Index;
@@ -91,6 +98,8 @@ event OnRemoved(UIScreen screen)
 	}
 }
 
+//event OnLoseFocus(UIScreen Screen)
+
 private function AddSquadButtons(UISquadSelect Screen)
 {
 	local UIButton SquadLoadoutButton;
@@ -114,32 +123,41 @@ private function AddSquadButtons(UISquadSelect Screen)
 
 private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 {
-	local UIList List;
+	local UIList	List;
+	local UIBGBox	ListBG;
 
 	if (!bLoadoutSpawned)
 	{
-		List = btn_clicked.Spawn(class'UIList', btn_clicked);
-		List.InitList('IRI_SquadLoadoutList_Armor', /*initX*/,/*initY*/,/*initWidth*/,/*initHeight*/,/*horizontalList*/, true, /*optional name bgLibID */);
-		List.SetPosition(-300, bRJSSPresent ? 60 : 30);
-		List.bAnimateOnInit = false;
-		FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR);
+		// Armor
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Armor_BG',	-600, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		List = CreateList('IRI_SquadLoadoutList_Armor',			-600, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
 
-		List = btn_clicked.Spawn(class'UIList', btn_clicked);
-		List.InitList('IRI_SquadLoadoutList_Weapon', /*initX*/,/*initY*/,/*initWidth*/,/*initHeight*/,/*horizontalList*/, true, /*optional name bgLibID */);
-		List.SetPosition(0, bRJSSPresent ? 60 : 30);
-		List.bAnimateOnInit = false;
-		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON);
+		FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR,, eInvSlot_HeavyWeapon); // Apparently heavy weapons are armor as far as the game is concerned :shrug: Exclude them here, non-primary weapons will pick them up.
+		RealizeListBG(List, ListBG);
+		
+		// Primary Weapons
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Primary_BG',	-300, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		List = CreateList('IRI_SquadLoadoutList_Weapon_Primary',		-300, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
 
-		List = btn_clicked.Spawn(class'UIList', btn_clicked);
-		List.InitList('IRI_SquadLoadoutList_Item', /*initX*/,/*initY*/,/*initWidth*/,/*initHeight*/,/*horizontalList*/, true, /*optional name bgLibID */);
-		List.SetPosition(300, bRJSSPresent ? 60 : 30);
-		List.bAnimateOnInit = false;
+		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON, eInvSlot_PrimaryWeapon); // Only primaries
+		RealizeListBG(List, ListBG);
+
+		// Secondary and other weapons
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Other_BG',	0, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		List = CreateList('IRI_SquadLoadoutList_Weapon_Other',			0, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+
+		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON,, eInvSlot_PrimaryWeapon); // Only non-primaries
+		RealizeListBG(List, ListBG);
+
+		// Grenades and other items
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Item_BG',	300, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		List = CreateList('IRI_SquadLoadoutList_Item',			300, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_ITEM);
+		RealizeListBG(List, ListBG);
 
 		bLoadoutSpawned = true;
 		bLoadoutVisible = true;
-
-		btn_clicked.SetTimer(1.0f, true, nameof(UpdateListData), self);
 	}
 	else
 	{
@@ -147,28 +165,68 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		{
 			bLoadoutVisible = false;
 			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor').Hide();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon').Hide();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary').Hide();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Other').Hide();
 			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item').Hide();
 
-			btn_clicked.ClearTimer(nameof(UpdateListData), self);
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor_BG').Hide();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG').Hide();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG').Hide();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item_BG').Hide();
 		}
 		else
 		{
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor_BG').Show();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG').Show();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG').Show();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item_BG').Show();
+
 			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Armor').Show();
-			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon').Show();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary').Show();
+			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Weapon_Other').Show();
 			btn_clicked.GetChildByName('IRI_SquadLoadoutList_Item').Show();
 
-			bLoadoutVisible = true;
+			UpdateListData();
 
-			btn_clicked.SetTimer(1.0f, true, nameof(UpdateListData), self);
+			bLoadoutVisible = true;
 		}
 	}
+}
+
+private function UIList CreateList(name InitName, float initX, float initY, UIPanel ParentPanel)
+{
+	local UIList List;
+
+	List = ParentPanel.Spawn(class'UIList', ParentPanel);
+	List.InitList(InitName, initX, initY, ListWidth);
+	List.bAnimateOnInit = false;
+
+	return List;
+}
+
+private function UIBGBox CreateListBG(name InitName, float initX, float initY, UIPanel ParentPanel)
+{
+	local UIBGBox ListBG;
+
+	ListBG = ParentPanel.Spawn(class'UIBGBox', ParentPanel);
+	ListBG.LibID = class'UIUtilities_Controls'.const.MC_X2Background;
+	ListBG.InitBG(InitName, initX - ListBG_Padding, initY - ListBG_Padding, ListWidth + ListBG_Padding * 2);
+	ListBG.bAnimateOnInit = false;
+	ListBG.SetAlpha(ListBG_Alpha);
+
+	return ListBG;
+}
+
+private function RealizeListBG(UIList List, UIBGBox ListBG)
+{
+	ListBG.SetHeight(List.ItemCount * ListBG_ItemHeight);
 }
 
 private function UpdateListData()
 {
 	local UIButton	SquadLoadoutButton;
 	local UIList	List;
+	local UIBGBox	ListBG;
 
 	SquadLoadoutButton = UIButton(FindObject(PathToButton, class'UIButton'));
 	if (SquadLoadoutButton == none)
@@ -177,17 +235,36 @@ private function UpdateListData()
 		return;
 	}
 
+	// Armor
 	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Armor'));
-	FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR);
+	ListBG = UIBGBox(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Armor_BG'));
 
-	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon'));
-	FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON);
+	FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR,, eInvSlot_HeavyWeapon);
+	RealizeListBG(List, ListBG);
 
+	// Primary Weapons
+	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary'));
+	ListBG = UIBGBox(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon_Primary_BG'));
+
+	FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON, eInvSlot_PrimaryWeapon);
+	RealizeListBG(List, ListBG);
+
+	// Secondary and other weapons
+	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon_Other'));
+	ListBG = UIBGBox(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Weapon_Other_BG'));
+
+	FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON,, eInvSlot_PrimaryWeapon);
+	RealizeListBG(List, ListBG);
+
+	// Grenades and other items
 	List = UIList(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Item'));
+	ListBG = UIBGBox(SquadLoadoutButton.GetChildByName('IRI_SquadLoadoutList_Item_BG'));
+
 	FillListOfType(List, class'CHItemSlot'.const.SLOT_ITEM);
+	RealizeListBG(List, ListBG);
 }
 
-private function FillListOfType(UIList List, const int SlotMask)
+private function FillListOfType(UIList List, const int SlotMask, optional EInventorySlot ForceSlot = eInvSlot_Unknown, optional EInventorySlot ExcludeSlot = eInvSlot_Unknown)
 {
 	local UIText								ListItem;
 	local array<IRIDisplayLoadoutItemStruct>	DisplayItems;
@@ -195,31 +272,39 @@ private function FillListOfType(UIList List, const int SlotMask)
 	local string								strText;
 	local int i;
 
-	DisplayItems = GetDisplayItemsOfType(SlotMask);
+	DisplayItems = GetDisplayItemsOfType(SlotMask, ForceSlot, ExcludeSlot);
+
+	`AMLOG("Current list item count:" @ List.ItemCount @ ", Display items:" @ DisplayItems.Length);
 
 	if (List.ItemCount > DisplayItems.Length)
 	{	
+		`AMLOG("Clearing list.");
 		List.ClearItems();
 	}
 
 	foreach DisplayItems(DisplayItem, i)
 	{
+		`AMLOG(i @ "Display item:" @ DisplayItem.LocalizedName @ DisplayItem.Quantity);
+
 		ListItem = GetListItem(List, i);
-		ListItem.bAnimateOnInit = false;
 
 		strText = DisplayItem.LocalizedName;
 		if (DisplayItem.Quantity > 1)
 		{
 			strText @= "(" $ DisplayItem.Quantity $ ")";
 		}
+		`AMLOG("Setting display text:" @ strText);
 		ListItem.SetText(strText);
 	}	
 
+	`AMLOG("All done. Realizing list.");
 	List.RealizeList();
+
+	`AMLOG("All done. Realizing items.");
 	List.RealizeItems();
 }
 
-private function array<IRIDisplayLoadoutItemStruct> GetDisplayItemsOfType(const int SlotMask)
+private function array<IRIDisplayLoadoutItemStruct> GetDisplayItemsOfType(const int SlotMask, optional EInventorySlot ForceSlot = eInvSlot_Unknown, optional EInventorySlot ExcludeSlot = eInvSlot_Unknown)
 {
 	local array<XComGameState_Unit>				UnitStates;
 	local XComGameState_Unit					UnitState;
@@ -230,11 +315,17 @@ private function array<IRIDisplayLoadoutItemStruct> GetDisplayItemsOfType(const 
 	local array<XComGameState_Item>				ItemStates;
 	local XComGameState_Item					ItemState;
 
-	`AMLOG("Called for SlotMask:" @ SlotMask);
-
-	class'CHItemSlot'.static.CollectSlots(SlotMask, Slots);
+	`AMLOG("Called for SlotMask:" @ SlotMask @ ForceSlot @ ExcludeSlot);
 	UnitStates = class'Help'.static.GetSquadUnitStates();
-	
+	if (ForceSlot != eInvSlot_Unknown)
+	{
+		Slots.AddItem(ForceSlot);
+	}
+	else
+	{
+		class'CHItemSlot'.static.CollectSlots(SlotMask, Slots);
+		Slots.RemoveItem(ExcludeSlot);
+	}	
 	foreach Slots(Slot)
 	{	
 		`AMLOG("Begin for slot:" @ Slot);
@@ -284,6 +375,7 @@ private function UIText GetListItem(UIList List, int ItemIndex)
 		ListItem = List.Spawn(class'UIText', List.ItemContainer);
 		ListItem.InitText();
 		ListItem.bAnimateOnInit = false;
+		ListItem.SetHeight(ListItem.Height - 5);
 	}
 	else
 	{
@@ -293,79 +385,6 @@ private function UIText GetListItem(UIList List, int ItemIndex)
 
 	return ListItem;
 }
-
-private function array<XComGameState_Item> GetItemsOfType(const int SlotMask)
-{
-	local array<XComGameState_Unit>			UnitStates;
-	local XComGameState_Unit				UnitState;
-	local array<EInventorySlot>				Slots;
-	local EInventorySlot					Slot;
-	local array<XComGameState_Item>			ReturnArray;
-	local array<XComGameState_Item>			ItemStates;
-	local XComGameState_Item				ItemState;
-
-	class'CHItemSlot'.static.CollectSlots(SlotMask, Slots);
-
-	UnitStates = class'Help'.static.GetSquadUnitStates();
-	foreach UnitStates(UnitState)
-	{
-		foreach Slots(Slot)
-		{
-			if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
-			{
-				ItemStates = UnitState.GetAllItemsInSlot(Slot,, true);
-				MergeArrays(ReturnArray, ItemStates);
-			}
-			else
-			{
-				ItemState = UnitState.GetItemInSlot(Slot);
-				if (ItemState != none)
-				{
-					ReturnArray.AddItem(ItemState);
-				}
-			}
-		}
-	}
-	ReturnArray.Sort(SortItemsBySlot);
-
-	return ReturnArray;
-}
-
-private final function int SortItemsBySlot(XComGameState_Item ItemA, XComGameState_Item ItemB)
-{
-	if (ItemA.InventorySlot < ItemB.InventorySlot)
-	{
-		return 1;
-	}
-	else if (ItemA.InventorySlot > ItemB.InventorySlot)
-	{
-		return -1;
-	}
-	return 0;
-}
-
-private function MergeArrays(out array<XComGameState_Item> Acceptor, const array<XComGameState_Item> Donor)
-{
-	local XComGameState_Item Member;
-
-	foreach Donor(Member)
-	{
-		Acceptor.AddItem(Member);
-	}
-}
-
-private function OnCategoryButtonClicked_Armor(UIButton btn_clicked)
-{
-}
-
-private function OnCategoryButtonClicked_Items(UIButton btn_clicked)
-{
-}
-
-
-
-
-
 
 
 // This event is triggered after a screen receives focus
@@ -380,17 +399,13 @@ event OnReceiveFocus(UIScreen Screen)
 			`SCREENSTACK.SubscribeToOnInput(OnArmoryLoadoutInput);
 		}
 	}
-}
-
-event OnLoseFocus(UIScreen Screen)
-{
-	if (UIArmory_Loadout(Screen) != none && bCHLPresent)
+	else if (UISquadSelect(Screen) != none && bLoadoutVisible)
 	{
-		`SCREENSTACK.UnsubscribeFromOnInput(OnArmoryLoadoutInput);
+		UpdateListData();
 	}
 }
 
-event OnRemovedFocus(UIScreen Screen)
+event OnLoseFocus(UIScreen Screen)
 {
 	if (UIArmory_Loadout(Screen) != none && bCHLPresent)
 	{
@@ -543,3 +558,67 @@ private function bool OnArmoryLoadoutInput(int cmd, int arg)
 			return false;
 	}
 }
+
+
+/*
+private function array<XComGameState_Item> GetItemsOfType(const int SlotMask)
+{
+	local array<XComGameState_Unit>			UnitStates;
+	local XComGameState_Unit				UnitState;
+	local array<EInventorySlot>				Slots;
+	local EInventorySlot					Slot;
+	local array<XComGameState_Item>			ReturnArray;
+	local array<XComGameState_Item>			ItemStates;
+	local XComGameState_Item				ItemState;
+
+	class'CHItemSlot'.static.CollectSlots(SlotMask, Slots);
+
+	UnitStates = class'Help'.static.GetSquadUnitStates();
+	foreach UnitStates(UnitState)
+	{
+		foreach Slots(Slot)
+		{
+			if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
+			{
+				ItemStates = UnitState.GetAllItemsInSlot(Slot,, true);
+				MergeArrays(ReturnArray, ItemStates);
+			}
+			else
+			{
+				ItemState = UnitState.GetItemInSlot(Slot);
+				if (ItemState != none)
+				{
+					ReturnArray.AddItem(ItemState);
+				}
+			}
+		}
+	}
+	ReturnArray.Sort(SortItemsBySlot);
+
+	return ReturnArray;
+}
+
+private final function int SortItemsBySlot(XComGameState_Item ItemA, XComGameState_Item ItemB)
+{
+	if (ItemA.InventorySlot < ItemB.InventorySlot)
+	{
+		return 1;
+	}
+	else if (ItemA.InventorySlot > ItemB.InventorySlot)
+	{
+		return -1;
+	}
+	return 0;
+}
+
+private function MergeArrays(out array<XComGameState_Item> Acceptor, const array<XComGameState_Item> Donor)
+{
+	local XComGameState_Item Member;
+
+	foreach Donor(Member)
+	{
+		Acceptor.AddItem(Member);
+	}
+}
+
+*/
