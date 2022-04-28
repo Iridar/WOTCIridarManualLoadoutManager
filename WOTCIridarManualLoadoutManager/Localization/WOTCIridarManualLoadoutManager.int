@@ -48,6 +48,8 @@ SearchButtonTitle = "SEARCH"
 
 FilterButtonTitle = "FILTER"
 
+SquadItems = "SQUAD ITEMS"
+
 [WOTCIridarManualLoadoutManager_MCMScreen]
 ModName = "Loadout Manager"
 PageTitle = "Iridar's Loadout Manager"

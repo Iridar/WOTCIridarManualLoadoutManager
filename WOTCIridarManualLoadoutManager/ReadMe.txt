@@ -21,7 +21,9 @@ figure out automatic list item size realization maybe
 mod preview image
 localization pass
 
-squad loadout items list (conflate by weapon category configurable in MCM)
+Squad item list:
+- sorting?
+- max. height and scrolling.
 
 take num. utility slots into account when not equipping armor that grants the required extra slot
 

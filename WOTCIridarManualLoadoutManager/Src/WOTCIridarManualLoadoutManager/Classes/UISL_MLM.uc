@@ -30,12 +30,13 @@ var private bool bLoadoutSpawned;
 var private string PathToButton;
 var private bool bRJSSPresent;
 
-const RJSS_List_VerticalOffset = 65;
+const RJSS_List_VerticalOffset = 70;
 const List_VerticalOffset = 35;
 const ListBG_Padding = 5;
 const ListBG_Alpha = 50;
-const ListBG_ItemHeight = 28.8f;
-const ListWidth = 280;
+const ListBG_ItemHeight = 28.7f;
+const ListWidth = 250;
+const HorizontalPaddingBetweenLists = 15;
 
 private function AddDisplayItem(out array<IRIDisplayLoadoutItemStruct> Items, const out IRIDisplayLoadoutItemStruct Item)
 {
@@ -104,7 +105,7 @@ private function AddSquadButtons(UISquadSelect Screen)
 {
 	local UIButton SquadLoadoutButton;
 
-	SquadLoadoutButton = Screen.Spawn(class'UIButton', Screen).InitButton('IRI_SquadLoadoutButton_Weapons', "SQUAD ITEMS", OnCategoryButtonClicked_Weapons, eUIButtonStyle_NONE); // TODO: Localize
+	SquadLoadoutButton = Screen.Spawn(class'UIButton', Screen).InitButton('IRI_SquadLoadoutButton_Weapons', `GetLocalizedString('SquadItems'), OnCategoryButtonClicked_Weapons, eUIButtonStyle_NONE);
 	if (Screen.Class != class'UISquadSelect') // Basially check if RJSS or derivatives is active.
 	{
 		bRJSSPresent = true;
@@ -125,33 +126,44 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 {
 	local UIList	List;
 	local UIBGBox	ListBG;
+	local int		InitX;
+	local int		InitY;
 
 	if (!bLoadoutSpawned)
-	{
+	{	
+		InitX = -622;
+		InitY = bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset;
+
 		// Armor
-		ListBG = CreateListBG('IRI_SquadLoadoutList_Armor_BG',	-600, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
-		List = CreateList('IRI_SquadLoadoutList_Armor',			-600, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Armor_BG',	InitX, InitY, btn_clicked);
+		List = CreateList('IRI_SquadLoadoutList_Armor',			InitX, InitY, btn_clicked);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR,, eInvSlot_HeavyWeapon); // Apparently heavy weapons are armor as far as the game is concerned :shrug: Exclude them here, non-primary weapons will pick them up.
 		RealizeListBG(List, ListBG);
 		
 		// Primary Weapons
-		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Primary_BG',	-300, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
-		List = CreateList('IRI_SquadLoadoutList_Weapon_Primary',		-300, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		InitX += ListWidth + HorizontalPaddingBetweenLists;
+
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Primary_BG',	InitX, InitY, btn_clicked);
+		List = CreateList('IRI_SquadLoadoutList_Weapon_Primary',		InitX, InitY, btn_clicked);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON, eInvSlot_PrimaryWeapon); // Only primaries
 		RealizeListBG(List, ListBG);
 
 		// Secondary and other weapons
-		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Other_BG',	0, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
-		List = CreateList('IRI_SquadLoadoutList_Weapon_Other',			0, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		InitX += ListWidth + HorizontalPaddingBetweenLists;
+
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Other_BG',	InitX, InitY, btn_clicked);
+		List = CreateList('IRI_SquadLoadoutList_Weapon_Other',			InitX, InitY, btn_clicked);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON,, eInvSlot_PrimaryWeapon); // Only non-primaries
 		RealizeListBG(List, ListBG);
 
 		// Grenades and other items
-		ListBG = CreateListBG('IRI_SquadLoadoutList_Item_BG',	300, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
-		List = CreateList('IRI_SquadLoadoutList_Item',			300, bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset, btn_clicked);
+		InitX += ListWidth + HorizontalPaddingBetweenLists;
+
+		ListBG = CreateListBG('IRI_SquadLoadoutList_Item_BG',	InitX, InitY, btn_clicked);
+		List = CreateList('IRI_SquadLoadoutList_Item',			InitX, InitY, btn_clicked);
 		
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_ITEM);
 		RealizeListBG(List, ListBG);
