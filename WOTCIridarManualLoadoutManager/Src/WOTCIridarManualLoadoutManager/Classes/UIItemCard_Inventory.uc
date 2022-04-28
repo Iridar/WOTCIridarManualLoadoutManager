@@ -40,12 +40,29 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 	List.SetHeight(RightPanelH);
 
 	// send mouse scroll events to the list
-	self.ProcessMouseEvents(List.OnChildMouseEvent);
+	//self.ProcessMouseEvents(OnItemCardMouseEvent); // TODO: This fixes the scroll, but breaks clicking on checkboxes.
 
 	XComHQ = `XCOMHQ;
 	LocTag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
 
 	return self;
+}
+
+private function OnItemCardMouseEvent(UIPanel Control, int cmd)
+{
+	switch(cmd)
+	{
+	case class'UIUtilities_Input'.const.FXS_MOUSE_SCROLL_DOWN:
+		if( List.Scrollbar != none )
+			List.Scrollbar.OnMouseScrollEvent(1);
+		break;
+	case class'UIUtilities_Input'.const.FXS_MOUSE_SCROLL_UP:
+		if( List.Scrollbar != none )
+			List.Scrollbar.OnMouseScrollEvent(-1);
+		break;
+	default:
+		
+	}
 }
 
 simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)

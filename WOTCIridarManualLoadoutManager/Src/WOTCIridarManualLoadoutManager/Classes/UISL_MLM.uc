@@ -273,7 +273,7 @@ private function FillListOfType(UIList List, const int SlotMask, optional EInven
 			strText @= "(" $ DisplayItem.Quantity $ ")";
 		}
 		`AMLOG("Setting display text:" @ strText);
-		ListItem.UpdateDataDescription(strText);
+		ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(strText, eUIState_Normal));
 		ListItem.SetTooltipText(JoinStrings(DisplayItem.SoldierNames, "\n, "),,,,,,, 0);
 	}	
 
@@ -377,7 +377,7 @@ private function UISquadLoadoutListItem GetListItem(UIList List, int ItemIndex)
 		ListItem.InitListItem();
 		ListItem.bAnimateOnInit = false;
 		ListItem.bIsNavigable = false;
-		ListItem.BG.SetAlpha(10);
+		ListItem.BG.SetAlpha(0);
 	}
 	else
 	{
