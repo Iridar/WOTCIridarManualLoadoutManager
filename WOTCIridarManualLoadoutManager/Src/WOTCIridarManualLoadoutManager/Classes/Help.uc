@@ -7,6 +7,7 @@ class Help extends Object abstract;
 
 var localized string strDummy;
 
+
 struct IRILoadoutItemStruct
 {
 	var name				Item;

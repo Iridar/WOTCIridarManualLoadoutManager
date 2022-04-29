@@ -16,13 +16,11 @@ TODO:
 Loadouts:
 - File autobackup
 - don't store ItemState in config, find better way
-- Utility item doesn't get equipped.
 - heavy weapons show as equippable even if there's no slots on the unit and armor that adds them cannot be equipped, even if it's not in the loadout.
 - take num. utility slots into account when not equipping armor that grants the required extra slot
-- armor needs sorting too
 - delete button too big, too left, and obscures text
 - figure out automatic list item size realization maybe
-
+- tooltips are broken again.
 
 Squad item list:
 - max. height and scrolling.
@@ -32,6 +30,7 @@ localization pass
 mod preview image
 
 One day:
+improve slot counting logic
 PCS support
 Weapon Upgrade support
 IAM integration

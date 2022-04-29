@@ -594,6 +594,7 @@ private function bool IsAnyLoadoutSelected()
 			return true;
 		}
 	}
+	return false;
 }
 
 private function SelectListItem(const int ItemIndex)
@@ -634,11 +635,13 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	local XComGameState_Item				EquippedItem;
 	local array<XComGameState_Item>			EquippedItems;
 	local bool								bSoundPlayed;
+	local array<int>						SlotMap;
 
 	History = `XCOMHISTORY;
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Loading Loadout For Unit" @ UnitState.GetFullName());
 	XComHQ = class'Help'.static.GetAndPrepXComHQ(NewGameState);
 	UnitState = XComGameState_Unit(NewGameState.ModifyStateObject(UnitState.Class, UnitState.ObjectID));
+	SlotMap.Add(eInvSlot_MAX);
 
 	`AMLOG("==== BEGIN ====");
 	`AMLOG("Loadout Items:" @ LoadoutItems.Length @ "and unit:" @ UnitState.GetFullName() @ UnitState.GetSoldierClassTemplateName());
@@ -684,10 +687,10 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 						}
 					}
 
-					// If we haven't found an item we're mutually exclusive with, then simply use the last item in slot.
+					// If we haven't found an item we're mutually exclusive with, then simply use the first item in slot we haven't equipped here.
 					if (EquippedItem == none)
 					{
-						EquippedItem = EquippedItems[EquippedItems.Length - 1];
+						EquippedItem = EquippedItems[SlotMap[LoadoutItem.Slot]];
 					}
 				}
 			}
@@ -738,8 +741,10 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 		}
 
 		// Add the restored item to our inventory
-		if (UnitState.AddItemToInventory(ItemState, LoadoutItem.Slot, NewGameState))
+		if (UnitState.AddItemToInventory(ItemState, LoadoutItem.Slot, NewGameState, true))
 		{
+			SlotMap[LoadoutItem.Slot]++;
+
 			`AMLOG("Successfully equipped loadout item.");
 			if (!bSoundPlayed && X2EquipmentTemplate(ItemTemplate).EquipSound != "")
 			{

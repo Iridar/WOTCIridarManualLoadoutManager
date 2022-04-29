@@ -190,7 +190,7 @@ final function array<IRILoadoutItemStruct> GetSelectedLoadoutItems()
 	for (i = 0; i < List.ItemCount; i++)
 	{
 		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
-		if (ListItem != none && ListItem.Checkbox.bChecked && ListItem.ItemState != none)
+		if (ListItem != none && ListItem.Checkbox != none && ListItem.Checkbox.bChecked && ListItem.ItemState != none)
 		{
 			ListItem.LoadoutItem.ItemState = ListItem.ItemState;
 			ReturnArray.AddItem(ListItem.LoadoutItem);
@@ -352,7 +352,8 @@ private function bool ItemIsAlreadyEquipped(const X2ItemTemplate ItemTemplate, c
 	{
 		EquippedItem = UnitState.GetItemInSlot(Slot);
 
-		`AMLOG("Equipped item:" @ EquippedItem.GetMyTemplateName());
+		if (EquippedItem != none)
+			`AMLOG("Equipped item:" @ EquippedItem.GetMyTemplateName());
 
 		return EquippedItem != none && EquippedItem.GetMyTemplateName() == ItemTemplate.DataName;
 	}
@@ -375,12 +376,11 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	local int						BronzeScore;	
 	local string					DLCReason;
 	local int						iNumMutuallyExclusiveItems;
+	local bool						bMultiItemSlot;
 
 	local array<X2DownloadableContentInfo> DLCInfos;
 	local int UnusedOutInt;
 	local int i;
-	
-	DLCInfos = `ONLINEEVENTMGR.GetDLCInfos(false);
 	
 	// Disable the weapon cannot be equipped by the current soldier class
 	WeaponTemplate = X2WeaponTemplate(ItemTemplate);
@@ -474,6 +474,7 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	//start of Issue #50: add hook to UI to show disabled reason, if possible
 	//start of Issue #114: added ItemState of what's being looked at for more expansive disabling purposes
 	//issue #127: hook now fires all the time instead of a specific use case scenario
+	DLCInfos = `ONLINEEVENTMGR.GetDLCInfos(false);
 	for(i = 0; i < DLCInfos.Length; ++i)
 	{
 		if(!DLCInfos[i].CanAddItemToInventory_CH_Improved(UnusedOutInt, Slot, ItemTemplate, Item.Quantity, UnitState, , DLCReason, Item))
@@ -484,6 +485,33 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	//end of Issue #50
 	//end of issue #114
 	
+	// Check if the unit even has a slot for the item.
+	bMultiItemSlot = class'CHItemSlot'.static.SlotIsMultiItem(Slot);
+	if (bMultiItemSlot && DisabledReason != "")
+	{
+		if (class'CHItemSlot'.static.SlotGetMaxItemCount(Slot, UnitState) == 0)
+		{
+			switch (Slot)
+			{
+			case eInvSlot_HeavyWeapon:
+				if (!DoesLoadoutContainArmorThatGrantsHeavyWeaponSlot())
+				{
+					DisabledReason = `GetLocalizedString('NoInventorySlotsForItem');
+				}
+				break;
+			case eInvSlot_Utility:
+				if (!DoesLoadoutContainArmorThatGrantsUtilitySlot())
+				{
+					DisabledReason = `GetLocalizedString('NoInventorySlotsForItem');
+				}
+				break;
+			default:
+				DisabledReason = `GetLocalizedString('NoInventorySlotsForItem');
+				break;
+			}
+		}
+	}
+
 	// Here we deviate from how original GetDisabledReason() works, becaue we don't have the luxury of a specific index of the multi item slot to which want to equip the new item.
 	// Proceed only if the item is mutually exclusive with some other item equipped on the soldier.
 	if (DisabledReason == "" && class'Help'.static.IsItemUniqueEquipInSlot(ItemMgr, ItemTemplate, Slot) && !UnitState.RespectsUniqueRule(ItemTemplate, Slot))
@@ -494,7 +522,7 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 		// So for multi-item slots, look for items in that slot we're mutually exclusive with.
 		// Provide a disabled reason if there is more than one such item in this slot,
 		// or if there is still some other item on the soldier we're mutually exclusive with, even if they are in other slots.
-		if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
+		if (bMultiItemSlot)
 		{
 			EquippedItemStates = UnitState.GetAllItemsInSlot(Slot);
 			iNumMutuallyExclusiveItems = 0;
@@ -533,6 +561,36 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	return DisabledReason;
 }
 
+private function bool DoesLoadoutContainArmorThatGrantsUtilitySlot()
+{
+	local X2ArmorTemplate		ArmorTemplate;
+	local IRILoadoutItemStruct	LoadoutItem;
+
+	foreach Loadout.LoadoutItems(LoadoutItem)
+	{
+		ArmorTemplate = X2ArmorTemplate(ItemMgr.FindItemTemplate(LoadoutItem.Item));
+		if (ArmorTemplate != none)
+		{
+			return ArmorTemplate.bAddsUtilitySlot;
+		}
+	}
+	return false;
+}
+private function bool DoesLoadoutContainArmorThatGrantsHeavyWeaponSlot()
+{
+	local X2ArmorTemplate		ArmorTemplate;
+	local IRILoadoutItemStruct	LoadoutItem;
+
+	foreach Loadout.LoadoutItems(LoadoutItem)
+	{
+		ArmorTemplate = X2ArmorTemplate(ItemMgr.FindItemTemplate(LoadoutItem.Item));
+		if (ArmorTemplate != none)
+		{
+			return ArmorTemplate.bHeavyWeapon;
+		}
+	}
+	return false;
+}
 
 
 private function XComGameState_Item GetDesiredItemState(const name TemplateName, EInventorySlot Slot)

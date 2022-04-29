@@ -9,7 +9,7 @@ struct IRIDisplayLoadoutItemStruct
 	var int				Quantity;
 	var array<string>	SoldierNames;
 	var name			ItemCat;
-	var name			WeaponCat;
+	var name			ArmorWeaponCat; // Stores ArmorCat+ArmorClass or WeaponCat depending on kind of item
 
 	structdefaultproperties
 	{
@@ -105,7 +105,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 
 	if (!bLoadoutSpawned)
 	{	
-		InitX = 400;
+		InitX = 420;
 		InitY = bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset;
 
 		// Armor
@@ -360,7 +360,7 @@ private function array<IRIDisplayLoadoutItemStruct> GetDisplayItemsOfType(const 
 	`AMLOG("Collected this many display items:" @ ReturnArray.Length);
 
 	
-	ReturnArray.Sort(SortDisplayItemsByWeaponCat);
+	ReturnArray.Sort(SortDisplayItemsByArmorWeaponCat);
 	ReturnArray.Sort(SortDisplayItemsByItemCat);
 
 	return ReturnArray;
@@ -406,13 +406,22 @@ private function AddDisplayItem(out array<IRIDisplayLoadoutItemStruct> Items, co
 
 private function IRIDisplayLoadoutItemStruct ConvertStatesIntoStruct(const XComGameState_Item ItemState, const XComGameState_Unit UnitState)
 {
-	local IRIDisplayLoadoutItemStruct Item;
+	local IRIDisplayLoadoutItemStruct	Item;
+	local X2ArmorTemplate				ArmorTemplate;
 
 	Item.TemplateName = ItemState.GetMyTemplateName();
 	Item.LocalizedName = ItemState.GetMyTemplate().GetItemFriendlyNameNoStats();
 	Item.SoldierNames.AddItem(UnitState.GetName(eNameType_FullNick));
 	Item.ItemCat = ItemState.GetMyTemplate().ItemCat;
-	Item.WeaponCat = ItemState.GetWeaponCategory();
+	ArmorTemplate = X2ArmorTemplate(ItemState.GetMyTemplate());
+	if (ArmorTemplate != none)
+	{
+		Item.ArmorWeaponCat = name(ArmorTemplate.ArmorCat $ ArmorTemplate.ArmorClass); // Store armor class for sorting purposes as well.
+	}
+	else
+	{
+		Item.ArmorWeaponCat = ItemState.GetWeaponCategory();
+	}
 
 	return Item;
 }
@@ -429,13 +438,13 @@ private function int SortDisplayItemsByItemCat(IRIDisplayLoadoutItemStruct ItemA
 	}
 	return 0;
 }
-private function int SortDisplayItemsByWeaponCat(IRIDisplayLoadoutItemStruct ItemA, IRIDisplayLoadoutItemStruct ItemB)
+private function int SortDisplayItemsByArmorWeaponCat(IRIDisplayLoadoutItemStruct ItemA, IRIDisplayLoadoutItemStruct ItemB)
 {
-	if (string(ItemA.WeaponCat) < string(ItemB.WeaponCat))
+	if (string(ItemA.ArmorWeaponCat) < string(ItemB.ArmorWeaponCat))
 	{
 		return 1;
 	}
-	else if (string(ItemA.WeaponCat) > string(ItemB.WeaponCat))
+	else if (string(ItemA.ArmorWeaponCat) > string(ItemB.ArmorWeaponCat))
 	{
 		return -1;
 	}
