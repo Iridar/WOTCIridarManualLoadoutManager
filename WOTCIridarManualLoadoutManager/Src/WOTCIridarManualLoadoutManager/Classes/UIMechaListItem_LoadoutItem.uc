@@ -9,21 +9,8 @@ var XComGameState_Item		ItemState;		// Used when displaying items equipped on th
 var IRILoadoutItemStruct	LoadoutItem;	// Used when displaying items in a previously saved loadout in the UIScreen_Loadouts on the right when loading a loadout.
 var XComGameState_Unit		UnitState;		// Used when displaying a "Load Loadout" shortcut in squad select.
 
-// Bandaid fix for incoherent list width.
-var int						ListItemWidthMod;
-
-//var private UITextContainer	Tooltip;
-
-simulated function SetWidth(float NewWidth)
-{
-	NewWidth += ListItemWidthMod;
-
-	super.SetWidth(NewWidth);
-
-	if (BG != none) BG.SetWidth(NewWidth);
-	if (Checkbox != none) Checkbox.SetX(NewWidth - 34);
-	if (Desc != none) Desc.SetWidth(NewWidth - 36);
-}
+var X2ItemTemplate			ItemTemplate;
+var X2ItemTemplate			ReplacementTemplate;
 
 final function UpdateDataDescriptionShortcut(XComGameState_Unit _UnitState)
 {
@@ -58,7 +45,7 @@ private function OnEquipLoadoutShortcutClicked()
 // Tooltips don't work out of the box for list items. I don't know why. I don't care why. Fox everything.
 simulated function OnMouseEvent( int cmd, array<string> args )
 {
-	local UITooltip			Tooltip; 
+	local UITooltip Tooltip; 
 
 	super.OnMouseEvent(cmd, args);
 

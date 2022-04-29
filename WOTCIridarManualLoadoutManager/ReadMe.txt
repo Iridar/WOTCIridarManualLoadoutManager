@@ -12,12 +12,11 @@ https://github.com/Iridar/EnhancedModProjectTemplate
 
 TODO: 
 
-
 Loadouts:
 - File autobackup
-- don't store ItemState in config, find better way
 - delete button too big, too left, and obscures text
 - figure out automatic list item size realization maybe
+- special handle grenade pocket to allow equipping the grenade into utility slot, if one is available
 
 Squad item list:
 - max. height and scrolling.
@@ -26,6 +25,7 @@ localization pass
 mod preview image
 
 One day:
+preview loadout changes
 improve slot counting logic via slot map
 PCS support
 Weapon Upgrade support

@@ -9,7 +9,6 @@ var config int RightPanelX;
 var config int RightPanelY;
 var config int RightPanelW;
 var config int RightPanelH;
-var config int ListItemWidth;
 
 var private XComGameState_HeadquartersXCom	XComHQ;
 var private IRILoadoutStruct				Loadout;
@@ -41,31 +40,10 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 	List.SetWidth(RightPanelW);
 	List.SetHeight(RightPanelH);
 
-	// send mouse scroll events to the list
-	//self.ProcessMouseEvents(OnItemCardMouseEvent); // TODO: This fixes the scroll, but breaks clicking on checkboxes.
-	//self.ProcessMouseEvents(List.OnChildMouseEvent);
-
 	XComHQ = `XCOMHQ;
 	LocTag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
 
 	return self;
-}
-
-private function OnItemCardMouseEvent(UIPanel Control, int cmd)
-{
-	switch(cmd)
-	{
-	case class'UIUtilities_Input'.const.FXS_MOUSE_SCROLL_DOWN:
-		if( List.Scrollbar != none )
-			List.Scrollbar.OnMouseScrollEvent(1);
-		break;
-	case class'UIUtilities_Input'.const.FXS_MOUSE_SCROLL_UP:
-		if( List.Scrollbar != none )
-			List.Scrollbar.OnMouseScrollEvent(-1);
-		break;
-	default:
-		
-	}
 }
 
 simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
@@ -74,6 +52,8 @@ simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 	local X2ItemTemplate				ItemTemplate;
 
 	SpawnedItem = UIMechaListItem_LoadoutItem(ContainerList.GetSelectedItem());
+	if (SpawnedItem == none)
+		return;
 
 	if (SpawnedItem.ItemState != none)
 	{
@@ -86,6 +66,7 @@ simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 		{
 			SetItemImages(ItemTemplate);
 		}
+		else SetItemImages();
 	}	
 }
 
@@ -117,6 +98,7 @@ simulated function PopulateLoadoutFromUnit()
 				HeaderItem.bIsNavigable = false;
 				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot));
 				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent); // So that scrolling works.
+				
 			}
 			else
 			{	
@@ -133,7 +115,7 @@ simulated function PopulateLoadoutFromUnit()
 		SpawnedItem.bAnimateOnInit = false;
 		SpawnedItem.InitListItem();
 		SpawnedItem.ItemState = ItemState;
-		SpawnedItem.UpdateDataCheckbox(ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", true);
+		SpawnedItem.UpdateDataCheckbox(ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", true,, OnLoadoutItemClicked);
 
 		PreviousSlot = ItemState.InventorySlot;
 	}
@@ -239,6 +221,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 				HeaderItem.bIsNavigable = false;
 				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(LoadoutItem.Slot));
 				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent);
+				
 
 				`AMLOG("Adding fancy header for inventory slot:" @ LoadoutItem.Slot);
 			}
@@ -293,9 +276,11 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 				}
 				else
 				{
-					SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats() @ "->" @ ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), eUIState_Warning), "", false, OnCheckboxChanged);
+					SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats() @ "->" @ ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), eUIState_Warning), "", false, OnCheckboxChanged, OnLoadoutItemClicked);
 					SpawnedItem.SetTooltipText(`GetLocalizedString('ItemNotFoundInInventoryButReplacementFound'),,,,,,, 0);
 					SpawnedItem.ItemState = ItemState;
+					SpawnedItem.ItemTemplate = ItemTemplate;
+					SpawnedItem.ReplacementTemplate = ItemState.GetMyTemplate();
 				}
 			}
 			else
@@ -309,7 +294,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 			DisabledReason = "";
 			if (GetDisabledReason(ItemTemplate, LoadoutItem.Slot, ItemState, DisabledReason))
 			{
-				SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats() $ ": " $ DisabledReason, eUIState_Warning), "", false, OnCheckboxChanged);
+				SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats() $ ": " $ DisabledReason, eUIState_Warning), "", false, OnCheckboxChanged, OnLoadoutItemClicked);
 				SpawnedItem.SetTooltipText(`GetLocalizedString('UnitHasNoSlotButYouMayTry'),,,,,,, 0);
 				SpawnedItem.ItemState = ItemState;
 				continue;
@@ -324,7 +309,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 			}
 			else
 			{
-				SpawnedItem.UpdateDataCheckbox(ItemTemplate.GetItemFriendlyNameNoStats(), "", true, OnCheckboxChanged);
+				SpawnedItem.UpdateDataCheckbox(ItemTemplate.GetItemFriendlyNameNoStats(), "", true, OnCheckboxChanged, OnLoadoutItemClicked);
 				SpawnedItem.SetTooltipText(`GetLocalizedString('ItemWillBeEquipped'),,,,,,, 0);
 				SpawnedItem.ItemState = ItemState;
 			}
@@ -345,9 +330,19 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 	`AMLOG("==== END =====");
 }
 
+private function OnLoadoutItemClicked()
+{
+	local UIMechaListItem_LoadoutItem ClickedItem;
 
+	ClickedItem = UIMechaListItem_LoadoutItem(List.GetSelectedItem());
 
-// Necessary to update unit slot mask based on selected items
+	if (ClickedItem != none && ClickedItem.Checkbox != none)
+	{
+		ClickedItem.Checkbox.SetChecked(!ClickedItem.Checkbox.bChecked);
+	}	
+}
+
+// Necessary to update unit slot map based on selected items
 private function OnCheckboxChanged(UICheckbox CheckboxControl)
 {
 	local UIMechaListItem_LoadoutItem ListItem;
@@ -364,7 +359,7 @@ private function OnCheckboxChanged(UICheckbox CheckboxControl)
 		DisabledReason = "";
 		if (GetDisabledReason(ListItem.ItemState.GetMyTemplate(), ListItem.LoadoutItem.Slot, ListItem.ItemState, DisabledReason))
 		{
-			ListItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ListItem.ItemState.GetMyTemplate().GetItemFriendlyNameNoStats() $ ": " $ DisabledReason, eUIState_Warning), "", ListItem.Checkbox != none && ListItem.Checkbox.bChecked, OnCheckboxChanged);
+			ListItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ListItem.ItemState.GetMyTemplate().GetItemFriendlyNameNoStats() $ ": " $ DisabledReason, eUIState_Warning), "", ListItem.Checkbox != none && ListItem.Checkbox.bChecked, OnCheckboxChanged, OnLoadoutItemClicked);
 			ListItem.SetTooltipText(`GetLocalizedString('UnitHasNoSlotButYouMayTry'),,,,,,, 0);
 			continue;
 		}
@@ -374,9 +369,15 @@ private function OnCheckboxChanged(UICheckbox CheckboxControl)
 			ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(ListItem.ItemState.GetMyTemplate().GetItemFriendlyNameNoStats() $ ": " $ DisabledReason, eUIState_Warning));
 			ListItem.SetTooltipText(`GetLocalizedString('UnitCannotEquipItem'),,,,,,, 0);
 		}
+		else if (ListItem.ReplacementTemplate != none)
+		{
+			ListItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ListItem.ItemTemplate.GetItemFriendlyNameNoStats() @ "->" @ ListItem.ReplacementTemplate.GetItemFriendlyNameNoStats(), eUIState_Warning), "", ListItem.Checkbox != none && ListItem.Checkbox.bChecked, OnCheckboxChanged, OnLoadoutItemClicked);
+			ListItem.SetTooltipText(`GetLocalizedString('ItemNotFoundInInventoryButReplacementFound'),,,,,,, 0);
+		}
 		else
 		{
-			ListItem.UpdateDataCheckbox(ListItem.ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", ListItem.Checkbox != none && ListItem.Checkbox.bChecked, OnCheckboxChanged);
+
+			ListItem.UpdateDataCheckbox(ListItem.ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", ListItem.Checkbox != none && ListItem.Checkbox.bChecked, OnCheckboxChanged, OnLoadoutItemClicked);
 			ListItem.SetTooltipText(`GetLocalizedString('ItemWillBeEquipped'),,,,,,, 0);
 		}
 	}
@@ -595,7 +596,7 @@ private function bool GetDisabledReason(const X2ItemTemplate ItemTemplate, const
 		}
 	}
 	
-	return DisabledReason != "";
+	return false;
 }
 
 private function bool DoesLoadoutContainArmorThatGrantsUtilitySlot()
@@ -664,7 +665,7 @@ private function XComGameState_Item GetDesiredItemState(const name TemplateName,
 		}
 	}	
 
-	return ItemState;
+	return none;
 }
 
 private function XComGameState_Item GetReplacementItemState(const name TemplateName, EInventorySlot Slot)
@@ -693,7 +694,7 @@ private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemT
 	local XComGameState_Item	ItemState;
 	local XComGameState_Item	BestItemState;
 	local StateObjectReference	ItemRef;
-	local string				DummyString;
+	local string				DisabledReason;
 
 	HighestTier = -999;
 
@@ -703,16 +704,16 @@ private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemT
 		foreach XComHQ.Inventory(ItemRef)
 		{
 			ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
-			if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified)
+			if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified || ItemIsAlreadyEquipped(ItemState.GetMyTemplate(), eSlot))
 				continue;
 
 			WeaponTemplate = X2WeaponTemplate(ItemState.GetMyTemplate());
 
 			if (WeaponTemplate != none)
 			{
-				DummyString = "";
-				if (WeaponTemplate.WeaponCat == OrigWeaponTemplate.WeaponCat && 
-					GetDisabledReason(WeaponTemplate, eSlot, ItemState, DummyString))
+				DisabledReason = "";
+				GetDisabledReason(WeaponTemplate, eSlot, ItemState, DisabledReason);
+				if (WeaponTemplate.WeaponCat == OrigWeaponTemplate.WeaponCat && DisabledReason == "")
 				{
 					if (WeaponTemplate.Tier > HighestTier)
 					{
@@ -723,60 +724,65 @@ private function XComGameState_Item FindBestReplacementItemForUnit(const X2ItemT
 			}
 		}
 	}
-	OrigArmorTemplate = X2ArmorTemplate(OrigItemTemplate);
-	if (OrigArmorTemplate != none)
+	else
 	{
-		foreach XComHQ.Inventory(ItemRef)
+		OrigArmorTemplate = X2ArmorTemplate(OrigItemTemplate);
+		if (OrigArmorTemplate != none)
 		{
-			ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
-			if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified)
-				continue;
-
-			ArmorTemplate = X2ArmorTemplate(ItemState.GetMyTemplate());
-
-			if (ArmorTemplate != none)
+			foreach XComHQ.Inventory(ItemRef)
 			{
-				DummyString = "";
+				ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+				if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified || ItemIsAlreadyEquipped(ItemState.GetMyTemplate(), eSlot))
+					continue;
 
-				if (ArmorTemplate.ArmorCat == OrigArmorTemplate.ArmorCat && ArmorTemplate.ArmorClass == OrigArmorTemplate.ArmorClass &&
-					ArmorTemplate.bInfiniteItem &&
-					GetDisabledReason(WeaponTemplate, eSlot, ItemState, DummyString))
+				ArmorTemplate = X2ArmorTemplate(ItemState.GetMyTemplate());
+
+				if (ArmorTemplate != none)
 				{
-					if (ArmorTemplate.Tier > HighestTier)
+					DisabledReason = "";
+					GetDisabledReason(WeaponTemplate, eSlot, ItemState, DisabledReason);
+					if (ArmorTemplate.ArmorCat == OrigArmorTemplate.ArmorCat && ArmorTemplate.ArmorClass == OrigArmorTemplate.ArmorClass && DisabledReason == "")
 					{
-						HighestTier = ArmorTemplate.Tier;
-						BestItemState = ItemState;
+						if (ArmorTemplate.Tier > HighestTier)
+						{
+							HighestTier = ArmorTemplate.Tier;
+							BestItemState = ItemState;
+						}
+					}
+				}
+			}
+		}
+		else
+		{
+			OrigEquipmentTemplate = X2EquipmentTemplate(OrigItemTemplate);
+			if (OrigEquipmentTemplate != none)
+			{
+				foreach XComHQ.Inventory(ItemRef)
+				{
+					ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+					if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified || ItemIsAlreadyEquipped(ItemState.GetMyTemplate(), eSlot))
+						continue;
+
+					EquipmentTemplate = X2EquipmentTemplate(ItemState.GetMyTemplate());
+
+					if (EquipmentTemplate != none)
+					{
+						DisabledReason = "";
+						GetDisabledReason(WeaponTemplate, eSlot, ItemState, DisabledReason);
+						if (EquipmentTemplate.ItemCat == OrigEquipmentTemplate.ItemCat && DisabledReason == "")
+						{
+							if (EquipmentTemplate.Tier > HighestTier)
+							{
+								HighestTier = EquipmentTemplate.Tier;
+								BestItemState = ItemState;
+							}
+						}
 					}
 				}
 			}
 		}
 	}
-	OrigEquipmentTemplate = X2EquipmentTemplate(OrigItemTemplate);
-	if (OrigEquipmentTemplate != none)
-	{
-		foreach XComHQ.Inventory(ItemRef)
-		{
-			ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
-			if (ItemState == none || ItemState.HasBeenModified() && !bAllowModified)
-				continue;
-
-			EquipmentTemplate = X2EquipmentTemplate(ItemState.GetMyTemplate());
-
-			if (EquipmentTemplate != none)
-			{
-				DummyString = "";
-				if (EquipmentTemplate.ItemCat == OrigEquipmentTemplate.ItemCat && EquipmentTemplate.bInfiniteItem &&
-					GetDisabledReason(WeaponTemplate, eSlot, ItemState, DummyString))
-				{
-					if (EquipmentTemplate.Tier > HighestTier)
-					{
-						HighestTier = EquipmentTemplate.Tier;
-						BestItemState = ItemState;
-					}
-				}
-			}
-		}
-	}
+	
 	if (HighestTier != -999)
 	{
 		return BestItemState;
@@ -794,6 +800,7 @@ final function ClearListItems()
 
 private function BuildUnitSlotMap()
 {
+	local string DummyString;
 	local int i;
 
 	UnitSlotMap.Length = 0;
@@ -805,9 +812,13 @@ private function BuildUnitSlotMap()
 		{
 			UnitSlotMap[i] = class'CHItemSlot'.static.SlotGetMaxItemCount(EInventorySlot(i), UnitState);
 		}
-		else
+		else if (class'CHItemSlot'.static.SlotAvailable(EInventorySlot(i), DummyString, UnitState))
 		{
 			UnitSlotMap[i] = 1;
+		}
+		else
+		{
+			UnitSlotMap[i] = 0;
 		}
 	}
 	if (DoesLoadoutContainArmorThatGrantsUtilitySlot())

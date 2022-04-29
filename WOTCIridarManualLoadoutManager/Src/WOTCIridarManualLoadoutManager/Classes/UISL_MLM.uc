@@ -20,11 +20,11 @@ struct IRIDisplayLoadoutItemStruct
 var config int SaveLoadout_OffsetX;
 var config int SaveLoadout_OffsetY;
 
-var config int LockLoadout_OffsetX;
-var config int LockLoadout_OffsetY;
+var config int LoadLoadout_OffsetX;
+var config int LoadLoadout_OffsetY;
 
 var localized string strSaveLoadout;
-var localized string strLockLoadout;
+var localized string strLoadLoadout;
 
 var private bool bCHLPresent;
 var private bool bLoadoutVisible;
@@ -33,7 +33,7 @@ var private string PathToButton;
 var private bool bRJSSPresent;
 
 const RJSS_List_VerticalOffset = 70;
-const List_VerticalOffset = 35;
+const List_VerticalOffset = 40;
 const ListBG_Padding = 5;
 const ListBG_Alpha = 50;
 const ListBG_ItemHeight = 28.0f;
@@ -512,8 +512,8 @@ private function AddLoadoutButtons(UIArmory_Loadout Screen)
 	ToggleLoadoutLockButton = UIButton(ListContainer.GetChild('IRI_ToggleLoadoutLockButton', false));
 	ToggleLoadoutLockButton = ListContainer.Spawn(class'UIButton', ListContainer).InitButton('IRI_ToggleLoadoutLockButton',, ToggleLoadoutButtonClicked, eUIButtonStyle_NONE);
 
-	ToggleLoadoutLockButton.SetText(default.strLockLoadout);
-	ToggleLoadoutLockButton.SetPosition(default.LockLoadout_OffsetX - 108.65, default.LockLoadout_OffsetY - 121);
+	ToggleLoadoutLockButton.SetText(default.strLoadLoadout);
+	ToggleLoadoutLockButton.SetPosition(default.LoadLoadout_OffsetX - 108.65, default.LoadLoadout_OffsetY - 121);
 	ToggleLoadoutLockButton.AnimateIn(0);
 
 	// The screen disables navigations for the list, which now forces selection to the buttons, when it flips between the two lists

@@ -1,6 +1,6 @@
 [UISL_MLM]
 strSaveLoadout = "SAVE LOADOUT"
-strLockLoadout = "LOAD LOADOUT"
+strLoadLoadout = "EQUIP LOADOUT"
 
 [Help]
 LoadoutListTitleSave = "SELECT LOADOUT"
@@ -10,7 +10,6 @@ LoadoutListSubTitleSave = "PREPARING TO SAVE SOLDIER LOADOUT"
 LoadoutListSubTitleLoad = "PREPARING TO EQUIP SOLDIER LOADOUT"
 
 CreateNewLoadoutButton = "SAVE AS NEW LOADOUT"
-;SelectLoadoutTitle = "SELECT LOADOUT"
 
 EnterLoadoutName = "Enter loadout name"
 PlaceholderLoadoutName = ""

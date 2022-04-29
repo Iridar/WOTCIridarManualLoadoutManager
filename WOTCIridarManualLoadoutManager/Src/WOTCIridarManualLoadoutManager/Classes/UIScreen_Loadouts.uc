@@ -144,6 +144,7 @@ simulated function BuildScreen()
 	ListBG = Spawn(class'UIPanel', ListContainer);
 	ListBG.InitPanel('InventoryListBG'); 
 	ListBG.bShouldPlayGenericUIAudioEvents = false;
+	//ListBG.SetWidth(TitleHeader.headerWidth + 30);
 	ListBG.Show();
 
 	List = Spawn(class'UIList', ListContainer);
@@ -151,6 +152,7 @@ simulated function BuildScreen()
 	List.bSelectFirstAvailable = bSelectFirstAvailable;
 	List.bStickyHighlight = true;
 	List.OnSelectionChanged = SelectedItemChanged;
+	//List.SetWidth(TitleHeader.headerWidth - 60);
 	Navigator.SetSelected(ListContainer);
 	ListContainer.Navigator.SetSelected(List);
 
@@ -206,11 +208,11 @@ simulated function PopulateData()
 	{
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
+		SpawnedItem.SetWidth(TitleHeader.headerWidth - 65);
+		SpawnedItem.InitListItem()/*.ProcessMouseEvents(List.OnChildMouseEvent)*/;
 		SpawnedItem.Loadout = Loadout;
-		SpawnedItem.ListItemWidthMod = ListItemWidthMod;
 		SpawnedItem.UpdateDataDescription(`GetLocalizedString('CreateNewLoadoutButton'), OnCreateLoadoutClicked);
-		
+				
 		UIItemCard_Inventory(ItemCard).PopulateLoadoutFromUnit();
 	}
 
@@ -222,19 +224,17 @@ simulated function PopulateData()
 
 		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
 		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem().ProcessMouseEvents(List.OnChildMouseEvent);
+		SpawnedItem.SetWidth(TitleHeader.headerWidth - 65);
+		SpawnedItem.InitListItem()/*.ProcessMouseEvents(List.OnChildMouseEvent)*/;
 		SpawnedItem.Loadout = Loadout;
-		SpawnedItem.ListItemWidthMod = ListItemWidthMod;
 
 		if (bForSaving)
 		{
 			SpawnedItem.UpdateDataButton(Loadout.LoadoutName, class'UIMPShell_SquadLoadoutList'.default.m_strDeleteSet, OnDeleteLoadoutClicked, OnSaveSelectedLoadoutClicked);
-			
 		}
 		else
 		{
-			SpawnedItem.UpdateDataCheckbox(Loadout.LoadoutName, "", false, none, OnLoadSelectedLoadoutClicked);
-			SpawnedItem.Checkbox.OnMouseEventDelegate = CheckboxMouseEvent;
+			SpawnedItem.UpdateDataCheckbox(Loadout.LoadoutName, "", false, OnCheckboxChanged, OnLoadSelectedLoadoutClicked);
 		}
 	}
 
@@ -361,28 +361,34 @@ private function bool IsItemAllowedByClassInSlot(const name TemplateName, const 
 	return bCheckPassed;
 }
 
-private function CheckboxMouseEvent(UIPanel Panel, int Cmd)
-{
-	switch( cmd )
-	{
-	case class'UIUtilities_Input'.const.FXS_L_MOUSE_IN:
-	case class'UIUtilities_Input'.const.FXS_L_MOUSE_DRAG_OVER:
-		//OnMouseEventDelegate(self, cmd);
-		break;
-	case class'UIUtilities_Input'.const.FXS_L_MOUSE_OUT:
-	case class'UIUtilities_Input'.const.FXS_L_MOUSE_DRAG_OUT:
-		//OnMouseEventDelegate(self, cmd);
-		break;
-	case class'UIUtilities_Input'.const.FXS_L_MOUSE_UP:
-	case class'UIUtilities_Input'.const.FXS_L_MOUSE_DOUBLE_UP:
-		SelectListItem(List.GetItemIndex(Panel.GetParent(class'UIMechaListItem_LoadoutItem')));
-		break;
-	}
-}
-
+// Clicking on the list item or the checkbox toggles the checkbox and unchecks checkboxes on all other items.
 private function OnLoadSelectedLoadoutClicked()
 {
-	SelectListItem(List.GetItemIndex(List.GetSelectedItem()));
+	local UIMechaListItem_LoadoutItem ClickedItem;
+
+	ClickedItem = UIMechaListItem_LoadoutItem(List.GetSelectedItem());
+
+	if (ClickedItem != none && ClickedItem.Checkbox != none)
+	{
+		ClickedItem.Checkbox.SetChecked(!ClickedItem.Checkbox.bChecked, true);
+	}	
+}
+private function OnCheckboxChanged(UICheckbox CheckboxControl)
+{
+	local UIMechaListItem_LoadoutItem ListItem;
+	local int i;
+
+	for (i = 0; i < List.ItemCount; i++)
+	{
+		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
+		if (ListItem == none || ListItem.Checkbox == none)
+			continue;
+
+		if (ListItem.Checkbox != CheckboxControl)
+		{	
+			ListItem.Checkbox.SetChecked(false, false);
+		}
+	}
 }
 
 private function OnDeleteLoadoutClicked(UIButton ButtonSource)
@@ -568,16 +574,10 @@ simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 	if (ListItem == none)
 		return;
 
-	if (bForSaving)
+	// Update loadout contents on the right only if no checkbox is checked in the list on the left.
+	if (!bForSaving && !IsAnyLoadoutSelected())
 	{
-		
-	}
-	else
-	{
-		if (!IsAnyLoadoutSelected())
-		{
-			UIItemCard_Inventory(ItemCard).PopulateLoadoutFromStruct(ListItem.Loadout);
-		}
+		UIItemCard_Inventory(ItemCard).PopulateLoadoutFromStruct(ListItem.Loadout);
 	}
 }
 
