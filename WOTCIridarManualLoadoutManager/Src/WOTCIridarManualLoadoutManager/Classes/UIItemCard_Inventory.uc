@@ -183,10 +183,10 @@ final function array<XComGameState_Item> GetSelectedItemStates()
 	return ReturnArray;
 }
 
-final function array<IRILoadoutItemStruct> GetSelectedLoadoutItems()
+final function array<UIMechaListItem_LoadoutItem> GetSelectedListItems()
 {
-	local UIMechaListItem_LoadoutItem	ListItem;
-	local array<IRILoadoutItemStruct>	ReturnArray;
+	local UIMechaListItem_LoadoutItem			ListItem;
+	local array<UIMechaListItem_LoadoutItem>	ReturnArray;
 	local int i;
 
 	for (i = 0; i < List.ItemCount; i++)
@@ -194,8 +194,7 @@ final function array<IRILoadoutItemStruct> GetSelectedLoadoutItems()
 		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
 		if (ListItem != none && ListItem.Checkbox != none && ListItem.Checkbox.bChecked && ListItem.ItemState != none)
 		{
-			ListItem.LoadoutItem.ItemState = ListItem.ItemState;
-			ReturnArray.AddItem(ListItem.LoadoutItem);
+			ReturnArray.AddItem(ListItem);
 		}
 	}
 	return ReturnArray;
@@ -601,15 +600,15 @@ private function bool GetDisabledReason(const X2ItemTemplate ItemTemplate, const
 
 private function bool DoesLoadoutContainArmorThatGrantsUtilitySlot()
 {
-	local X2ArmorTemplate				ArmorTemplate;
-	local IRILoadoutItemStruct			LoadoutItem;
-	local array<IRILoadoutItemStruct>	SelectedItems;
+	local X2ArmorTemplate						ArmorTemplate;
+	local UIMechaListItem_LoadoutItem			SelectedItem;
+	local array<UIMechaListItem_LoadoutItem>	SelectedItems;
 
-	SelectedItems = GetSelectedLoadoutItems();
+	SelectedItems = GetSelectedListItems();
 
-	foreach SelectedItems(LoadoutItem)
+	foreach SelectedItems(SelectedItem)
 	{
-		ArmorTemplate = X2ArmorTemplate(LoadoutItem.ItemState.GetMyTemplate());
+		ArmorTemplate = X2ArmorTemplate(SelectedItem.ItemState.GetMyTemplate());
 		if (ArmorTemplate != none)
 		{
 			return ArmorTemplate.bAddsUtilitySlot;
@@ -617,17 +616,18 @@ private function bool DoesLoadoutContainArmorThatGrantsUtilitySlot()
 	}
 	return false;
 }
+
 private function bool DoesLoadoutContainArmorThatGrantsHeavyWeaponSlot()
 {
-	local X2ArmorTemplate				ArmorTemplate;
-	local IRILoadoutItemStruct			LoadoutItem;
-	local array<IRILoadoutItemStruct>	SelectedItems;
+	local X2ArmorTemplate						ArmorTemplate;
+	local UIMechaListItem_LoadoutItem			SelectedItem;
+	local array<UIMechaListItem_LoadoutItem>	SelectedItems;
 
-	SelectedItems = GetSelectedLoadoutItems();
+	SelectedItems = GetSelectedListItems();
 
-	foreach SelectedItems(LoadoutItem)
+	foreach SelectedItems(SelectedItem)
 	{
-		ArmorTemplate = X2ArmorTemplate(LoadoutItem.ItemState.GetMyTemplate());
+		ArmorTemplate = X2ArmorTemplate(SelectedItem.ItemState.GetMyTemplate());
 		if (ArmorTemplate != none)
 		{
 			return ArmorTemplate.bHeavyWeapon;

@@ -18,8 +18,6 @@ Loadouts:
 - don't store ItemState in config, find better way
 - delete button too big, too left, and obscures text
 - figure out automatic list item size realization maybe
-- tooltips are broken again.
-- use slot maps in GetDisabledReason(). One for loadout, one for soldier, adjusted by armor in the loadout.
 
 Squad item list:
 - max. height and scrolling.

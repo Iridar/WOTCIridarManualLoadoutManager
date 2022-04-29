@@ -181,9 +181,9 @@ simulated function BuildScreen()
 
 private function OnEquipLoadoutClicked(UIButton Button)
 {
-	local array<IRILoadoutItemStruct> LoadoutItems;
+	local array<UIMechaListItem_LoadoutItem> LoadoutItems;
 
-	LoadoutItems = UIItemCard_Inventory(ItemCard).GetSelectedLoadoutItems();
+	LoadoutItems = UIItemCard_Inventory(ItemCard).GetSelectedListItems();
 	if (LoadoutItems.Length == 0)
 	{
 		ShowInfoPopup(`GetLocalizedString('InvalidLoadoutNameTitle'), `GetLocalizedString('NoItemsInLoadoutText_Equip'), eDialog_Warning);
@@ -625,8 +625,9 @@ private function SelectListItem(const int ItemIndex)
 	}
 }
 
-private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
+private function EquipItems(array<UIMechaListItem_LoadoutItem> LoadoutItems)
 {
+	local UIMechaListItem_LoadoutItem		LoadoutListItem;
 	local IRILoadoutItemStruct				LoadoutItem;
 	local XComGameState						NewGameState;
 	local bool								bChangedSomething;
@@ -646,12 +647,13 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	`AMLOG("==== BEGIN ====");
 	`AMLOG("Loadout Items:" @ LoadoutItems.Length @ "and unit:" @ UnitState.GetFullName() @ UnitState.GetSoldierClassTemplateName());
 
-	foreach LoadoutItems(LoadoutItem)
+	foreach LoadoutItems(LoadoutListItem)
 	{
-		`AMLOG("Loadout Item:" @ LoadoutItem.ItemState.GetMyTemplateName() @ LoadoutItem.Slot);
-
-		ItemState = LoadoutItem.ItemState;
+		LoadoutItem = LoadoutListItem.LoadoutItem;
+		ItemState = LoadoutListItem.ItemState;
 		XComHQ.GetItemFromInventory(NewGameState, ItemState.GetReference(), ItemState);
+
+		`AMLOG("Loadout Item:" @ ItemState.GetMyTemplateName() @ LoadoutItem.Slot);
 		if (ItemState == none)
 			continue;
 
