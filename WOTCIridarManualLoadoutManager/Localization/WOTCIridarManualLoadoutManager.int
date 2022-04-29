@@ -51,6 +51,7 @@ FilterButtonTitle = "FILTER"
 SquadItems = "SQUAD ITEMS"
 
 NoInventorySlotsForItem = "NO SLOT AVAILABLE"
+UnitHasNoSlotButYouMayTry = "Unit appears to not have a slot to equip this item into, but you may attempt equipping it anyway."
 
 [WOTCIridarManualLoadoutManager_MCMScreen]
 ModName = "Loadout Manager"

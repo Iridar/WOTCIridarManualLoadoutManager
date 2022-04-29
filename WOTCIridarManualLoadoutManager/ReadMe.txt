@@ -16,21 +16,19 @@ TODO:
 Loadouts:
 - File autobackup
 - don't store ItemState in config, find better way
-- heavy weapons show as equippable even if there's no slots on the unit and armor that adds them cannot be equipped, even if it's not in the loadout.
-- take num. utility slots into account when not equipping armor that grants the required extra slot
 - delete button too big, too left, and obscures text
 - figure out automatic list item size realization maybe
 - tooltips are broken again.
+- use slot maps in GetDisabledReason(). One for loadout, one for soldier, adjusted by armor in the loadout.
 
 Squad item list:
 - max. height and scrolling.
-- scrolling text on the squad loadout gets cut off in the middle
 
 localization pass
 mod preview image
 
 One day:
-improve slot counting logic
+improve slot counting logic via slot map
 PCS support
 Weapon Upgrade support
 IAM integration
