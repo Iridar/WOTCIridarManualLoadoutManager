@@ -105,7 +105,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 
 	if (!bLoadoutSpawned)
 	{	
-		InitX = 420;
+		InitX = 430;
 		InitY = bRJSSPresent ? RJSS_List_VerticalOffset : List_VerticalOffset;
 
 		// Armor

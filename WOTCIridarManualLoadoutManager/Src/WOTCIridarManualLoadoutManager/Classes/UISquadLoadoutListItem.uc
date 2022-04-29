@@ -16,7 +16,7 @@ var public Object metadataObject;
 
 var private string cachedValue;
 
-var UIText Desc;
+var UIScrollingText Desc;
 var UIPanel BG;
 var bool bDisabled;
 var bool bIsBad;
@@ -77,11 +77,11 @@ simulated function UISquadLoadoutListItem InitListItem(optional name InitName, o
 	BG.InitPanel('mechaBG');
 	BG.SetWidth(Width);
 
-	Desc = Spawn(class'UIText', self);
+	Desc = Spawn(class'UIScrollingText', self);
 	Desc.bIsNavigable = false;
 	Desc.bAnimateOnInit = bAnimateOnInit;
 	
-	Desc.InitText('DescTextControl');
+	Desc.InitScrollingText('DescTextControl');
 
 	//if(GetLanguage() == "JPN")
 	//	Desc.InitScrollingText('DescTextControl',, textWidth,5,-2);
@@ -293,55 +293,6 @@ simulated function OnCommand( string cmd, string arg )
 }
 
 
-simulated function UISquadLoadoutListItem UpdateDataValue(string _Desc,
-								    String _ValueLabel,
-								    optional delegate<OnClickDelegate> _OnClickDelegate = none,
-									optional bool bForce = false,
-									optional delegate<OnSelectorClickDelegate> _OnSelectorClickDelegate = none)
-{
-	SetWidgetType(EUILineItemType_Value);
-	
-	if(Value == none)
-	{
-		Value = Spawn(class'UIScrollingText', self);
-		Value.bAnimateOnInit = bAnimateOnInit;
-		Value.bIsNavigable = false;
-		
-		if(GetLanguage() == "JPN")
-		{
-			Value.InitScrollingText('ValueTextControl',"",250,5,-2);
-		}
-		else
-		{
-			Value.InitScrollingText('ValueTextControl'," " , 250, 5, 0);
-		}
-	}
-	
-	Value.Show();
-	
-	// Force textfield updates so that we can accurately get the textfield size before the getValueTextSize call occurs
-	cachedValue = _ValueLabel;
-
-	MC.BeginFunctionOp("setDescTextField");
-	MC.QueueString(_Desc);
-	MC.EndOp();
-	
-	Desc.SetHTMLText(_Desc,, bForce);
-	
-	Desc.Show();
-
-	MC.BeginFunctionOp("setValueTextField");
-	MC.QueueString(cachedValue);
-	MC.EndOp();
-
-	MC.BeginFunctionOp("getValueTextSize");
-	MC.EndOp();
-
-	OnClickDelegate = _OnClickDelegate;
-	OnSelectorClickDelegate = _OnSelectorClickDelegate;
-
-	return self;
-}
 
 simulated function UISquadLoadoutListItem UpdateDataColorChip(string _Desc,
 										String _HTMLColorChip,
