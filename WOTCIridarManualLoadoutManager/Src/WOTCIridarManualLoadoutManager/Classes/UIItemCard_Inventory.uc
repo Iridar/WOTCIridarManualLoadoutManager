@@ -327,7 +327,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 			}
 			else
 			{
-				SpawnedItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ItemTemplate.GetItemFriendlyNameNoStats(), eUIState_Normal), "", true, OnCheckboxChanged);
+				SpawnedItem.UpdateDataCheckbox(ItemTemplate.GetItemFriendlyNameNoStats(), "", true, OnCheckboxChanged);
 				SpawnedItem.SetTooltipText(`GetLocalizedString('ItemWillBeEquipped'),,,,,,, 0);
 				SpawnedItem.ItemState = ItemState;
 			}
@@ -377,7 +377,7 @@ private function OnCheckboxChanged(UICheckbox CheckboxControl)
 		}
 		else
 		{
-			ListItem.UpdateDataCheckbox(class'UIUtilities_Text'.static.GetColoredText(ListItem.ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), eUIState_Normal), "", ListItem.Checkbox != none && ListItem.Checkbox.bChecked, OnCheckboxChanged);
+			ListItem.UpdateDataCheckbox(ListItem.ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", ListItem.Checkbox != none && ListItem.Checkbox.bChecked, OnCheckboxChanged);
 			ListItem.SetTooltipText(`GetLocalizedString('ItemWillBeEquipped'),,,,,,, 0);
 		}
 	}
