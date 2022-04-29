@@ -55,6 +55,37 @@ private function OnEquipLoadoutShortcutClicked()
 	HQPresLayer.ScreenStack.Push(SaveLoadout, HQPresLayer.Get3DMovie());
 }
 
+// Tooltips don't work out of the box for list items. I don't know why. I don't care why. Fox everything.
+simulated function OnMouseEvent( int cmd, array<string> args )
+{
+	local UITooltip			Tooltip; 
+
+	super.OnMouseEvent(cmd, args);
+
+	switch( cmd )
+	{
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_IN:
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_OVER:
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_DRAG_OVER:
+			Tooltip = Movie.Pres.m_kTooltipMgr.GetTooltipByID(CachedTooltipId);
+			if (Tooltip == none)
+				return;
+			Tooltip.bUsePartialPath = true;
+			Movie.Pres.m_kTooltipMgr.ActivateTooltip(Tooltip);
+			return;
+
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_OUT:
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_DRAG_OUT:
+		case class'UIUtilities_Input'.const.FXS_L_MOUSE_RELEASE_OUTSIDE:
+			Tooltip = Movie.Pres.m_kTooltipMgr.GetTooltipByID(CachedTooltipId);
+			if (Tooltip == none)
+				return;
+			Tooltip.bUsePartialPath = true;
+			Movie.Pres.m_kTooltipMgr.DeactivateTooltip(Tooltip, true);
+			return;
+	}
+}
+
 
 /*
 simulated function UIMechaListItem InitListItem(optional name InitName, optional int defaultWidth = -1, optional int textWidth = 250)

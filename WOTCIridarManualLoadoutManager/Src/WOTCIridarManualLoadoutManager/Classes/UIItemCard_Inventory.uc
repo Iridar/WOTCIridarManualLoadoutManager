@@ -279,8 +279,6 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 		}
 
 		// At this point we have to look for an actual Item State we're going to equip on the soldier.
-
-
 	
 		ItemState = GetDesiredItemState(ItemTemplate.DataName, LoadoutItem.Slot);
 		if (ItemState == none)
@@ -340,13 +338,15 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 	{
 		//List.SetSelectedIndex(1);
 		//SelectedItemChanged(List, 1);
-
+		OnCheckboxChanged(none); 
 		List.RealizeItems();
 		List.RealizeList();
 	}
 
 	`AMLOG("==== END =====");
 }
+
+
 
 // Necessary to update unit slot mask based on selected items
 private function OnCheckboxChanged(UICheckbox CheckboxControl)
