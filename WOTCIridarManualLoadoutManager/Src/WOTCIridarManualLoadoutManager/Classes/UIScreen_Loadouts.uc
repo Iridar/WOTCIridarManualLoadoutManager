@@ -631,7 +631,6 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 	local bool								bChangedSomething;
 	local XComGameState_Item				ItemState;
 	local X2ItemTemplate					ItemTemplate;
-	local X2ItemTemplate					EquippedItemTemplate;
 	local XComGameState_Item				EquippedItem;
 	local array<XComGameState_Item>			EquippedItems;
 	local bool								bSoundPlayed;
@@ -666,6 +665,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 			{
 				// if there are any items in the slot,
 				EquippedItems = UnitState.GetAllItemsInSlot(LoadoutItem.Slot, NewGameState,, true);
+				`AMLOG("This is a multi item slot, this many items in it:" @ EquippedItems.Length);
 				if (EquippedItems.Length > 0)
 				{
 					if (class'Help'.static.IsItemUniqueEquipInSlot(ItemMgr, ItemTemplate, LoadoutItem.Slot))
@@ -674,24 +674,21 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 						{	
 							// Check if the item we want to equip is mutually exclusive with any other item in that slot
 							// I.e. it matches item category or weapon category
-							EquippedItemTemplate = EquippedItem.GetMyTemplate();
-							if (ItemTemplate.ItemCat == EquippedItemTemplate.ItemCat || 
-								X2WeaponTemplate(ItemTemplate) != none && X2WeaponTemplate(EquippedItemTemplate) != none && 
-								X2WeaponTemplate(ItemTemplate).WeaponCat == X2WeaponTemplate(EquippedItemTemplate).WeaponCat)
+							if (class'Help'.static.AreItemTemplatesMutuallyExclusive(ItemTemplate, EquippedItem.GetMyTemplate()))
 							{
 								// Stop cycling when we find a match, at which point the mutually exclusive item should be in EquippedItem.
 								// Or at least it will hold the last item in the slot.
+								`AMLOG("Item we want to equip is mutually exclusive with:" @ EquippedItem.GetMyTemplateName());
 								break;
 							}
-							
 						}
 					}
-					else
+
+					// If we haven't found an item we're mutually exclusive with, then simply use the last item in slot.
+					if (EquippedItem == none)
 					{
 						EquippedItem = EquippedItems[EquippedItems.Length - 1];
 					}
-					
-					`AMLOG("This is a multi slot, attempting to replace the last item:" @ EquippedItem.GetMyTemplateName());
 				}
 			}
 			else // For regular slots, just take the item that is equipped in the slot. We'll attempt to remove it below.
@@ -703,7 +700,7 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 		// If we found an item to replace with the restored equipment, it will be stored in ItemState, and we need to put it back into the inventory
 		if (EquippedItem != none)
 		{
-			`AMLOG("Slot is already occupied by:" @ EquippedItem.GetMyTemplateName());
+			`AMLOG("Slot is occupied by:" @ EquippedItem.GetMyTemplateName());
 			EquippedItem = XComGameState_Item(NewGameState.ModifyStateObject(class'XComGameState_Item', EquippedItem.ObjectID));
 					
 			// Try to remove the item we want to replace from our inventory
@@ -727,11 +724,12 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 				`AMLOG("Slot was previously occupied by:" @ EquippedItem.GetMyTemplateName() @ "attempting to equip it back.");
 				if (UnitState.AddItemToInventory(EquippedItem, LoadoutItem.Slot, NewGameState))
 				{
-					`AMLOG("Success");
+					`AMLOG("Successfully equipped old item.");
 				}
 				else
 				{
-					`AMLOG("Epic fail.");
+					`AMLOG("ERROR, failed to equip the old item. Putting it into HQ inventory.");
+					XComHQ.PutItemInInventory(NewGameState, EquippedItem);
 				}
 			}
 			
@@ -764,6 +762,9 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 				EquippedItem = none;
 			}
 			bChangedSomething = true;
+
+			// Validate loadout after every equipped item, because it can change status of slots on the soldier.
+			UnitState.ValidateLoadout(NewGameState);
 		}		
 		else
 		{
@@ -773,11 +774,12 @@ private function EquipItems(array<IRILoadoutItemStruct> LoadoutItems)
 			`AMLOG("Attempting to equip previously equipped item.");
 			if (UnitState.AddItemToInventory(EquippedItem, LoadoutItem.Slot, NewGameState))
 			{
-				`AMLOG("Success");
+				`AMLOG("Successfully equipped old item.");
 			}
 			else
 			{
-				`AMLOG("Epic fail.");
+				`AMLOG("ERROR, failed to equip the old item. Putting it into HQ inventory.");
+				XComHQ.PutItemInInventory(NewGameState, EquippedItem);
 			}
 		}
 	}

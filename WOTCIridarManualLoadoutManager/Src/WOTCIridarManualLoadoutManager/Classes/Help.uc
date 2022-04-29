@@ -51,6 +51,13 @@ static final function array<XComGameState_Unit> GetSquadUnitStates()
 	return UnitStates;
 }
 
+static final function bool AreItemTemplatesMutuallyExclusive(const X2ItemTemplate TemplateA, const X2ItemTemplate TemplateB)
+{
+	return TemplateA.ItemCat == TemplateB.ItemCat || 
+			X2WeaponTemplate(TemplateA) != none && X2WeaponTemplate(TemplateB) != none && 
+			X2WeaponTemplate(TemplateA).WeaponCat == X2WeaponTemplate(TemplateB).WeaponCat;
+}
+
 
 static final function bool IsItemUniqueEquipInSlot(X2ItemTemplateManager ItemMgr, const X2ItemTemplate ItemTemplate, const EInventorySlot Slot)
 {

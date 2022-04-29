@@ -41,6 +41,7 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 
 	// send mouse scroll events to the list
 	//self.ProcessMouseEvents(OnItemCardMouseEvent); // TODO: This fixes the scroll, but breaks clicking on checkboxes.
+	//self.ProcessMouseEvents(List.OnChildMouseEvent);
 
 	XComHQ = `XCOMHQ;
 	LocTag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
@@ -484,21 +485,31 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 	//end of issue #114
 	
 	// Here we deviate from how original GetDisabledReason() works, becaue we don't have the luxury of a specific index of the multi item slot to which want to equip the new item.
-	if(DisabledReason == "" && class'Help'.static.IsItemUniqueEquipInSlot(ItemMgr, ItemTemplate, Slot))
+	// Proceed only if the item is mutually exclusive with some other item equipped on the soldier.
+	if (DisabledReason == "" && class'Help'.static.IsItemUniqueEquipInSlot(ItemMgr, ItemTemplate, Slot) && !UnitState.RespectsUniqueRule(ItemTemplate, Slot))
 	{
-		// When dealing with multi-item slots, we can allow *one* item in that slot to be mutually exclusive with the item we want to equip, 
-		// cuz we're gonna be replacing that one when we'll be actually equipping the item (handled in UIScreen_Loadouts::EquipItems());
+		`AMLOG(ItemTemplate.DataName @ "is unique-equip in slot:" @ Slot); 
+		// We can allow the item we want to equip to be mutually exclusive with *one* item in the target inventory slot, since EquipItems() is set up to replace it.
+
+		// So for multi-item slots, look for items in that slot we're mutually exclusive with.
+		// Provide a disabled reason if there is more than one such item in this slot,
+		// or if there is still some other item on the soldier we're mutually exclusive with, even if they are in other slots.
 		if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
 		{
 			EquippedItemStates = UnitState.GetAllItemsInSlot(Slot);
 			iNumMutuallyExclusiveItems = 0;
+			`AMLOG("This a multi-item slot is occupied by this many items:" @ EquippedItemStates.Length); 
+
 			foreach EquippedItemStates(EquippedItemState)
 			{
-				if (!UnitState.RespectsUniqueRule(ItemTemplate, Slot, , EquippedItemState.ObjectID))
+				`AMLOG("Slot is occupied by:" @ EquippedItemState.GetMyTemplateName()); 
+				if (class'Help'.static.AreItemTemplatesMutuallyExclusive(ItemTemplate, EquippedItemState.GetMyTemplate()))
 				{
+					`AMLOG("We're mutually exclusive with this item."); 
 					iNumMutuallyExclusiveItems++;
-					if (iNumMutuallyExclusiveItems > 1)
+					if (iNumMutuallyExclusiveItems > 1 || !UnitState.RespectsUniqueRule(ItemTemplate, Slot, , EquippedItemState.ObjectID))
 					{
+						`AMLOG("More than one mutually exclusive item:" @ iNumMutuallyExclusiveItems @ "or we're still mutually exclusive with some other item besides this one, setting disabled reason, breaking off."); 
 						LocTag.StrValue0 = ItemTemplate.GetLocalizedCategory();
 						DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strCategoryRestricted));
 						break;
@@ -509,8 +520,10 @@ private function string GetDisabledReason(const X2ItemTemplate ItemTemplate, EIn
 		else // Non-multi slots are handled by base game code well enough, which just checks if the item we want to equip is mutually exclusive with any of the times equipped on the unit
 		{	 // besides the item equipped in the inventory slot itself, as *that* item will be removed from the unit before we attempt to equip a new one.
 			EquippedItemState = UnitState.GetItemInSlot(Slot);
+			`AMLOG("Slot is occupied by:" @ EquippedItemState.GetMyTemplateName()); 
 			if (EquippedItemState != none && !UnitState.RespectsUniqueRule(ItemTemplate, Slot, , EquippedItemState.ObjectID))
 			{
+				`AMLOG("Even if we ignore that item, the item we want to equip must be mutually exclusive with something else. Setting disabled reason."); 
 				LocTag.StrValue0 = ItemTemplate.GetLocalizedCategory();
 				DisabledReason = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(`XEXPAND.ExpandString(class'UIArmory_Loadout'.default.m_strCategoryRestricted));
 			}
