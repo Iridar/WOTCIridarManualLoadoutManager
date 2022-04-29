@@ -14,8 +14,6 @@
     <Folder Include="Config\Base\" />
     <Folder Include="Localization\" />
     <Folder Include="Src\" />
-    <Folder Include="Content\" />
-    <Folder Include="ContentForCook\" />
     <Folder Include="Src\ModConfigMenuAPI\" />
     <Folder Include="Src\ModConfigMenuAPI\Classes\" />
     <Folder Include="Src\WOTCIridarManualLoadoutManager\" />
@@ -30,7 +28,6 @@
     </Content>
     <Content Include="ReadMe.txt" />
     <Content Include="ModPreview.jpg" />
-    <Content Include="ContentOptions.json" />
     <Content Include="Config\Base\XComEditor.ini" />
     <Content Include="Config\Base\XComEngine.ini" />
     <Content Include="Config\Base\XComGame.ini" />
@@ -107,7 +104,6 @@
     </Content>
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\X2DLCInfo_WOTCIridarManualLoadoutManager.uc" />
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\Help.uc" />
-    <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\ConfigEngine.uc" />
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\X2EventListener_MLM.uc">
       <SubType>Content</SubType>
     </Content>
