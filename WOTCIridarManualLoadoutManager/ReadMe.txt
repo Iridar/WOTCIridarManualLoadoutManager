@@ -19,6 +19,7 @@ Loadouts:
 - special handle grenade pocket to allow equipping the grenade into utility slot, if one is available
 
 Squad item list:
+ taking the soldier skill panel into account automatically when I get back.
 - max. height and scrolling.
 
 localization pass

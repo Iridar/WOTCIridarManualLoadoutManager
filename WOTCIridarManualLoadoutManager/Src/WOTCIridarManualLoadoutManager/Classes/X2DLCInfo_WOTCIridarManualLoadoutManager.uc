@@ -25,12 +25,12 @@ static exec function SetWidth(int NewWidth)
 	class'UIScreen_Loadouts'.default.LeftPanelW = NewWidth;
 }
 */
-
+/*
 static exec function SetListItemWidth(int NewWidth)
 {
 	class'X2EventListener_MLM'.default.ListItemWidth = NewWidth;
 }
-
+*/
 
 /// <summary>
 /// This method is run if the player loads a saved game that was created prior to this DLC / Mod being installed, and allows the 

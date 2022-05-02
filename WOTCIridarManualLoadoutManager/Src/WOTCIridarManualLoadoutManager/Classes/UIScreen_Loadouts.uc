@@ -371,6 +371,7 @@ private function OnLoadSelectedLoadoutClicked()
 	if (ClickedItem != none && ClickedItem.Checkbox != none)
 	{
 		ClickedItem.Checkbox.SetChecked(!ClickedItem.Checkbox.bChecked, true);
+		UIItemCard_Inventory(ItemCard).PopulateLoadoutFromStruct(ClickedItem.Loadout);
 	}	
 }
 private function OnCheckboxChanged(UICheckbox CheckboxControl)

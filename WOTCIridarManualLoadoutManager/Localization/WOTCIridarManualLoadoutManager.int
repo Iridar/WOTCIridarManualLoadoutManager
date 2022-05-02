@@ -32,14 +32,36 @@ NoItemsInLoadoutText_Equip  = "No items in the loadout are selected. Loadout wil
 ConfirmOverwriteLoadoutTitle = "CONFIRM OVERWRITE"
 ConfirmOverwriteLoadoutText = "Are you sure you want to overwrite loadout %LoadoutName%?"
 
-MissingItemTemplate = "Missing Item Template:"
-MissingItemTemplate_Tooltip = "Template for this item is not available. This item currently doesn't exist in your game. Most likely you are missing a mod that added this item previously."
+
 ItemAlreadyEquipped = "This item is already equipped on this unit in this slot."
-ItemNotFoundInInventory = "This item is currently not available."
-ItemNotFoundInInventoryAndNoReplacement = "This item is currently not available and there are no suitable replacements."
+
 ItemNotFoundInInventoryButReplacementFound = "This item is currently not available, but you can try using the suggested replacement."
-UnitCannotEquipItem = "This unit cannot equip this item."
 ItemWillBeEquipped = "Everything is OK. This item will be equipped on the unit if the checkbox is checked."
+
+LIS_MissingTemplate				= "Missing Item Template:"
+;LIS_NotAvailable				= ""
+;LIS_NotAvailable_NoReplacement	= ""
+;LIS_Restricted					= ""
+LIS_NoSlot						= ": NO SLOT AVAILABLE"
+;LIS_NotSelected				= ""
+;LIS_Selected					= ""
+;LIS_AlreadyEquipped			= ""
+
+LIS_MissingTemplate_Tooltip				= "Template for this item is not available. This item currently doesn't exist in your game. Most likely you are missing a mod that added this item previously."
+LIS_NotAvailable_Tooltip				= "This item is currently not available."
+LIS_NotAvailable_Tooltip_NoReplacement	= "This item is currently not available and there are no suitable replacements."
+LIS_Restricted_Tooltip					= "This unit cannot equip this item."
+LIS_NoSlot_Tooltip						= "Unit appears to not have a slot to equip this item into, but you may attempt equipping it anyway."
+LIS_NotSelected_Tooltip					= "This item will not be equipped. Check the checkbox to equip the item."
+LIS_Selected_Tooltip					= "This item will be equipped on the unit."
+LIS_AlreadyEquipped_Tooltip				= "This item is already equipped on this unit in this slot."
+
+
+
+
+
+
+
 
 SearchFieldTitle = "Enter partial loadout name"
 SearchButtonTooltip = "Search loadouts with specified text in their name."
@@ -49,8 +71,6 @@ FilterButtonTitle = "FILTER"
 
 SquadItems = "SQUAD ITEMS"
 
-NoInventorySlotsForItem = "NO SLOT AVAILABLE"
-UnitHasNoSlotButYouMayTry = "Unit appears to not have a slot to equip this item into, but you may attempt equipping it anyway."
 
 [WOTCIridarManualLoadoutManager_MCMScreen]
 ModName = "Loadout Manager"

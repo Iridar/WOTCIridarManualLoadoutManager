@@ -1,6 +1,10 @@
 class X2EventListener_MLM extends X2EventListener config(UI);
 
-var config int ListItemWidth;
+var config int SquadSelectLoadoutShortcut_ListItemWidth;
+var config int SquadSelectLoadoutShortcut_VerticalOffset_RJSS;
+var config int SquadSelectLoadoutShortcut_SoldierPanel_VerticalOffset_RJSS;
+var config int SquadSelectLoadoutShortcut_VerticalOffset;
+var config int SquadSelectLoadoutShortcut_SoldierPanel_VerticalOffset;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
@@ -82,7 +86,7 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 				else
 				{
 					Shortcut.UpdateDataDescriptionShortcut(UnitState);
-					Shortcut.SetWidth(default.ListItemWidth);
+					Shortcut.SetWidth(default.SquadSelectLoadoutShortcut_ListItemWidth);
 					Shortcut.Desc.SetWidth(Shortcut.Width - 10);
 					Shortcut.Show();
 				}
@@ -92,11 +96,11 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 				Shortcut = ListItem.Spawn(class'UIMechaListItem_LoadoutItem', ListItem);
 				Shortcut.InitListItem('IRI_MLM_LoadLoadout_SquadSelect_Shortcut').bAnimateOnInit = false;
 				Shortcut.UpdateDataDescriptionShortcut(UnitState);
-				Shortcut.SetWidth(default.ListItemWidth);
+				Shortcut.SetWidth(default.SquadSelectLoadoutShortcut_ListItemWidth);
 				Shortcut.Desc.SetWidth(Shortcut.Width - 10);
 
-				Shortcut.SetY(ListItem.Height + robojumper_UISquadSelect_ListItem(ListItem).GetExtraHeight());
-				ListItem.SetY(ListItem.Y - Shortcut.Height - 10);
+				Shortcut.SetY(ListItem.Height + robojumper_UISquadSelect_ListItem(ListItem).GetExtraHeight() + default.SquadSelectLoadoutShortcut_VerticalOffset_RJSS);
+				ListItem.SetY(ListItem.Y - Shortcut.Height + default.SquadSelectLoadoutShortcut_SoldierPanel_VerticalOffset_RJSS);
 			}			
 		}
 	}
@@ -122,7 +126,7 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 				else
 				{
 					Shortcut.UpdateDataDescriptionShortcut(UnitState);
-					Shortcut.SetWidth(default.ListItemWidth);
+					Shortcut.SetWidth(default.SquadSelectLoadoutShortcut_ListItemWidth);
 					Shortcut.Desc.SetWidth(Shortcut.Width - 10);
 					Shortcut.Show();
 				}
@@ -132,11 +136,11 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 				Shortcut = ListItem.Spawn(class'UIMechaListItem_LoadoutItem', ListItem);
 				Shortcut.InitListItem('IRI_MLM_LoadLoadout_SquadSelect_Shortcut').bAnimateOnInit = false;
 				Shortcut.UpdateDataDescriptionShortcut(UnitState);
-				Shortcut.SetWidth(default.ListItemWidth);
+				Shortcut.SetWidth(default.SquadSelectLoadoutShortcut_ListItemWidth);
 				Shortcut.Desc.SetWidth(Shortcut.Width - 10);
 
-				Shortcut.SetY(362);
-				ListItem.SetY(ListItem.Y - Shortcut.Height);
+				Shortcut.SetY(362 + default.SquadSelectLoadoutShortcut_VerticalOffset);
+				ListItem.SetY(ListItem.Y - Shortcut.Height + default.SquadSelectLoadoutShortcut_SoldierPanel_VerticalOffset);
 			}
 		}
 	}

@@ -7,6 +7,17 @@ class Help extends Object abstract;
 
 var localized string strDummy;
 
+enum ELoadoutItemStatus
+{
+	eLIS_Unknown,
+	eLIS_MissingTemplate,
+	eLIS_NotAvailable,
+	eLIS_Restricted,
+	eLIS_NoSlot,
+	eLIS_NotSelected,
+	eLIS_Selected,
+	eLIS_AlreadyEquipped
+};
 
 struct IRILoadoutItemStruct
 {
