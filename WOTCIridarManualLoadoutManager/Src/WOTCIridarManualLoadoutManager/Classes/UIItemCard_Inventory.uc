@@ -241,7 +241,7 @@ final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 		SpawnedItem.bIsNavigable = true;
 		SpawnedItem.InitListItem();
 		SpawnedItem.InitLoadoutItem(Loadout, LoadoutItem, ItemMgr, UnitState, XComHQ);
-		SpawnedItem.UpdateItem(true);
+		SpawnedItem.UpdateItem();
 
 		// Go to next loadout item.
 	}

@@ -14,6 +14,7 @@ var XComGameState_Unit		UnitState;		// Used when displaying a "Load Loadout" sho
 var X2ItemTemplate			ItemTemplate;			// Set when the ItemState contains a replacement item (so that it can be compared against ReplacemenTemplate)
 var X2ItemTemplate			ReplacementTemplate;	// Set when the ItemState contains a replacement item.
 
+var ELoadoutItemStatus		PrevStatus;
 var ELoadoutItemStatus		Status;			// Current status of the loadout item.
 var int						MappedSlotIndex;// Used for multi-item slots to figure which of the slots the item must be equipped into.
 
@@ -43,12 +44,26 @@ final function InitLoadoutItem(IRILoadoutStruct _Loadout, IRILoadoutItemStruct	_
 	ItemState = GetItemState();
 }
 
-final function UpdateItem(optional bool bUpdateCheckbox)
+final function UpdateItem(optional bool bJustToggleCheckbox) // True when this function runs for clicking on this item.
 {
 	UpdateItemStatus();
+
 	if (IsCheckboxAvailable())
 	{
-		UpdateDataCheckbox(GetColoredTitle(), "", Status != eLIS_NoSlot, OnCheckboxChanged, OnLoadoutItemClicked);
+		if (bJustToggleCheckbox)
+		{
+			UpdateDataCheckbox(GetColoredTitle(), "", Checkbox != none && Checkbox.bChecked, OnCheckboxChanged, OnLoadoutItemClicked);
+		}
+		else if (PrevStatus == eLIS_NoSlot || Status == eLIS_NoSlot)
+		{
+			UpdateDataCheckbox(GetColoredTitle(), "", Status != eLIS_NoSlot, OnCheckboxChanged, OnLoadoutItemClicked);
+		}
+		else
+		{
+			UpdateDataCheckbox(GetColoredTitle(), "", Status == eLIS_Selected, OnCheckboxChanged, OnLoadoutItemClicked);
+		}
+				
+		`AMLOG("Updated item:" @ LoadoutItem.Item @ Status);
 	}
 	else
 	{
@@ -86,8 +101,11 @@ private function OnLoadoutItemClicked()
 	}	
 }
 
+// Returns true if status has changed.
 final function UpdateItemStatus()
 {
+	PrevStatus = Status;
+
 	if (ItemTemplate == none)
 	{
 		Status = eLIS_MissingTemplate;
@@ -110,14 +128,10 @@ final function UpdateItemStatus()
 		else if (!IsSlotAvailable())
 		{
 			Status = eLIS_NoSlot;
-			if (Checkbox != none)
-			{
-				Checkbox.SetChecked(false, false);
-			}
 		}
 		else
 		{
-			if (Checkbox != none && Checkbox.bChecked)
+			if (Checkbox != none && Checkbox.bChecked || PrevStatus == eLIS_Unknown) // If checkbox is checked or the list item is init-ed for the first time.
 			{
 				Status = eLIS_Selected;
 			}
@@ -127,6 +141,7 @@ final function UpdateItemStatus()
 			}
 		}
 	}
+	`AMLOG("Prev status:" @ PrevStatus @ "new status:" @ Status);
 }
 
 private function string GetColoredTitle()
@@ -337,6 +352,8 @@ private function UpdateAllItems()
 	local UIMechaListItem_LoadoutItem	ListItem;
 	local int i;
 
+	`AMLOG("=================================================================");
+
 	List = UIList(GetParent(class'UIList'));
 	for (i = 0; i < List.ItemCount; i++)
 	{	
@@ -344,7 +361,8 @@ private function UpdateAllItems()
 		if (ListItem == none)
 			continue;
 
-		ListItem.UpdateItem(); // Force update items where slot was an issue
+		`AMLOG("Updating item:" @ ListItem.LoadoutItem.Item @ ListItem.Status);
+		ListItem.UpdateItem(ListItem == self); // Force update items where slot was an issue
 	}
 }
 
