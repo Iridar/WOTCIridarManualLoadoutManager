@@ -78,6 +78,9 @@
     <Content Include="Src\ModConfigMenuAPI\MCM_API_Includes.uci">
       <SubType>Content</SubType>
     </Content>
+    <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\LoadoutObject.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\UIItemCard_Inventory.uc">
       <SubType>Content</SubType>
     </Content>

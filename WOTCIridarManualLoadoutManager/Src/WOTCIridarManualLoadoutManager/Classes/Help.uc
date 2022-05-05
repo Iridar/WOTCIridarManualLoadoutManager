@@ -14,8 +14,7 @@ enum ELoadoutItemStatus
 	eLIS_NotAvailable,
 	eLIS_Restricted,
 	eLIS_NoSlot,
-	eLIS_NotSelected,
-	eLIS_Selected,
+	eLIS_Normal,
 	eLIS_AlreadyEquipped
 };
 

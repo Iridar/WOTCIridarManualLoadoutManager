@@ -14,24 +14,28 @@ var XComGameState_Unit		UnitState;		// Used when displaying a "Load Loadout" sho
 var X2ItemTemplate			ItemTemplate;			// Set when the ItemState contains a replacement item (so that it can be compared against ReplacemenTemplate)
 var X2ItemTemplate			ReplacementTemplate;	// Set when the ItemState contains a replacement item.
 
-var ELoadoutItemStatus		PrevStatus;
+
 var ELoadoutItemStatus		Status;			// Current status of the loadout item.
+var string					SlotDisabledReason;
+var string					CachedDisabledReason;
+
+
+var ELoadoutItemStatus		PrevStatus;
 var int						MappedSlotIndex;// Used for multi-item slots to figure which of the slots the item must be equipped into.
 
 // Cached stuff
-var X2ItemTemplateManager			ItemMgr;
-var XComGameState_HeadquartersXCom	XComHQ;
-var XComGameStateHistory			History;
-var string							SlotDisabledReason;
-var string							CachedDisabledReason;
-var private XGParamTag				LocTag;
+var private X2ItemTemplateManager			ItemMgr;
+var private XComGameState_HeadquartersXCom	XComHQ;
+var private XComGameStateHistory			History;
+var private XGParamTag						LocTag;
+
+var delegate<OnCheckboxChangedCallback> OnCheckboxChangedFn;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
-
-final function InitLoadoutItem(IRILoadoutStruct _Loadout, IRILoadoutItemStruct	_LoadoutItem, X2ItemTemplateManager _ItemMgr, XComGameState_Unit _UnitState, XComGameState_HeadquartersXCom _XComHQ)
+// Returns true if the item can be equipped on the unit if there's a slot for it.
+final function bool InitLoadoutItem(IRILoadoutItemStruct _LoadoutItem, X2ItemTemplateManager _ItemMgr, XComGameState_Unit _UnitState, XComGameState_HeadquartersXCom _XComHQ)
 {	
-	Loadout = _Loadout;
 	LoadoutItem = _LoadoutItem;
 	UnitState = _UnitState;
 	ItemMgr = _ItemMgr;
@@ -41,29 +45,54 @@ final function InitLoadoutItem(IRILoadoutStruct _Loadout, IRILoadoutItemStruct	_
 	LocTag = XGParamTag(`XEXPANDCONTEXT.FindTag("XGParam"));
 
 	ItemTemplate = ItemMgr.FindItemTemplate(LoadoutItem.Item);
+	if (ItemTemplate == none)
+	{
+		SetStatus(eLIS_MissingTemplate);
+		return false;
+	}
+
 	ItemState = GetItemState();
+	if (ItemState == none)
+	{
+		SetStatus(eLIS_NotAvailable);
+		return false;
+	}
+		
+	CachedDisabledReason = GetDisabledReason(ItemTemplate, ItemState);
+	if (CachedDisabledReason != "")
+	{
+		SetStatus(eLIS_Restricted);
+		return false;
+	}
+
+	return true;
 }
+
+final function SetStatus(const ELoadoutItemStatus NewStatus)
+{
+	Status = NewStatus;
+	UpdateItem();
+}
+
 
 final function UpdateItem(optional bool bJustToggleCheckbox) // True when this function runs for clicking on this item.
 {
-	UpdateItemStatus();
+	//UpdateItemStatus();
 
 	if (IsCheckboxAvailable())
 	{
 		if (bJustToggleCheckbox)
 		{
-			UpdateDataCheckbox(GetColoredTitle(), "", Checkbox != none && Checkbox.bChecked, OnCheckboxChanged, OnLoadoutItemClicked);
+			UpdateDataCheckbox(GetColoredTitle(), "", Checkbox != none && Checkbox.bChecked, OnCheckboxChangedFn, OnLoadoutItemClicked);
 		}
-		else if (PrevStatus == eLIS_NoSlot || Status == eLIS_NoSlot)
+		else if (Status == eLIS_NoSlot)
 		{
-			UpdateDataCheckbox(GetColoredTitle(), "", Status != eLIS_NoSlot, OnCheckboxChanged, OnLoadoutItemClicked);
+			UpdateDataCheckbox(GetColoredTitle(), "", false, OnCheckboxChangedFn, OnLoadoutItemClicked);
 		}
 		else
 		{
-			UpdateDataCheckbox(GetColoredTitle(), "", Status == eLIS_Selected, OnCheckboxChanged, OnLoadoutItemClicked);
+			UpdateDataCheckbox(GetColoredTitle(), "", Status >= eLIS_Normal, OnCheckboxChangedFn, OnLoadoutItemClicked);
 		}
-				
-		`AMLOG("Updated item:" @ LoadoutItem.Item @ Status);
 	}
 	else
 	{
@@ -73,76 +102,47 @@ final function UpdateItem(optional bool bJustToggleCheckbox) // True when this f
 	SetTooltipText(GetTooltipText(),,,,,,, 0);
 }
 
-private function OnCheckboxChanged(UICheckbox CheckboxControl)
+private function bool IsCheckboxAvailable()
 {
-	//local UIList ContainerList;
-
-	//if (CheckboxControl.bChecked)
-	//{
-	//	Status = eLIS_Selected;
-	//}
-	//else
-	//{
-	//	Status = eLIS_NotSelected;
-	//}
-	
-	//UpdateItemStatus();
-	//UpdateItem();
-	UpdateAllItems();
-
-	//ContainerList = UIList(GetParent(class'UIList'));
+	switch (Status)
+	{
+	case eLIS_Unknown:
+	case eLIS_MissingTemplate:
+	case eLIS_NotAvailable:
+	case eLIS_Restricted:
+		return false;
+	case eLIS_NoSlot:
+	case eLIS_Normal:
+		return true;
+	case eLIS_AlreadyEquipped:
+		return class'CHItemSlot'.static.SlotIsMultiItem(LoadoutItem.Slot);
+	default:
+		return false;
+	}
 }
 
-private function OnLoadoutItemClicked()
+private function string ColorText(string Text)
 {
-	if (Checkbox != none)
+	switch (Status)
 	{
-		Checkbox.SetChecked(!Checkbox.bChecked);
-	}	
+	case eLIS_Unknown:
+		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Bad);
+	case eLIS_MissingTemplate:
+		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Disabled);
+	case eLIS_NotAvailable:
+	case eLIS_Restricted:	
+		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Bad);
+	case eLIS_NoSlot:
+		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Warning);
+	case eLIS_Normal:
+		return Text; // defaults to normal color.
+	case eLIS_AlreadyEquipped:
+		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Good);
+	default:
+		return "Warning, unhandled Loadout Item Status:" @ Status;
+	}
 }
 
-// Returns true if status has changed.
-final function UpdateItemStatus()
-{
-	PrevStatus = Status;
-
-	if (ItemTemplate == none)
-	{
-		Status = eLIS_MissingTemplate;
-	}
-	else if (IsItemAlreadyEquipped(ItemTemplate))
-	{
-		Status = eLIS_AlreadyEquipped;
-	}
-	if (ItemState == none)
-	{
-		Status = eLIS_NotAvailable;
-	}
-	else
-	{
-		CachedDisabledReason = GetDisabledReason(ItemTemplate, ItemState);
-		if (CachedDisabledReason != "")
-		{
-			Status = eLIS_Restricted;
-		}
-		else if (!IsSlotAvailable())
-		{
-			Status = eLIS_NoSlot;
-		}
-		else
-		{
-			if (Checkbox != none && Checkbox.bChecked || PrevStatus == eLIS_Unknown) // If checkbox is checked or the list item is init-ed for the first time.
-			{
-				Status = eLIS_Selected;
-			}
-			else
-			{
-				Status = eLIS_NotSelected;
-			}
-		}
-	}
-	`AMLOG("Prev status:" @ PrevStatus @ "new status:" @ Status);
-}
 
 private function string GetColoredTitle()
 {
@@ -171,8 +171,7 @@ private function string GetTitle()
 			return ItemTemplate.GetItemFriendlyNameNoStats() $ `GetLocalizedString('LIS_NoSlot');
 		}
 		
-	case eLIS_NotSelected:
-	case eLIS_Selected:
+	case eLIS_Normal:
 	case eLIS_AlreadyEquipped:
 		return ItemTemplate.GetItemFriendlyNameNoStats();
 	default:
@@ -180,50 +179,16 @@ private function string GetTitle()
 	}
 }
 
-private function bool IsCheckboxAvailable()
+private function OnLoadoutItemClicked()
 {
-	switch (Status)
+	if (Checkbox != none)
 	{
-	case eLIS_Unknown:
-	case eLIS_MissingTemplate:
-	case eLIS_NotAvailable:
-	case eLIS_Restricted:
-		return false;
-	case eLIS_NoSlot:
-	case eLIS_NotSelected:
-	case eLIS_Selected:
-		return true;
-	case eLIS_AlreadyEquipped:
-		return false;
-	default:
-		return false;
-	}
+		Checkbox.SetChecked(!Checkbox.bChecked);
+	}	
 }
 
 
 
-private function string ColorText(string Text)
-{
-	switch (Status)
-	{
-	case eLIS_Unknown:
-		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Bad);
-	case eLIS_MissingTemplate:
-		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Disabled);
-	case eLIS_NotAvailable:
-	case eLIS_Restricted:	
-		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Bad);
-	case eLIS_NoSlot:
-		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Warning);
-	case eLIS_NotSelected:
-	case eLIS_Selected:
-		return Text; // defaults to normal color.
-	case eLIS_AlreadyEquipped:
-		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Good);
-	default:
-		return "Warning, unhandled Loadout Item Status:" @ Status;
-	}
-}
 
 private function bool IsItemAlreadyEquipped(const X2ItemTemplate _ItemTemplate)
 {
@@ -239,10 +204,11 @@ private function bool IsItemAlreadyEquipped(const X2ItemTemplate _ItemTemplate)
 
 		foreach EquippedItems(EquippedItem)
 		{
-			`AMLOG("Equipped item:" @ EquippedItem.GetMyTemplateName());
+			`AMLOG("Equipped item:" @ EquippedItem.GetMyTemplateName() @ "comparing to:" @ _ItemTemplate.DataName);
 
 			if (EquippedItem.GetMyTemplateName() == _ItemTemplate.DataName)
 			{
+				`AMLOG("Match found");
 				return true;
 			}
 		}
@@ -259,112 +225,163 @@ private function bool IsItemAlreadyEquipped(const X2ItemTemplate _ItemTemplate)
 	return false;
 }
 
-private function bool IsSlotAvailable()
-{
-	local int SlotMaxItemCount;
-
-	SlotDisabledReason = "";
-
-	if (class'CHItemSlot'.static.SlotIsMultiItem(LoadoutItem.Slot))
-	{
-		SlotMaxItemCount = class'CHItemSlot'.static.SlotGetMaxItemCount(LoadoutItem.Slot, UnitState);
-
-		switch (LoadoutItem.Slot)
-		{
-		case eInvSlot_Utility:
-			if (DoesLoadoutContainArmorThatGrantsUtilitySlot())
-			{
-				SlotMaxItemCount++;
-			}
-			break;
-		case eInvSlot_HeavyWeapon:
-			if (DoesLoadoutContainArmorThatGrantsHeavyWeaponSlot())
-			{
-				SlotMaxItemCount++;
-			}
-			break;
-		default:
-			break;
-		}
-
-		return MappedSlotIndex < SlotMaxItemCount;
-	}
-	return class'CHItemSlot'.static.SlotAvailable(LoadoutItem.Slot, SlotDisabledReason, UnitState);
-}
-
-private function bool DoesLoadoutContainArmorThatGrantsUtilitySlot()
-{
-	local X2ArmorTemplate						ArmorTemplate;
-	local UIMechaListItem_LoadoutItem			SelectedItem;
-	local array<UIMechaListItem_LoadoutItem>	SelectedItems;
-	local UIItemCard_Inventory					ItemCard;
-
-	ItemCard = UIItemCard_Inventory(GetParent(class'UIItemCard_Inventory'));
-	if (ItemCard == none)
-	{
-		`AMLOG("WARNING :: No Item Card parent panel.");
-		`AMLOG(GetScriptTrace());
-		return false;
-	}
-	SelectedItems = ItemCard.GetSelectedListItems();
-
-	foreach SelectedItems(SelectedItem)
-	{
-		ArmorTemplate = X2ArmorTemplate(SelectedItem.ItemState.GetMyTemplate());
-		if (ArmorTemplate != none)
-		{
-			return ArmorTemplate.bAddsUtilitySlot;
-		}
-	}
-	return false;
-}
-
-private function bool DoesLoadoutContainArmorThatGrantsHeavyWeaponSlot()
-{
-	local X2ArmorTemplate						ArmorTemplate;
-	local UIMechaListItem_LoadoutItem			SelectedItem;
-	local array<UIMechaListItem_LoadoutItem>	SelectedItems;
-	local UIItemCard_Inventory					ItemCard;
-
-	ItemCard = UIItemCard_Inventory(GetParent(class'UIItemCard_Inventory'));
-	if (ItemCard == none)
-	{
-		`AMLOG("WARNING :: No Item Card parent panel.");
-		`AMLOG(GetScriptTrace());
-		return false;
-	}
-	SelectedItems = ItemCard.GetSelectedListItems();
-
-	foreach SelectedItems(SelectedItem)
-	{
-		ArmorTemplate = X2ArmorTemplate(SelectedItem.ItemState.GetMyTemplate());
-		if (ArmorTemplate != none)
-		{
-			return ArmorTemplate.bHeavyWeapon;
-		}
-	}
-	return false;
-}
-
 private function UpdateAllItems()
 {
 	local UIList						List;
 	local UIMechaListItem_LoadoutItem	ListItem;
+	//local array<int>					SlotMap;
+	//local array<EInventorySlot>			Slots;
 	local int i;
 
 	`AMLOG("=================================================================");
 
+	/*class'CHItemSlot'.static.CollectSlots(class'CHItemSlot'.const.SLOT_ALL, Slots);
+	for (i = Slots.Length - 1; i >= 0; i--)
+	{
+		if (!class'CHItemSlot'.static.SlotIsMultiItem(Slots[i]))
+		{
+			Slots.Remove(i, 1);
+		}
+	}*/
+
+	//MapSlotIndex_FirstPass(Slots);
+
+	//SlotMap.Add(eInvSlot_MAX);
 	List = UIList(GetParent(class'UIList'));
+
 	for (i = 0; i < List.ItemCount; i++)
 	{	
 		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
 		if (ListItem == none)
 			continue;
 
+		//SlotMap[ListItem.LoadoutItem.Slot]++;
+
 		`AMLOG("Updating item:" @ ListItem.LoadoutItem.Item @ ListItem.Status);
 		ListItem.UpdateItem(ListItem == self); // Force update items where slot was an issue
 	}
 }
+
+// Already equipped items.
+/*
+private function MapSlotIndex_FirstPass(const out array<EInventorySlot> Slots)
+{
+	local UIList								List;
+	local UIMechaListItem_LoadoutItem			ListItem;
+	local array<UIMechaListItem_LoadoutItem>	ListItems;
+	local EInventorySlot						Slot;
+	local XComGameState_Item					EquippedItem;
+	local array<XComGameState_Item>				EquippedItems;
+	local bool									bItemFound;
+	local int									SlotIndex;
+	local int i;
+	
+	foreach Slots(Slot)
+	{
+		// Collecting all loadout items for this multi-item slot.
+		ListItems.Length = 0;
+		for (i = 0; i < List.ItemCount; i++)
+		{	
+			ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
+			if (ListItem == none)
+				continue;
+
+			if (ListItem.LoadoutItem.Slot == Slot)
+			{
+				ListItems.AddItem(ListItem);
+			}
+		}
+
+		if (ListItems.Length == 0)
+			continue; // to next slot
+
+		// Cycle through all items equipped in this slot.
+		SlotIndex = 0;
+		EquippedItems = UnitState.GetAllItemsInSlot(Slot);
+		foreach EquippedItems(EquippedItem, SlotIndex)
+		{	
+			// If any of them matches an item we want to equip, 
+			// mark it as such.
+			bItemFound = false;
+			foreach ListItems(ListItem)
+			{
+				if (EquippedItem.GetMyTemplateName() == ListItem.LoadoutItem.Item)
+				{
+					ListItem.Status = eLIS_AlreadyEquipped;
+					ListItem.MappedSlotIndex = SlotIndex;
+					bItemFound = true;
+					break;
+				}
+			}
+			if (bItemFound)
+				continue; // to next equipped item
+		}
+	}
+}
+
+// For unique-equip items
+private function MapSlotIndex_SecondPass(const out array<EInventorySlot> Slots)
+{
+	local UIList								List;
+	local UIMechaListItem_LoadoutItem			ListItem;
+	local array<UIMechaListItem_LoadoutItem>	ListItems;
+	local EInventorySlot						Slot;
+	local XComGameState_Item					EquippedItem;
+	local array<XComGameState_Item>				EquippedItems;
+	local int									SlotIndex;
+	local array<int>							UsedSlotIndices;
+	local bool									bSlotFound;
+	local int i;
+	
+	foreach Slots(Slot)
+	{
+		// Collecting all loadout items for this multi-item slot that are not equipped already.
+		ListItems.Length = 0;
+		UsedSlotIndices.Length = 0;
+		for (i = 0; i < List.ItemCount; i++)
+		{	
+			ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
+			if (ListItem == none)
+				continue;
+
+			// Write down slot indices that were used for this stlo already by items that are already equipped.
+			if (ListItem.Status == eLIS_AlreadyEquipped)
+			{
+				UsedSlotIndices.AddItem(ListItem.MappedSlotIndex);
+				continue;
+			}
+
+			if (ListItem.LoadoutItem.Slot == Slot)
+			{
+				ListItems.AddItem(ListItem);
+			}
+		}
+
+		if (ListItems.Length == 0)
+			continue; // to next slot
+
+		// Cycle through all items equipped in this slot.
+		SlotIndex = 0;
+		EquippedItems = UnitState.GetAllItemsInSlot(Slot);
+		foreach EquippedItems(EquippedItem, SlotIndex)
+		{	
+			// Don't consider slots that we already know contain items that we want to keep.
+			if (UsedSlotIndices.Find(SlotIndex) != INDEX_NONE)
+				continue;
+
+			// Check if the item is not mutually exclusive with any items
+			if (UnitState.RespectsUniqueRule(ListItem.ItemTemplate, Slot,, EquippedItemState.ObjectID))
+			{
+				ListItem.Status = eLIS_AlreadyEquipped;
+				ListItem.MappedSlotIndex = SlotIndex;
+				UsedSlotIndices.AddItem(SlotIndex);
+				bSlotFound = true;
+				break;
+			}
+		}
+	}
+}*/
+
 
 
 // Adjusted copy of eponymous function from UIArmory_Loadout.
@@ -698,10 +715,15 @@ private function string GetTooltipText()
 		return `GetLocalizedString('LIS_Restricted_Tooltip');
 	case eLIS_NoSlot:
 		return `GetLocalizedString('LIS_NoSlot_Tooltip');
-	case eLIS_NotSelected:
-		return `GetLocalizedString('LIS_NotSelected_Tooltip');
-	case eLIS_Selected:
-		return `GetLocalizedString('LIS_Selected_Tooltip');
+	case eLIS_Normal:
+		if (Checkbox.bChecked)
+		{
+			return `GetLocalizedString('LIS_Selected_Tooltip');
+		}
+		else
+		{
+			return `GetLocalizedString('LIS_NotSelected_Tooltip');
+		}
 	case eLIS_AlreadyEquipped:
 		return `GetLocalizedString('LIS_AlreadyEquipped_Tooltip');
 	default:
@@ -773,4 +795,9 @@ private function OnEquipLoadoutShortcutClicked()
 	SaveLoadout.UIArmoryLoadoutScreen = ArmoryScreen;
 	SaveLoadout.bCloseArmoryScreenWhenClosing = true;
 	HQPresLayer.ScreenStack.Push(SaveLoadout, HQPresLayer.Get3DMovie());
+}
+
+defaultproperties
+{
+	MappedSlotIndex = INDEX_NONE
 }

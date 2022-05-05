@@ -10,12 +10,9 @@ var config int RightPanelY;
 var config int RightPanelW;
 var config int RightPanelH;
 
-var private XComGameState_HeadquartersXCom	XComHQ;
 var private IRILoadoutStruct				Loadout;
-var private array<int>						LoadoutSlotMask;// How many items the loadout contain for each slot
+//var private array<int>						LoadoutSlotMask;// How many items the loadout contain for each slot
 //var private array<int>						UnitSlotMap;	// How many items the unit can equip in each slot. Estimated, cuz equipping items contained in the loadout can change it.
-var private X2ItemTemplateManager			ItemMgr;
-
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
@@ -40,7 +37,6 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 	List.SetWidth(RightPanelW);
 	List.SetHeight(RightPanelH);
 
-	XComHQ = `XCOMHQ;
 
 	return self;
 }
@@ -185,74 +181,29 @@ final function array<UIMechaListItem_LoadoutItem> GetSelectedListItems()
 final function PopulateLoadoutFromStruct(const IRILoadoutStruct _Loadout)
 {
 	local IRILoadoutItemStruct			LoadoutItem;
-	local UIMechaListItem_LoadoutItem	SpawnedItem;
-	local UIInventory_HeaderListItem	HeaderItem;
-	local EInventorySlot				PreviousSlot;
-	local bool							bImageDisplayed;
 	local X2ItemTemplate				ItemTemplate;
+	local LoadoutObject					LoadoutInstance;
+	local X2ItemTemplateManager			ItemMgr;
 
 	Loadout = _Loadout;
-	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
-	//BuildUnitSlotMap();
-	BuildLoadoutSlotMask();
-	List.ClearItems();
 
 	`AMLOG("==== BEGIN =====");
 	`AMLOG("Loadout:" @ Loadout.LoadoutName @ ", items:" @ Loadout.LoadoutItems.Length);
 
+	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
 	foreach Loadout.LoadoutItems(LoadoutItem)
 	{
 		ItemTemplate = ItemMgr.FindItemTemplate(LoadoutItem.Item);
-		if (ItemTemplate != none && !bImageDisplayed)
+		if (ItemTemplate != none)
 		{
 			SetItemImages(ItemTemplate);
-			bImageDisplayed = true;
+			break;
 		}
-
-		// Add inventory slot header, if necessary
-		if (LoadoutItem.Slot != PreviousSlot)
-		{
-			if (!`GETMCMVAR(USE_SIMPLE_HEADERS))
-			{
-				HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
-				HeaderItem.bIsNavigable = false;
-				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(LoadoutItem.Slot));
-				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent);
-				
-				`AMLOG("Adding fancy header for inventory slot:" @ LoadoutItem.Slot);
-			}
-			else
-			{
-				SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
-				SpawnedItem.bIsNavigable = false;
-				SpawnedItem.bAnimateOnInit = false;
-				SpawnedItem.InitListItem();
-				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(LoadoutItem.Slot), eUIState_Disabled));
-				SpawnedItem.SetDisabled(true);
-
-				`AMLOG("Adding simple header for inventory slot:" @ LoadoutItem.Slot);
-			}
-		}
-		PreviousSlot = LoadoutItem.Slot;
-
-		// Add a list item for this loadout item.
-		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
-		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.bIsNavigable = true;
-		SpawnedItem.InitListItem();
-		SpawnedItem.InitLoadoutItem(Loadout, LoadoutItem, ItemMgr, UnitState, XComHQ);
-		SpawnedItem.UpdateItem();
-
-		// Go to next loadout item.
 	}
 
-	if (List.ItemCount > 0)
-	{
-		//List.SetSelectedIndex(1);
-		//SelectedItemChanged(List, 1);
-		List.RealizeItems();
-		List.RealizeList();
-	}
+	List.ClearItems();
+	LoadoutInstance = new class'LoadoutObject';
+	LoadoutInstance.InitLoadout(Loadout, UnitState, List);	
 
 	`AMLOG("==== END =====");
 }
@@ -295,7 +246,7 @@ private function BuildUnitSlotMap()
 		UnitSlotMap[eInvSlot_HeavyWeapon]++; 
 	}
 }*/
-
+/*
 private function BuildLoadoutSlotMask()
 {
 	local IRILoadoutItemStruct LoadoutItem;
@@ -307,7 +258,7 @@ private function BuildLoadoutSlotMask()
 	{
 		LoadoutSlotMask[LoadoutItem.Slot]++;
 	}
-}
+}*/
 
 /*
 private function bool LoadoutContainsArmorThatGrantsHeavyWeaponSlot()
