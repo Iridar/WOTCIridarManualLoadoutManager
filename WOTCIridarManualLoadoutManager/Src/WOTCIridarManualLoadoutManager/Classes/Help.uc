@@ -40,6 +40,8 @@ enum eLoadoutFilterStatus
 	eLFS_SecondaryWeapon
 };
 
+`include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
+
 static final function array<XComGameState_Unit> GetSquadUnitStates()
 {
 	local XComGameState_HeadquartersXCom	XComHQ;
@@ -79,6 +81,37 @@ static final function bool IsItemUniqueEquipInSlot(X2ItemTemplateManager ItemMgr
 	WeaponTemplate = X2WeaponTemplate(ItemTemplate);
 
 	return ItemMgr.ItemCategoryIsUniqueEquip(ItemTemplate.ItemCat) || WeaponTemplate != none && ItemMgr.ItemCategoryIsUniqueEquip(WeaponTemplate.WeaponCat);
+}
+
+static function AddSlotHeader(UIList List, const out EInventorySlot Slot)
+{
+	local UIMechaListItem				ListItem;
+	local UIInventory_HeaderListItem	HeaderItem;
+
+	if (!`GETMCMVAR(SHOW_HEADERS))
+		return;
+
+	if (!`GETMCMVAR(USE_SIMPLE_HEADERS))
+	{
+		HeaderItem = List.ParentPanel.Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
+		HeaderItem.bIsNavigable = false;
+		HeaderItem.bAnimateOnInit = false;
+		HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(Slot));
+		HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent); // Enable scrolling
+				
+		`AMLOG("Adding fancy header for inventory slot:" @ Slot);
+	}
+	else
+	{
+		ListItem = List.ParentPanel.Spawn(class'UIMechaListItem', List.ItemContainer);
+		ListItem.bIsNavigable = false;
+		ListItem.bAnimateOnInit = false;
+		ListItem.InitListItem();
+		ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(Slot), eUIState_Disabled));
+		ListItem.SetDisabled(true);
+
+		`AMLOG("Adding simple header for inventory slot:" @ Slot);
+	}
 }
 
 /*

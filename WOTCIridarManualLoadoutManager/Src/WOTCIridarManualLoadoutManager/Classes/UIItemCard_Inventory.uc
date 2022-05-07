@@ -68,7 +68,6 @@ simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 simulated function PopulateLoadoutFromUnit()
 {
 	local UIMechaListItem_LoadoutItem	ListItem;
-	local UIInventory_HeaderListItem	HeaderItem;
 	local array<XComGameState_Item>		ItemStates;
 	local XComGameState_Item			ItemState;
 	local EInventorySlot				PreviousSlot;
@@ -87,23 +86,7 @@ simulated function PopulateLoadoutFromUnit()
 
 		if (ItemState.InventorySlot != PreviousSlot)
 		{
-			if (!`GETMCMVAR(USE_SIMPLE_HEADERS))
-			{
-				HeaderItem = Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
-				HeaderItem.bIsNavigable = false;
-				HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot));
-				HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent); // So that scrolling works.
-				
-			}
-			else
-			{	
-				ListItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
-				ListItem.bIsNavigable = false;
-				ListItem.bAnimateOnInit = false;
-				ListItem.InitListItem();
-				ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot), eUIState_Disabled));
-				ListItem.SetDisabled(true);
-			}
+			class'Help'.static.AddSlotHeader(List, ItemState.InventorySlot);
 		}
 
 		ListItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);

@@ -12,6 +12,7 @@ var localized array<string> LOADOUT_FILTER_STATUS_Tooltips;
 
 `MCM_API_AutoCheckBoxVars(DEBUG_LOGGING);
 `MCM_API_AutoCheckBoxVars(ALLOW_MODIFIED_ITEMS);
+`MCM_API_AutoCheckBoxVars(SHOW_HEADERS);
 `MCM_API_AutoCheckBoxVars(USE_SIMPLE_HEADERS);
 `MCM_API_AutoCheckBoxVars(ALLOW_REPLACEMENT_ITEMS);
 `MCM_API_AutoIndexSpinnerVars(LOADOUT_FILTER_STATUS);
@@ -21,10 +22,11 @@ var localized array<string> LOADOUT_FILTER_STATUS_Tooltips;
 
 `MCM_API_AutoCheckBoxFns(DEBUG_LOGGING, 1);
 `MCM_API_AutoCheckBoxFns(ALLOW_MODIFIED_ITEMS, 1);
+`MCM_API_AutoCheckBoxFns(SHOW_HEADERS, 1);
 `MCM_API_AutoCheckBoxFns(USE_SIMPLE_HEADERS, 1);
 `MCM_API_AutoCheckBoxFns(ALLOW_REPLACEMENT_ITEMS, 1);
 `MCM_API_AutoCheckBoxFns(USE_SQUAD_SELECT_SHORTCUT, 1);
-`MCM_API_AutoIndexSpinnerFns(LOADOUT_FILTER_STATUS, 2)
+`MCM_API_AutoIndexSpinnerFns(LOADOUT_FILTER_STATUS, 1)
 
 event OnInit(UIScreen Screen)
 {
@@ -45,7 +47,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 
 	Group = Page.AddGroup('Group', GroupHeader);
 
-
+	`MCM_API_AutoAddCheckBox(Group, SHOW_HEADERS);
 	`MCM_API_AutoAddCheckBox(Group, USE_SIMPLE_HEADERS);
 	`MCM_API_AutoAddCheckBox(Group, ALLOW_MODIFIED_ITEMS);
 	`MCM_API_AutoAddCheckBox(Group, ALLOW_REPLACEMENT_ITEMS);
@@ -60,6 +62,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 
 simulated function LoadSavedSettings()
 {
+	SHOW_HEADERS = `GETMCMVAR(SHOW_HEADERS);
 	USE_SIMPLE_HEADERS = `GETMCMVAR(USE_SIMPLE_HEADERS);
 	ALLOW_MODIFIED_ITEMS = `GETMCMVAR(ALLOW_MODIFIED_ITEMS);
 	ALLOW_REPLACEMENT_ITEMS = `GETMCMVAR(ALLOW_REPLACEMENT_ITEMS);
@@ -70,6 +73,7 @@ simulated function LoadSavedSettings()
 
 simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 {
+	`MCM_API_AutoReset(SHOW_HEADERS);
 	`MCM_API_AutoReset(USE_SIMPLE_HEADERS);
 	`MCM_API_AutoReset(ALLOW_MODIFIED_ITEMS);
 	`MCM_API_AutoReset(ALLOW_REPLACEMENT_ITEMS);

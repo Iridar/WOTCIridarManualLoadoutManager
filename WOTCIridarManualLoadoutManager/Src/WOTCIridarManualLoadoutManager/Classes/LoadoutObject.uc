@@ -34,7 +34,7 @@ final function InitLoadout(const IRILoadoutStruct _Loadout, const XComGameState_
 		LoadoutItems = GetLoadoutItemsForSlot(Slot);
 		if (LoadoutItems.Length > 0)
 		{
-			AddSlotHeader(Slot);
+			class'Help'.static.AddSlotHeader(List, Slot);
 		}
 		EquippedItems = GetEquippedItemsInSlot(Slot);
 		SeparateLoadoutItems(LoadoutItems, EquippedItems); // Separate LoadoutItems into EquippedLoadoutItems and NeedEquipLoadoutItems.
@@ -150,34 +150,6 @@ private function bool ShouldUpdateListItemsInSlot(const out EInventorySlot Click
 	}
 
 	return ClickedSlot == ListItemSlot;
-}
-
-private function AddSlotHeader(const out EInventorySlot Slot)
-{
-	local UIMechaListItem				ListItem;
-	local UIInventory_HeaderListItem	HeaderItem;
-
-	if (!`GETMCMVAR(USE_SIMPLE_HEADERS))
-	{
-		HeaderItem = List.ParentPanel.Spawn(class'UIInventory_HeaderListItem', List.ItemContainer);
-		HeaderItem.bIsNavigable = false;
-		HeaderItem.bAnimateOnInit = false;
-		HeaderItem.InitHeaderItem("", class'CHItemSlot'.static.SlotGetName(Slot));
-		HeaderItem.ProcessMouseEvents(List.OnChildMouseEvent); // Enable scrolling
-				
-		`AMLOG("Adding fancy header for inventory slot:" @ Slot);
-	}
-	else
-	{
-		ListItem = List.ParentPanel.Spawn(class'UIMechaListItem', List.ItemContainer);
-		ListItem.bIsNavigable = false;
-		ListItem.bAnimateOnInit = false;
-		ListItem.InitListItem();
-		ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(Slot), eUIState_Disabled));
-		ListItem.SetDisabled(true);
-
-		`AMLOG("Adding simple header for inventory slot:" @ Slot);
-	}
 }
 
 private function SeparateLoadoutItems(array<IRILoadoutItemStruct> LoadoutItems, const out array<XComGameState_Item> EquippedItems)

@@ -80,6 +80,9 @@ GroupHeader = "General Settings"
 DEBUG_LOGGING_Label = "Enable debug logging"
 DEBUG_LOGGING_Tip = "If enabled, the mod will print debug messages into the log file, located at:\n..\\Documents\\my games\\XCOM2 War of the Chosen\\XComGame\\Logs\\Launch.log"
 
+SHOW_HEADERS_Label = "Show slot labels"
+SHOW_HEADERS_Tip = "If enabled, the loadout item list will show inventory slot labels."
+
 USE_SIMPLE_HEADERS_Label = "Use compact slot labels"
 USE_SIMPLE_HEADERS_Tip = "If enabled, the loadout item list will use more compact inventory slot labels."
 
