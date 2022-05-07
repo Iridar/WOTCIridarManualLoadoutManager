@@ -5,7 +5,7 @@ class UIMechaListItem_LoadoutItem extends UIMechaListItem;
 
 var IRILoadoutStruct		Loadout;		// Used when displaying a list of loadouts in the UIScreen_Loadouts on the left.
 var IRILoadoutItemStruct	LoadoutItem;	// Used when displaying items in a previously saved loadout in the UIScreen_Loadouts on the right when loading a loadout.
-
+var bool					bAlreadyEqupped;// Set if this item is already equipped on the unit.
 var XComGameState_Item		ItemState;		// Used when displaying items equipped on the unit in the UIScreen_Loadouts on the right when saving a loadout.
 											// Used for storing the best replacement item in the displayed loadout in the ItemCard when loading a loadout.
 
@@ -13,7 +13,6 @@ var XComGameState_Unit		UnitState;		// Used when displaying a "Load Loadout" sho
 
 var X2ItemTemplate			ItemTemplate;			// Set when the ItemState contains a replacement item (so that it can be compared against ReplacemenTemplate)
 var X2ItemTemplate			ReplacementTemplate;	// Set when the ItemState contains a replacement item.
-
 
 var ELoadoutItemStatus		Status;			// Current status of the loadout item.
 var string					SlotDisabledReason;
@@ -173,9 +172,11 @@ private function bool IsCheckboxAvailable()
 		return false;
 	case eLIS_NoSlot:
 	case eLIS_Normal:
+		if (bAlreadyEqupped)
+		{
+			return class'CHItemSlot'.static.SlotIsMultiItem(LoadoutItem.Slot);
+		}
 		return true;
-	case eLIS_AlreadyEquipped:
-		return class'CHItemSlot'.static.SlotIsMultiItem(LoadoutItem.Slot);
 	default:
 		return false;
 	}
@@ -195,9 +196,11 @@ private function string ColorText(string Text)
 	case eLIS_NoSlot:
 		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Warning);
 	case eLIS_Normal:
+		if (bAlreadyEqupped)
+		{
+			return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Good);
+		}
 		return Text; // defaults to normal color.
-	case eLIS_AlreadyEquipped:
-		return class'UIUtilities_Text'.static.GetColoredText(Text, eUIState_Good);
 	default:
 		return "Warning, unhandled Loadout Item Status:" @ Status;
 	}
@@ -232,7 +235,6 @@ private function string GetTitle()
 		}
 		
 	case eLIS_Normal:
-	case eLIS_AlreadyEquipped:
 		return ItemTemplate.GetItemFriendlyNameNoStats();
 	default:
 		return  "Unhandled Loadout Item Status:" @ Status;
@@ -321,128 +323,6 @@ private function UpdateAllItems()
 		ListItem.UpdateItem(ListItem == self); // Force update items where slot was an issue
 	}
 }
-
-// Already equipped items.
-/*
-private function MapSlotIndex_FirstPass(const out array<EInventorySlot> Slots)
-{
-	local UIList								List;
-	local UIMechaListItem_LoadoutItem			ListItem;
-	local array<UIMechaListItem_LoadoutItem>	ListItems;
-	local EInventorySlot						Slot;
-	local XComGameState_Item					EquippedItem;
-	local array<XComGameState_Item>				EquippedItems;
-	local bool									bItemFound;
-	local int									SlotIndex;
-	local int i;
-	
-	foreach Slots(Slot)
-	{
-		// Collecting all loadout items for this multi-item slot.
-		ListItems.Length = 0;
-		for (i = 0; i < List.ItemCount; i++)
-		{	
-			ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
-			if (ListItem == none)
-				continue;
-
-			if (ListItem.LoadoutItem.Slot == Slot)
-			{
-				ListItems.AddItem(ListItem);
-			}
-		}
-
-		if (ListItems.Length == 0)
-			continue; // to next slot
-
-		// Cycle through all items equipped in this slot.
-		SlotIndex = 0;
-		EquippedItems = UnitState.GetAllItemsInSlot(Slot);
-		foreach EquippedItems(EquippedItem, SlotIndex)
-		{	
-			// If any of them matches an item we want to equip, 
-			// mark it as such.
-			bItemFound = false;
-			foreach ListItems(ListItem)
-			{
-				if (EquippedItem.GetMyTemplateName() == ListItem.LoadoutItem.Item)
-				{
-					ListItem.Status = eLIS_AlreadyEquipped;
-					ListItem.MappedSlotIndex = SlotIndex;
-					bItemFound = true;
-					break;
-				}
-			}
-			if (bItemFound)
-				continue; // to next equipped item
-		}
-	}
-}
-
-// For unique-equip items
-private function MapSlotIndex_SecondPass(const out array<EInventorySlot> Slots)
-{
-	local UIList								List;
-	local UIMechaListItem_LoadoutItem			ListItem;
-	local array<UIMechaListItem_LoadoutItem>	ListItems;
-	local EInventorySlot						Slot;
-	local XComGameState_Item					EquippedItem;
-	local array<XComGameState_Item>				EquippedItems;
-	local int									SlotIndex;
-	local array<int>							UsedSlotIndices;
-	local bool									bSlotFound;
-	local int i;
-	
-	foreach Slots(Slot)
-	{
-		// Collecting all loadout items for this multi-item slot that are not equipped already.
-		ListItems.Length = 0;
-		UsedSlotIndices.Length = 0;
-		for (i = 0; i < List.ItemCount; i++)
-		{	
-			ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
-			if (ListItem == none)
-				continue;
-
-			// Write down slot indices that were used for this stlo already by items that are already equipped.
-			if (ListItem.Status == eLIS_AlreadyEquipped)
-			{
-				UsedSlotIndices.AddItem(ListItem.MappedSlotIndex);
-				continue;
-			}
-
-			if (ListItem.LoadoutItem.Slot == Slot)
-			{
-				ListItems.AddItem(ListItem);
-			}
-		}
-
-		if (ListItems.Length == 0)
-			continue; // to next slot
-
-		// Cycle through all items equipped in this slot.
-		SlotIndex = 0;
-		EquippedItems = UnitState.GetAllItemsInSlot(Slot);
-		foreach EquippedItems(EquippedItem, SlotIndex)
-		{	
-			// Don't consider slots that we already know contain items that we want to keep.
-			if (UsedSlotIndices.Find(SlotIndex) != INDEX_NONE)
-				continue;
-
-			// Check if the item is not mutually exclusive with any items
-			if (UnitState.RespectsUniqueRule(ListItem.ItemTemplate, Slot,, EquippedItemState.ObjectID))
-			{
-				ListItem.Status = eLIS_AlreadyEquipped;
-				ListItem.MappedSlotIndex = SlotIndex;
-				UsedSlotIndices.AddItem(SlotIndex);
-				bSlotFound = true;
-				break;
-			}
-		}
-	}
-}*/
-
-
 
 // Adjusted copy of eponymous function from UIArmory_Loadout.
 private function string GetDisabledReason(const X2ItemTemplate _ItemTemplate, const XComGameState_Item Item)
@@ -776,6 +656,17 @@ private function string GetTooltipText()
 	case eLIS_NoSlot:
 		return `GetLocalizedString('LIS_NoSlot_Tooltip');
 	case eLIS_Normal:
+		if (bAlreadyEqupped)
+		{
+			if (Checkbox.bChecked)
+			{
+				return `GetLocalizedString('LIS_Selected_Tooltip_AlreadyEquipped');
+			}
+			else
+			{
+				return `GetLocalizedString('LIS_NotSelected_Tooltip_AlreadyEquipped');
+			}
+		}
 		if (Checkbox.bChecked)
 		{
 			return `GetLocalizedString('LIS_Selected_Tooltip');
@@ -784,8 +675,6 @@ private function string GetTooltipText()
 		{
 			return `GetLocalizedString('LIS_NotSelected_Tooltip');
 		}
-	case eLIS_AlreadyEquipped:
-		return `GetLocalizedString('LIS_AlreadyEquipped_Tooltip');
 	default:
 		return "Warning, unhandled Loadout Item Status:" @ Status;
 	}

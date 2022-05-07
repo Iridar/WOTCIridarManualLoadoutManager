@@ -14,8 +14,7 @@ enum ELoadoutItemStatus
 	eLIS_NotAvailable,
 	eLIS_Restricted,
 	eLIS_NoSlot,
-	eLIS_Normal,
-	eLIS_AlreadyEquipped
+	eLIS_Normal
 };
 
 struct IRILoadoutItemStruct

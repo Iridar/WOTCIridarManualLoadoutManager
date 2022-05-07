@@ -45,7 +45,6 @@ LIS_MissingTemplate				= "Missing Item Template:"
 LIS_NoSlot						= ": NO SLOT AVAILABLE"
 ;LIS_NotSelected				= ""
 ;LIS_Selected					= ""
-;LIS_AlreadyEquipped			= ""
 
 LIS_MissingTemplate_Tooltip				= "Template for this item is not available. This item currently doesn't exist in your game. Most likely you are missing a mod that added this item previously."
 LIS_NotAvailable_Tooltip				= "This item is currently not available."
@@ -54,12 +53,8 @@ LIS_Restricted_Tooltip					= "This unit cannot equip this item."
 LIS_NoSlot_Tooltip						= "Unit appears to not have a slot to equip this item into, but you may attempt equipping it anyway."
 LIS_NotSelected_Tooltip					= "This item will not be equipped. Check the checkbox to equip the item."
 LIS_Selected_Tooltip					= "This item will be equipped on the unit."
-LIS_AlreadyEquipped_Tooltip				= "This item is already equipped on this unit in this slot."
-
-
-
-
-
+LIS_NotSelected_Tooltip_AlreadyEquipped = "This item is already equipped on the unit. Check the checkbox to make sure it remains equipped on the unit."
+LIS_Selected_Tooltip_AlreadyEquipped	= "This item is already equipped on the unit."
 
 
 

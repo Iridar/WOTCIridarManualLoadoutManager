@@ -70,7 +70,8 @@ private function DisplayLoadoutItemsForSlot(const out EInventorySlot Slot)
 		
 		ListItem.InitLoadoutItem(LoadoutItem, ItemMgr, UnitState, XComHQ);
 		ListItem.OnCheckboxChangedFn = OnCheckboxChanged;
-		ListItem.SetStatus(eLIS_AlreadyEquipped);
+		ListItem.bAlreadyEqupped = true;
+		ListItem.SetStatus(eLIS_Normal);
 		//ListItems.AddItem(ListItem);
 		
 	}
