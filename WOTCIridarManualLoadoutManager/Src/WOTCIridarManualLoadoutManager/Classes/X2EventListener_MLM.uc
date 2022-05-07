@@ -88,6 +88,8 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 					Shortcut.UpdateDataDescriptionShortcut(UnitState);
 					Shortcut.SetWidth(default.SquadSelectLoadoutShortcut_ListItemWidth);
 					Shortcut.Desc.SetWidth(Shortcut.Width - 10);
+
+					Shortcut.SetY(ListItem.Height + robojumper_UISquadSelect_ListItem(ListItem).GetExtraHeight() + default.SquadSelectLoadoutShortcut_VerticalOffset_RJSS);
 					Shortcut.Show();
 				}
 			}
@@ -98,7 +100,7 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 				Shortcut.UpdateDataDescriptionShortcut(UnitState);
 				Shortcut.SetWidth(default.SquadSelectLoadoutShortcut_ListItemWidth);
 				Shortcut.Desc.SetWidth(Shortcut.Width - 10);
-
+				
 				Shortcut.SetY(ListItem.Height + robojumper_UISquadSelect_ListItem(ListItem).GetExtraHeight() + default.SquadSelectLoadoutShortcut_VerticalOffset_RJSS);
 				ListItem.SetY(ListItem.Y - Shortcut.Height + default.SquadSelectLoadoutShortcut_SoldierPanel_VerticalOffset_RJSS);
 			}			

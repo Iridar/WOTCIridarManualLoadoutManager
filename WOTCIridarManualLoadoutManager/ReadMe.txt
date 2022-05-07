@@ -16,10 +16,8 @@ Loadouts:
 - File autobackup
 - delete button too big, too left, and obscures text
 - figure out automatic list item size realization maybe
-- special handle grenade pocket to allow equipping the grenade into utility slot, if one is available
 
 Squad item list:
- taking the soldier skill panel into account automatically
 - max. height and scrolling.
 
 localization pass
@@ -34,6 +32,7 @@ XSkin integration?
 Different layout so there's more space for the soldier's inventory list
 Hide shortcut when removing a soldier from squad in vanilla squad select
 Replace IsWeaponAllowedByClass by IsWeaponAllowedByClass_CH
+Special handle grenade pocket to allow equipping the grenade into utility slot, if one is available
 
 KNOWN ISSUES
 When using vanilla squad select, the EQUIP LOADOUT shortcut will remain on screen even after the soldier is removed from that slot.
