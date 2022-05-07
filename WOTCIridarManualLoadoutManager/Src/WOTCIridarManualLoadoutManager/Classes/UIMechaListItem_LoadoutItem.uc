@@ -57,6 +57,8 @@ final function bool InitLoadoutItem(IRILoadoutItemStruct _LoadoutItem, X2ItemTem
 		SetStatus(eLIS_NotAvailable);
 		return false;
 	}
+
+	SpawnImages();
 		
 	CachedDisabledReason = GetDisabledReason(ItemTemplate, ItemState);
 	if (CachedDisabledReason != "")
@@ -67,6 +69,63 @@ final function bool InitLoadoutItem(IRILoadoutItemStruct _LoadoutItem, X2ItemTem
 
 	return true;
 }
+
+
+simulated function SpawnImages()
+{
+	local private UIPanel			WeaponImageParent;
+	local private array<UIImage>	WeaponImages;
+	local private array<string>		strImagePaths;
+	local private UIMask			ImageMask;
+	local int i;
+
+	strImagePaths = ItemState.GetWeaponPanelImages();
+	if (strImagePaths.Length == 0)
+		return;
+
+	WeaponImageParent = Spawn(class'UIPanel', self);
+	WeaponImageParent.bIsNavigable = false;
+	WeaponImageParent.bAnimateOnInit = false;
+	WeaponImageParent.InitPanel();
+	WeaponImageParent.SetAlpha(0.5);
+
+	for (i = 0; i < strImagePaths.Length; i++)
+	{
+		if (i == WeaponImages.Length)
+		{
+			WeaponImages.AddItem(Spawn(class'UIImage', WeaponImageParent));
+			WeaponImages[i].bAnimateOnInit = false;
+			WeaponImages[i].InitImage('');
+		}
+		// haxhaxhax -- primary weapons are bigger than the others, which is normally handled by the image stack
+		// but we need to do it manually
+		if (LoadoutItem.Slot == eInvSlot_PrimaryWeapon ||
+			(X2WeaponTemplate(ItemTemplate) != none &&
+				(X2WeaponTemplate(ItemTemplate).WeaponCat == 'pistol' ||
+				 X2WeaponTemplate(ItemTemplate).WeaponCat == 'sidearm'))
+		)
+		{
+			WeaponImages[i].SetPosition(102 + 70, -24);
+			WeaponImages[i].SetSize(192, 96);
+		}
+		else
+		{
+			WeaponImages[i].SetPosition(70 + 70, -40);
+			WeaponImages[i].SetSize(256, 128);
+		}
+		WeaponImages[i].LoadImage(strImagePaths[i]);
+		WeaponImages[i].Show();
+	}
+
+	ImageMask = Spawn(class'UIMask', self);
+	ImageMask.bAnimateOnInit = false;
+	ImageMask.InitMask('', WeaponImageParent);
+	ImageMask.SetPosition(2, 2);
+	ImageMask.SetSize(Width - 4, Height - 4);
+
+	Desc.MoveToHighestDepth();
+}
+
 
 final function SetStatus(const ELoadoutItemStatus NewStatus)
 {

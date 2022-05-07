@@ -19,7 +19,7 @@ Loadouts:
 - special handle grenade pocket to allow equipping the grenade into utility slot, if one is available
 
 Squad item list:
- taking the soldier skill panel into account automatically when I get back.
+ taking the soldier skill panel into account automatically
 - max. height and scrolling.
 
 localization pass
@@ -27,15 +27,16 @@ mod preview image
 
 One day:
 preview loadout changes
-improve slot counting logic via slot map
 PCS support
 Weapon Upgrade support
 IAM integration
 XSkin integration?
-Use Tac Armory UI inventory images
 Different layout so there's more space for the soldier's inventory list
 Hide shortcut when removing a soldier from squad in vanilla squad select
 Replace IsWeaponAllowedByClass by IsWeaponAllowedByClass_CH
 
 KNOWN ISSUES
 When using vanilla squad select, the EQUIP LOADOUT shortcut will remain on screen even after the soldier is removed from that slot.
+
+Credits:
+Fancy inventory images copied from Tactical Armory UI by Musashi.
