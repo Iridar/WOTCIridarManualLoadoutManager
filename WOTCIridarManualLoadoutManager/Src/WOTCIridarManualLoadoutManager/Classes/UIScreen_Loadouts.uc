@@ -198,7 +198,7 @@ private function OnEquipLoadoutClicked(UIButton Button)
 
 simulated function PopulateData()
 {
-	local UIMechaListItem_LoadoutItem	SpawnedItem;
+	local UIMechaListItem_LoadoutItem	ListItem;
 	local array<IRILoadoutStruct>		Loadouts;
 	local IRILoadoutStruct				Loadout;
 
@@ -206,12 +206,12 @@ simulated function PopulateData()
 
 	if (bForSaving)
 	{
-		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
-		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.SetWidth(TitleHeader.headerWidth - 65);
-		SpawnedItem.InitListItem()/*.ProcessMouseEvents(List.OnChildMouseEvent)*/;
-		SpawnedItem.Loadout = Loadout;
-		SpawnedItem.UpdateDataDescription(`GetLocalizedString('CreateNewLoadoutButton'), OnCreateLoadoutClicked);
+		ListItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
+		ListItem.bAnimateOnInit = false;
+		ListItem.SetWidth(TitleHeader.headerWidth - 65);
+		ListItem.InitListItem()/*.ProcessMouseEvents(List.OnChildMouseEvent)*/;
+		ListItem.Loadout = Loadout;
+		ListItem.UpdateDataDescription(`GetLocalizedString('CreateNewLoadoutButton'), OnCreateLoadoutClicked);
 				
 		UIItemCard_Inventory(ItemCard).PopulateLoadoutFromUnit();
 	}
@@ -222,19 +222,19 @@ simulated function PopulateData()
 		if (!LoadoutPassesFilters(Loadout))
 			continue;
 
-		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
-		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.SetWidth(TitleHeader.headerWidth - 65);
-		SpawnedItem.InitListItem()/*.ProcessMouseEvents(List.OnChildMouseEvent)*/;
-		SpawnedItem.Loadout = Loadout;
+		ListItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
+		ListItem.bAnimateOnInit = false;
+		ListItem.SetWidth(TitleHeader.headerWidth - 65);
+		ListItem.InitListItem()/*.ProcessMouseEvents(List.OnChildMouseEvent)*/;
+		ListItem.Loadout = Loadout;
 
 		if (bForSaving)
 		{
-			SpawnedItem.UpdateDataButton(Loadout.LoadoutName, class'UIMPShell_SquadLoadoutList'.default.m_strDeleteSet, OnDeleteLoadoutClicked, OnSaveSelectedLoadoutClicked);
+			ListItem.UpdateDataButton(Loadout.LoadoutName, class'UIMPShell_SquadLoadoutList'.default.m_strDeleteSet, OnDeleteLoadoutClicked, OnSaveSelectedLoadoutClicked);
 		}
 		else
 		{
-			SpawnedItem.UpdateDataCheckbox(Loadout.LoadoutName, "", false, OnCheckboxChanged, OnLoadSelectedLoadoutClicked);
+			ListItem.UpdateDataCheckbox(Loadout.LoadoutName, "", false, OnCheckboxChanged, OnLoadSelectedLoadoutClicked);
 		}
 	}
 

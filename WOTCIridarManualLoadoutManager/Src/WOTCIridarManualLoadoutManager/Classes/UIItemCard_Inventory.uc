@@ -43,20 +43,20 @@ simulated function UIItemCard InitItemCard(optional name InitName)
 
 simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 {
-	local UIMechaListItem_LoadoutItem	SpawnedItem;
+	local UIMechaListItem_LoadoutItem	ListItem;
 	local X2ItemTemplate				ItemTemplate;
 
-	SpawnedItem = UIMechaListItem_LoadoutItem(ContainerList.GetSelectedItem());
-	if (SpawnedItem == none)
+	ListItem = UIMechaListItem_LoadoutItem(ContainerList.GetSelectedItem());
+	if (ListItem == none)
 		return;
 
-	if (SpawnedItem.ItemState != none)
+	if (ListItem.ItemState != none)
 	{
-		SetItemImages(SpawnedItem.ItemState.GetMyTemplate(), SpawnedItem.ItemState.GetReference());
+		SetItemImages(ListItem.ItemState.GetMyTemplate(), ListItem.ItemState.GetReference());
 	}
 	else
 	{
-		ItemTemplate = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(SpawnedItem.LoadoutItem.Item);
+		ItemTemplate = class'X2ItemTemplateManager'.static.GetItemTemplateManager().FindItemTemplate(ListItem.LoadoutItem.Item);
 		if (ItemTemplate != none)
 		{
 			SetItemImages(ItemTemplate);
@@ -67,7 +67,7 @@ simulated function SelectedItemChanged(UIList ContainerList, int ItemIndex)
 
 simulated function PopulateLoadoutFromUnit()
 {
-	local UIMechaListItem_LoadoutItem	SpawnedItem;
+	local UIMechaListItem_LoadoutItem	ListItem;
 	local UIInventory_HeaderListItem	HeaderItem;
 	local array<XComGameState_Item>		ItemStates;
 	local XComGameState_Item			ItemState;
@@ -97,20 +97,20 @@ simulated function PopulateLoadoutFromUnit()
 			}
 			else
 			{	
-				SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
-				SpawnedItem.bIsNavigable = false;
-				SpawnedItem.bAnimateOnInit = false;
-				SpawnedItem.InitListItem();
-				SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot), eUIState_Disabled));
-				SpawnedItem.SetDisabled(true);
+				ListItem = Spawn(class'UIMechaListItem_LoadoutItem', List.ItemContainer);
+				ListItem.bIsNavigable = false;
+				ListItem.bAnimateOnInit = false;
+				ListItem.InitListItem();
+				ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(ItemState.InventorySlot), eUIState_Disabled));
+				ListItem.SetDisabled(true);
 			}
 		}
 
-		SpawnedItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
-		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem();
-		SpawnedItem.ItemState = ItemState;
-		SpawnedItem.UpdateDataCheckbox(ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", true,, SpawnedItem.OnLoadoutItemClicked);
+		ListItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
+		ListItem.bAnimateOnInit = false;
+		ListItem.InitListItem();
+		ListItem.ItemState = ItemState;
+		ListItem.UpdateDataCheckbox(ItemState.GetMyTemplate().GetItemFriendlyNameNoStats(), "", true,, ListItem.OnLoadoutItemClicked);
 
 		PreviousSlot = ItemState.InventorySlot;
 	}

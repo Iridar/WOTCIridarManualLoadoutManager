@@ -55,23 +55,23 @@ final function InitLoadout(const IRILoadoutStruct _Loadout, const XComGameState_
 private function DisplayLoadoutItemsForSlot(const out EInventorySlot Slot)
 {
 	local IRILoadoutItemStruct					LoadoutItem;
-	local UIMechaListItem_LoadoutItem			SpawnedItem;
-	//local array<UIMechaListItem_LoadoutItem>	SpawnedItems;
+	local UIMechaListItem_LoadoutItem			ListItem;
+	//local array<UIMechaListItem_LoadoutItem>	ListItems;
 
 	foreach EquippedLoadoutItems(LoadoutItem)
 	{
 		if (LoadoutItem.Slot != Slot)
 			continue;
 
-		SpawnedItem = List.ParentPanel.Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
-		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.bIsNavigable = true;
-		SpawnedItem.InitListItem();
+		ListItem = List.ParentPanel.Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
+		ListItem.bAnimateOnInit = false;
+		ListItem.bIsNavigable = true;
+		ListItem.InitListItem();
 		
-		SpawnedItem.InitLoadoutItem(LoadoutItem, ItemMgr, UnitState, XComHQ);
-		SpawnedItem.OnCheckboxChangedFn = OnCheckboxChanged;
-		SpawnedItem.SetStatus(eLIS_AlreadyEquipped);
-		//SpawnedItems.AddItem(SpawnedItem);
+		ListItem.InitLoadoutItem(LoadoutItem, ItemMgr, UnitState, XComHQ);
+		ListItem.OnCheckboxChangedFn = OnCheckboxChanged;
+		ListItem.SetStatus(eLIS_AlreadyEquipped);
+		//ListItems.AddItem(ListItem);
 		
 	}
 
@@ -80,25 +80,25 @@ private function DisplayLoadoutItemsForSlot(const out EInventorySlot Slot)
 		if (LoadoutItem.Slot != Slot)
 			continue;
 
-		SpawnedItem = List.ParentPanel.Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
-		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.bIsNavigable = true;
-		SpawnedItem.InitListItem();
+		ListItem = List.ParentPanel.Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
+		ListItem.bAnimateOnInit = false;
+		ListItem.bIsNavigable = true;
+		ListItem.InitListItem();
 		
-		if (SpawnedItem.InitLoadoutItem(LoadoutItem, ItemMgr, UnitState, XComHQ))
+		if (ListItem.InitLoadoutItem(LoadoutItem, ItemMgr, UnitState, XComHQ))
 		{
-			SpawnedItem.OnCheckboxChangedFn = OnCheckboxChanged;
+			ListItem.OnCheckboxChangedFn = OnCheckboxChanged;
 
-			if (IsSlotAvailable(Slot, SpawnedItem.SlotDisabledReason))
+			if (IsSlotAvailable(ListItem))
 			{
-				SpawnedItem.SetStatus(eLIS_Normal);
+				ListItem.SetStatus(eLIS_Normal);
 			}
 			else
 			{
-				SpawnedItem.SetStatus(eLIS_NoSlot);
+				ListItem.SetStatus(eLIS_NoSlot);
 			}
 
-			//SpawnedItems.AddItem(SpawnedItem);
+			//ListItems.AddItem(ListItem);
 		}
 	}
 }
@@ -116,7 +116,7 @@ private function OnCheckboxChanged(UICheckbox CheckboxControl)
 
 	ClickedItem.UpdateItem(true);
 
-	for (i = 0; i < List.ItemCount; i++)
+	for (i = List.ItemCount - 1; i >= 0; i--)
 	{
 		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
 		if (ListItem != none && ListItem != ClickedItem && ListItem.Status > eLIS_Restricted)
@@ -126,7 +126,7 @@ private function OnCheckboxChanged(UICheckbox CheckboxControl)
 			if (!ShouldUpdateListItemsInSlot(ClickedItem.LoadoutItem.Slot, ListItem.LoadoutItem.Slot))
 				continue;
 
-			if (IsSlotAvailable(ListItem.LoadoutItem.Slot, ListItem.SlotDisabledReason))
+			if (IsSlotAvailable(ListItem))
 			{	
 				`AMLOG("Slot is available");
 				ListItem.SetStatus(eLIS_Normal); // This will UpdateItem
@@ -154,7 +154,7 @@ private function bool ShouldUpdateListItemsInSlot(const out EInventorySlot Click
 
 private function AddSlotHeader(const out EInventorySlot Slot)
 {
-	local UIMechaListItem				SpawnedItem;
+	local UIMechaListItem				ListItem;
 	local UIInventory_HeaderListItem	HeaderItem;
 
 	if (!`GETMCMVAR(USE_SIMPLE_HEADERS))
@@ -169,12 +169,12 @@ private function AddSlotHeader(const out EInventorySlot Slot)
 	}
 	else
 	{
-		SpawnedItem = List.ParentPanel.Spawn(class'UIMechaListItem', List.ItemContainer);
-		SpawnedItem.bIsNavigable = false;
-		SpawnedItem.bAnimateOnInit = false;
-		SpawnedItem.InitListItem();
-		SpawnedItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(Slot), eUIState_Disabled));
-		SpawnedItem.SetDisabled(true);
+		ListItem = List.ParentPanel.Spawn(class'UIMechaListItem', List.ItemContainer);
+		ListItem.bIsNavigable = false;
+		ListItem.bAnimateOnInit = false;
+		ListItem.InitListItem();
+		ListItem.UpdateDataDescription(class'UIUtilities_Text'.static.GetColoredText(class'CHItemSlot'.static.SlotGetName(Slot), eUIState_Disabled));
+		ListItem.SetDisabled(true);
 
 		`AMLOG("Adding simple header for inventory slot:" @ Slot);
 	}
@@ -237,16 +237,16 @@ private function array<IRILoadoutItemStruct> GetLoadoutItemsForSlot(const out EI
 	return LoadoutItems;
 }
 
-private function bool IsSlotAvailable(const out EInventorySlot Slot, out string SlotDisabledReason)
+private function bool IsSlotAvailable(out UIMechaListItem_LoadoutItem ListItem)
 {
 	local int SlotMaxItemCount;
 	local int NumItemsInSlot;
-
-	if (class'CHItemSlot'.static.SlotIsMultiItem(Slot))
+	
+	if (class'CHItemSlot'.static.SlotIsMultiItem(ListItem.LoadoutItem.Slot))
 	{
-		SlotMaxItemCount = class'CHItemSlot'.static.SlotGetMaxItemCount(Slot, UnitState);
+		SlotMaxItemCount = class'CHItemSlot'.static.SlotGetMaxItemCount(ListItem.LoadoutItem.Slot, UnitState);
 
-		switch (Slot)
+		switch (ListItem.LoadoutItem.Slot)
 		{
 		case eInvSlot_Utility:
 			if (DoesLoadoutContainArmorThatGrantsUtilitySlot())
@@ -264,26 +264,29 @@ private function bool IsSlotAvailable(const out EInventorySlot Slot, out string 
 			break;
 		}
 
-		NumItemsInSlot = GetNumSelectedListItemsForSlot(Slot);
+		NumItemsInSlot = GetNumSelectedListItemsForSlot(ListItem);
 
 		`AMLOG(`ShowVar(NumItemsInSlot) $ " < " $ `ShowVar(SlotMaxItemCount));
 
 		return NumItemsInSlot < SlotMaxItemCount;
 	}
-	SlotDisabledReason = "";
-	return class'CHItemSlot'.static.SlotAvailable(Slot, SlotDisabledReason, UnitState);
+	ListItem.SlotDisabledReason = "";
+	return class'CHItemSlot'.static.SlotAvailable(ListItem.LoadoutItem.Slot, ListItem.SlotDisabledReason, UnitState);
 }
 
-private function int GetNumSelectedListItemsForSlot(const out EInventorySlot Slot)
+private function int GetNumSelectedListItemsForSlot(const out UIMechaListItem_LoadoutItem ExcludeListItem)
 {
-	local UIMechaListItem_LoadoutItem			ListItem;
+	local UIMechaListItem_LoadoutItem ListItem;
 	local int NumItems;
 	local int i;
-
+	
 	for (i = 0; i < List.ItemCount; i++)
 	{
 		ListItem = UIMechaListItem_LoadoutItem(List.GetItem(i));
-		if (ListItem != none && ListItem.LoadoutItem.Slot == Slot && ListItem.Checkbox != none && ListItem.Checkbox.bChecked && ListItem.ItemState != none)
+		if (ListItem != none && ListItem != ExcludeListItem &&					// Ignore the list item we're running the calculation for
+			ListItem.LoadoutItem.Slot == ExcludeListItem.LoadoutItem.Slot && 
+			ListItem.Checkbox != none && ListItem.Checkbox.bChecked && 
+			ListItem.ItemState != none)
 		{
 			NumItems++;
 		}

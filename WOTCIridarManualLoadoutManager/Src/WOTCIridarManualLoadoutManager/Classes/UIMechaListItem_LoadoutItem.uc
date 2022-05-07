@@ -87,11 +87,12 @@ final function UpdateItem(optional bool bJustToggleCheckbox) // True when this f
 		}
 		else if (Status == eLIS_NoSlot)
 		{
-			UpdateDataCheckbox(GetColoredTitle(), "", false, OnCheckboxChangedFn, OnLoadoutItemClicked);
+			UpdateDataCheckbox(GetColoredTitle(), "", Checkbox != none ? Checkbox.bChecked : false, OnCheckboxChangedFn, OnLoadoutItemClicked);
 		}
 		else
 		{
-			UpdateDataCheckbox(GetColoredTitle(), "", Status >= eLIS_Normal, OnCheckboxChangedFn, OnLoadoutItemClicked);
+			// If checkbox already exists, then we keep whatever setting it had. Otherwise, we default to enabling the checkbox.
+			UpdateDataCheckbox(GetColoredTitle(), "", Checkbox != none ? Checkbox.bChecked : Status >= eLIS_Normal, OnCheckboxChangedFn, OnLoadoutItemClicked);
 		}
 	}
 	else
