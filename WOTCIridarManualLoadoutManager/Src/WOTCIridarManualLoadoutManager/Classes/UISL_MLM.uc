@@ -40,6 +40,8 @@ const ListBG_ItemHeight = 28.0f;
 const ListWidth = 250;
 const HorizontalPaddingBetweenLists = 15;
 
+`include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
+
 // This event is triggered after a screen is initialized
 event OnInit(UIScreen Screen)
 {
@@ -60,7 +62,7 @@ event OnInit(UIScreen Screen)
 			}
 		}
 	}
-	else if (UISquadSelect(Screen) != none)
+	else if (`GETMCMVAR(DISPLAY_SQUAD_ITEMS_BUTTON) && UISquadSelect(Screen) != none)
 	{
 		AddSquadButtons(UISquadSelect(Screen));
 	}
@@ -110,7 +112,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 
 		// Armor
 		ListBG = CreateListBG('IRI_SquadLoadoutList_Armor_BG',	InitX, InitY, btn_clicked.ParentPanel);
-		List = CreateList('IRI_SquadLoadoutList_Armor',			InitX, InitY, btn_clicked.ParentPanel);
+		List = CreateList('IRI_SquadLoadoutList_Armor',			InitX + 5, InitY, btn_clicked.ParentPanel);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_ARMOR,, eInvSlot_HeavyWeapon); // Apparently heavy weapons are armor as far as the game is concerned :shrug: Exclude them here, non-primary weapons will pick them up.
 		RealizeListBG(List, ListBG);
@@ -119,7 +121,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		InitX += ListWidth + HorizontalPaddingBetweenLists;
 
 		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Primary_BG',	InitX, InitY, btn_clicked.ParentPanel);
-		List = CreateList('IRI_SquadLoadoutList_Weapon_Primary',		InitX, InitY, btn_clicked.ParentPanel);
+		List = CreateList('IRI_SquadLoadoutList_Weapon_Primary',		InitX + 5, InitY, btn_clicked.ParentPanel);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON, eInvSlot_PrimaryWeapon); // Only primaries
 		RealizeListBG(List, ListBG);
@@ -128,7 +130,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		InitX += ListWidth + HorizontalPaddingBetweenLists;
 
 		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Other_BG',	InitX, InitY, btn_clicked.ParentPanel);
-		List = CreateList('IRI_SquadLoadoutList_Weapon_Other',			InitX, InitY, btn_clicked.ParentPanel);
+		List = CreateList('IRI_SquadLoadoutList_Weapon_Other',			InitX + 5, InitY, btn_clicked.ParentPanel);
 
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_WEAPON,, eInvSlot_PrimaryWeapon); // Only non-primaries
 		RealizeListBG(List, ListBG);
@@ -137,7 +139,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		InitX += ListWidth + HorizontalPaddingBetweenLists;
 
 		ListBG = CreateListBG('IRI_SquadLoadoutList_Item_BG',	InitX, InitY, btn_clicked.ParentPanel);
-		List = CreateList('IRI_SquadLoadoutList_Item',			InitX, InitY, btn_clicked.ParentPanel);
+		List = CreateList('IRI_SquadLoadoutList_Item',			InitX + 5, InitY, btn_clicked.ParentPanel);
 		
 		FillListOfType(List, class'CHItemSlot'.const.SLOT_ITEM);
 		RealizeListBG(List, ListBG);
@@ -207,6 +209,11 @@ private function UIBGBox CreateListBG(name InitName, float initX, float initY, U
 private function RealizeListBG(UIList List, UIBGBox ListBG)
 {
 	ListBG.SetHeight(15 + List.ItemCount * ListBG_ItemHeight);
+	if (List.ItemCount > `GETMCMVAR(MAX_LOADOUT_LIST_ITEMS))
+	{
+		List.SetHeight(`GETMCMVAR(MAX_LOADOUT_LIST_ITEMS) * ListBG_ItemHeight);
+		ListBG.SetHeight(List.Height + 15);
+	}
 }
 
 private function UpdateListData(UISquadSelect Screen)

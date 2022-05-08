@@ -70,10 +70,9 @@ SquadItems = "SQUAD ITEMS"
 [WOTCIridarManualLoadoutManager_MCMScreen]
 ModName = "Loadout Manager"
 PageTitle = "Iridar's Loadout Manager"
-GroupHeader = "General Settings"
 
-DEBUG_LOGGING_Label = "Enable debug logging"
-DEBUG_LOGGING_Tip = "If enabled, the mod will print debug messages into the log file, located at:\n..\\Documents\\my games\\XCOM2 War of the Chosen\\XComGame\\Logs\\Launch.log"
+
+GroupHeader = "Loadout Settings"
 
 SHOW_HEADERS_Label = "Show slot labels"
 SHOW_HEADERS_Tip = "If enabled, the loadout item list will show inventory slot labels."
@@ -85,13 +84,30 @@ ALLOW_MODIFIED_ITEMS_Label = "Allow modified items"
 ALLOW_MODIFIED_ITEMS_Tip = "If enabled, the loadout manager will equip a modified item if an unmodified version is not available."
 
 ALLOW_REPLACEMENT_ITEMS_Label = "Allow replacement items"
-ALLOW_REPLACEMENT_ITEMS_Tip = "If enabled, the loadout manager will look for the best possible replacement for a loadout item that is currently not available."
+ALLOW_REPLACEMENT_ITEMS_Tip = "If enabled, the loadout manager will look for the best possible replacement for a loadout item that is currently not available. This setting is affected by \"Allow modified items\" setting."
 
-USE_SQUAD_SELECT_SHORTCUT_Label = "Display shortcut in Squad Select"
-USE_SQUAD_SELECT_SHORTCUT_Tip = "If enabled, there will be an \"Equip Loadout\" shortcut under each soldier in Squad Select."
+LOADOUT_FILTER_STATUS_Label = "Default loadout filter"
+LOADOUT_FILTER_STATUS_Tip = "Choose loadout filter active by default on the Save Loadout and Equip Loadout screens. The \"Disabled\" option will mean the filter button is hidden and all loadouts are visible at all times."
 
-LOADOUT_FILTER_STATUS_Label = "Default loadout filter status"
-LOADOUT_FILTER_STATUS_Tip = "If enabled, there will be an \"Equip Loadout\" shortcut under each soldier in Squad Select."
+
+Group2Header = "Squad Select"
+
+DISPLAY_SQUAD_ITEMS_BUTTON_Label = "Display \"Squad Items\" button"
+DISPLAY_SQUAD_ITEMS_BUTTON_Tip = "If enabled, there will be a \"Squad Items\" button on the Squad Select screen. It can be clicked to display a list of all items equipped on soldiers in squad."
+
+MAX_LOADOUT_LIST_ITEMS_Label = "Max. items in squad items list"
+MAX_LOADOUT_LIST_ITEMS_Tip = "Maximum number of items displayed in the Squad Items lists before it becomes scrollable. Determines the amount of space the list can potentially occupy."
+
+DISPLAY_SQUAD_SELECT_SHORTCUT_Label = "Display shortcut in Squad Select"
+DISPLAY_SQUAD_SELECT_SHORTCUT_Tip = "If enabled, there will be an \"Equip Loadout\" shortcut under each soldier in Squad Select."
+
+
+Group3Header = "Miscellaneous"
+
+DEBUG_LOGGING_Label = "Enable debug logging"
+DEBUG_LOGGING_Tip = "If enabled, the mod will print debug messages into the log file, located at:\n..\\Documents\\my games\\XCOM2 War of the Chosen\\XComGame\\Logs\\Launch.log"
+
+
 
 LOADOUT_FILTER_STATUS_Strings[0] = "Disabled"
 LOADOUT_FILTER_STATUS_Strings[1] = "None"

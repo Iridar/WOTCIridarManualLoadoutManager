@@ -44,7 +44,7 @@ static function EventListenerReturn OnSquadSelectNavHelpUpdate(Object EventData,
 	local UIMechaListItem_LoadoutItem		Shortcut;
 	local int j;
 
-	if (!`GETMCMVAR(USE_SQUAD_SELECT_SHORTCUT))
+	if (!`GETMCMVAR(DISPLAY_SQUAD_SELECT_SHORTCUT))
 		return ELR_NoInterrupt;
 
 	SquadSelect = UISquadSelect(EventSource);
