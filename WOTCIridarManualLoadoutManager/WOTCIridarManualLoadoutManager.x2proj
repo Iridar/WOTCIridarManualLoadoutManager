@@ -31,7 +31,6 @@
     <Content Include="Config\Base\XComEditor.ini" />
     <Content Include="Config\Base\XComEngine.ini" />
     <Content Include="Config\Base\XComGame.ini" />
-    <Content Include="Localization\XComGame.int" />
     <Content Include="Localization\WOTCIridarManualLoadoutManager.int" />
     <Content Include="Src\extra_globals.uci" />
     <Content Include="Src\ModConfigMenuAPI\Classes\MCM_API.uc">
