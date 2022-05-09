@@ -67,6 +67,9 @@ FilterButtonTitle = "FILTER"
 SquadItems = "SQUAD ITEMS"
 
 
+ConfirmLoadBackup = "Would you like to load backup? <br/>%CurrentNumLoadouts% <br/>%BackupNumLoadouts%"
+
+
 [WOTCIridarManualLoadoutManager_MCMScreen]
 ModName = "Loadout Manager"
 PageTitle = "Iridar's Loadout Manager"

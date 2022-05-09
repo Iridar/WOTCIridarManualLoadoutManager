@@ -10,9 +10,7 @@ var config int RightPanelY;
 var config int RightPanelW;
 var config int RightPanelH;
 
-var private IRILoadoutStruct				Loadout;
-//var private array<int>						LoadoutSlotMask;// How many items the loadout contain for each slot
-//var private array<int>						UnitSlotMap;	// How many items the unit can equip in each slot. Estimated, cuz equipping items contained in the loadout can change it.
+var private IRILoadoutStruct Loadout;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 

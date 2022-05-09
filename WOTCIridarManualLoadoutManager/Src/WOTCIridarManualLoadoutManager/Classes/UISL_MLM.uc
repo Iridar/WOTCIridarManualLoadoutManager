@@ -48,7 +48,7 @@ event OnInit(UIScreen Screen)
 	if (UIArmory_Loadout(Screen) != none)
 	{
 		AddLoadoutButtons(UIArmory_Loadout(Screen));
-
+		
 		if (bCHLPresent)
 		{
 			`SCREENSTACK.SubscribeToOnInput(OnArmoryLoadoutInput);
@@ -66,6 +66,15 @@ event OnInit(UIScreen Screen)
 	{
 		AddSquadButtons(UISquadSelect(Screen));
 	}
+	else if (UIShell(Screen) != none && class'X2LoadoutSafe'.static.ShouldLoadBackup())
+	{
+		Screen.SetTimer(3.1f, false, nameof(RaiseLoadBackupPopupDelayed), self);
+	}
+}
+
+private function RaiseLoadBackupPopupDelayed()
+{
+	class'X2LoadoutSafe'.static.RaiseLoadBackupPopup();
 }
 
 event OnRemoved(UIScreen screen)

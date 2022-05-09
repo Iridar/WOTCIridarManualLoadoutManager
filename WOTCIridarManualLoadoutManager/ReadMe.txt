@@ -17,9 +17,6 @@ Loadouts:
 - delete button too big, too left, and obscures text
 - figure out automatic list item size realization maybe
 
-Squad item list:
-- max. height and scrolling.
-
 localization pass
 mod preview image
 

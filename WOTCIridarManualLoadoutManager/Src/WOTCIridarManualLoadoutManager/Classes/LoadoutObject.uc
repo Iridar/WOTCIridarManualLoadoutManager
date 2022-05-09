@@ -26,37 +26,57 @@ final function InitLoadout(const IRILoadoutStruct _Loadout, const XComGameState_
 	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
 
 	class'CHItemSlot'.static.CollectSlots(class'CHItemSlot'.const.SLOT_ALL, AllSlots);
-	
+	RemoveSlotDuplicates(); // CollectSlots() adds some slots multiple times, like Heavy Weapon.
+
 	// --- Finish initial init.
+	`AMLOG("========================================================");
+	`AMLOG("           BEGIN LOADOUT DISPLAY");
 
 	foreach AllSlots(Slot)
 	{
 		LoadoutItems = GetLoadoutItemsForSlot(Slot);
+		`AMLOG("=== Slot:" @ Slot @ "has this many loadout items:" @ LoadoutItems.Length);
 		if (LoadoutItems.Length > 0)
 		{
 			class'Help'.static.AddSlotHeader(List, Slot);
-		}
-		EquippedItems = GetEquippedItemsInSlot(Slot);
-		SeparateLoadoutItems(LoadoutItems, EquippedItems); // Separate LoadoutItems into EquippedLoadoutItems and NeedEquipLoadoutItems.
-		DisplayLoadoutItemsForSlot(Slot);
 
+			EquippedItems = GetEquippedItemsInSlot(Slot);		// Needed to check if some of the items in the loadout are already equipped on the unit.
+			SeparateLoadoutItems(LoadoutItems, EquippedItems);	// Separate LoadoutItems into EquippedLoadoutItems and NeedEquipLoadoutItems.
+			DisplayLoadoutItemsForSlot(Slot);
+		}
 		// Go to next slot.
 	}
 
+	`AMLOG("           END LOADOUT DISPLAY");
+	`AMLOG("========================================================");
+
+
 	if (List.ItemCount > 0)
 	{
-		//List.SetSelectedIndex(1);
-		//SelectedItemChanged(List, 1);
 		List.RealizeItems();
 		List.RealizeList();
 	}
+}
+
+private function RemoveSlotDuplicates()
+{
+	local array<EInventorySlot> NonDuplicateSlots;
+	local EInventorySlot		Slot;
+
+	foreach AllSlots(Slot)
+	{
+		if (NonDuplicateSlots.Find(Slot) == INDEX_NONE)
+		{
+			NonDuplicateSlots.AddItem(Slot);
+		}
+	}
+	AllSlots = NonDuplicateSlots;
 }
 
 private function DisplayLoadoutItemsForSlot(const out EInventorySlot Slot)
 {
 	local IRILoadoutItemStruct					LoadoutItem;
 	local UIMechaListItem_LoadoutItem			ListItem;
-	//local array<UIMechaListItem_LoadoutItem>	ListItems;
 
 	foreach EquippedLoadoutItems(LoadoutItem)
 	{
