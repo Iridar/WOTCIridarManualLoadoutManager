@@ -31,8 +31,6 @@
     <Content Include="Config\Base\XComEditor.ini" />
     <Content Include="Config\Base\XComEngine.ini" />
     <Content Include="Config\Base\XComGame.ini" />
-    <Content Include="Config\XComTemplateCreator.ini" />
-    <Content Include="Config\XComTemplateEditor.ini" />
     <Content Include="Localization\XComGame.int" />
     <Content Include="Localization\WOTCIridarManualLoadoutManager.int" />
     <Content Include="Src\extra_globals.uci" />
@@ -105,7 +103,6 @@
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\WOTCIridarManualLoadoutManager_MCMScreenListener.uc">
       <SubType>Content</SubType>
     </Content>
-    <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\X2DLCInfo_WOTCIridarManualLoadoutManager.uc" />
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\Help.uc" />
     <Content Include="Src\WOTCIridarManualLoadoutManager\Classes\X2EventListener_MLM.uc">
       <SubType>Content</SubType>
