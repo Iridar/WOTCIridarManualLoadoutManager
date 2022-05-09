@@ -13,8 +13,6 @@ https://github.com/Iridar/EnhancedModProjectTemplate
 TODO: 
 
 Loadouts:
-- File autobackup
-- delete button too big, too left, and obscures text
 - figure out automatic list item size realization maybe
 
 localization pass

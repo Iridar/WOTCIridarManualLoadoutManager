@@ -125,6 +125,15 @@ simulated function SpawnImages()
 	Desc.MoveToHighestDepth();
 }
 
+simulated function UpdateButtonX()
+{
+	if (Button != none)
+	{
+		Button.SetX(width - Button.Width - 30);
+		Desc.SetWidth(Desc.width - 12);
+	}
+}
+
 
 final function SetStatus(const ELoadoutItemStatus NewStatus)
 {

@@ -32,12 +32,6 @@ NoItemsInLoadoutText_Equip  = "No items in the loadout are selected. Loadout wil
 ConfirmOverwriteLoadoutTitle = "CONFIRM OVERWRITE"
 ConfirmOverwriteLoadoutText = "Are you sure you want to overwrite loadout %LoadoutName%?"
 
-
-ItemAlreadyEquipped = "This item is already equipped on this unit in this slot."
-
-ItemNotFoundInInventoryButReplacementFound = "This item is currently not available, but you can try using the suggested replacement."
-ItemWillBeEquipped = "Everything is OK. This item will be equipped on the unit if the checkbox is checked."
-
 LIS_MissingTemplate				= "Missing Item Template:"
 ;LIS_NotAvailable				= ""
 ;LIS_NotAvailable_NoReplacement	= ""
@@ -53,7 +47,7 @@ LIS_Restricted_Tooltip					= "This unit cannot equip this item."
 LIS_NoSlot_Tooltip						= "Unit appears to not have a slot to equip this item into, but you may attempt equipping it anyway."
 LIS_NotSelected_Tooltip					= "This item will not be equipped. Check the checkbox to equip the item."
 LIS_Selected_Tooltip					= "This item will be equipped on the unit."
-LIS_NotSelected_Tooltip_AlreadyEquipped = "This item is already equipped on the unit. Check the checkbox to make sure it remains equipped on the unit."
+LIS_NotSelected_Tooltip_AlreadyEquipped = "This item is already equipped on the unit. Check the checkbox to make sure it remains equipped."
 LIS_Selected_Tooltip_AlreadyEquipped	= "This item is already equipped on the unit."
 
 
@@ -67,13 +61,13 @@ FilterButtonTitle = "FILTER"
 SquadItems = "SQUAD ITEMS"
 
 
-ConfirmLoadBackup = "Would you like to load backup? <br/>%CurrentNumLoadouts% <br/>%BackupNumLoadouts%"
+ConfirmLoadBackupTitle = "Restore Loadouts from backup?" 
+ConfirmLoadBackupText = "Iridar's Loadout Manager has detected that your saved Loadouts have been lost.<br/><br/>Current number of saved Loadouts: %CurrentNumLoadouts%\n\nA backup file is available. It contains %BackupNumLoadouts% saved Loadouts. Would you like to restore your Loadouts from that backup?\n\nIf you accept, your current saved Loadouts will be completely overwritten by the backup.\nIf you proceed without restoring the backup now, the backup itself will be overwritten if you save a new Loadout."
 
 
 [WOTCIridarManualLoadoutManager_MCMScreen]
 ModName = "Loadout Manager"
 PageTitle = "Iridar's Loadout Manager"
-
 
 GroupHeader = "Loadout Settings"
 
@@ -99,13 +93,16 @@ DISPLAY_SQUAD_ITEMS_BUTTON_Label = "Display \"Squad Items\" button"
 DISPLAY_SQUAD_ITEMS_BUTTON_Tip = "If enabled, there will be a \"Squad Items\" button on the Squad Select screen. It can be clicked to display a list of all items equipped on soldiers in squad."
 
 MAX_LOADOUT_LIST_ITEMS_Label = "Max. items in squad items list"
-MAX_LOADOUT_LIST_ITEMS_Tip = "Maximum number of items displayed in the Squad Items lists before it becomes scrollable. Determines the amount of space the list can potentially occupy."
+MAX_LOADOUT_LIST_ITEMS_Tip = "Maximum number of items displayed in the Squad Items list before it becomes scrollable. Determines the amount of space the list can potentially occupy."
 
-DISPLAY_SQUAD_SELECT_SHORTCUT_Label = "Display shortcut in Squad Select"
+DISPLAY_SQUAD_SELECT_SHORTCUT_Label = "Display \"Equip Loadout"\ buttons in Squad Select"
 DISPLAY_SQUAD_SELECT_SHORTCUT_Tip = "If enabled, there will be an \"Equip Loadout\" shortcut under each soldier in Squad Select."
 
 
 Group3Header = "Miscellaneous"
+
+MAKE_BACKUPS_Label = "Automatic backup"
+MAKE_BACKUPS_Tip = "If enabled, the mod will backup all loadouts automatically and store them in a file, located at:\n..\\Documents\\my games\\XCOM2 War of the Chosen\\XComGame\\X2LoadoutManagerBackup.bin"
 
 DEBUG_LOGGING_Label = "Enable debug logging"
 DEBUG_LOGGING_Tip = "If enabled, the mod will print debug messages into the log file, located at:\n..\\Documents\\my games\\XCOM2 War of the Chosen\\XComGame\\Logs\\Launch.log"

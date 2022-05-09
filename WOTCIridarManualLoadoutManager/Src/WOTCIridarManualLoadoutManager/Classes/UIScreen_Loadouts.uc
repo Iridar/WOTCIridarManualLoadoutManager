@@ -24,6 +24,7 @@ var private X2ItemTemplateManager	ItemMgr;
 var private string					SearchText;
 var private int						LoadoutFilterStatus;
 var private X2SoldierClassTemplate	SoldierClassTemplate;
+var private X2SoldierClassTemplateManager	ClassMgr;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
@@ -34,20 +35,24 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	{
 		SoldierClassTemplate = UnitState.GetSoldierClassTemplate();
 	}
+
 	ItemMgr = class'X2ItemTemplateManager'.static.GetItemTemplateManager();
+	ClassMgr = class'X2SoldierClassTemplateManager'.static.GetSoldierClassTemplateManager();
 
 	super(UIInventory).InitScreen(InitController, InitMovie, InitName);
 
 	self.SetX(self.X + LeftListOffset);
 	
-	SetCategory("");
-	SetInventoryLayout();
-	PopulateData();
-
 	UIArmoryLoadoutScreen.Hide();
 	UIArmoryLoadoutScreen.NavHelp.Show();	
 	
 	UIMouseGuard_RotatePawn(MouseGuardInst).SetActorPawn(UIArmoryLoadoutScreen.ActorPawn);
+
+	SetCategory("");
+	SetInventoryLayout();
+
+	// Delay is required to have the "Delete" buttons in the right position. Don't ask why.
+	Screen.SetTimer(0.25f, false, nameof(PopulateData), self);
 }
 
 simulated function UpdateNavHelp()
@@ -230,11 +235,11 @@ simulated function PopulateData()
 
 		if (bForSaving)
 		{
-			ListItem.UpdateDataButton(Loadout.LoadoutName, class'UIMPShell_SquadLoadoutList'.default.m_strDeleteSet, OnDeleteLoadoutClicked, OnSaveSelectedLoadoutClicked);
+			ListItem.UpdateDataButton(GetLoadoutDisplayName(Loadout), class'UIMPShell_SquadLoadoutList'.default.m_strDeleteSet, OnDeleteLoadoutClicked, OnSaveSelectedLoadoutClicked);
 		}
 		else
 		{
-			ListItem.UpdateDataCheckbox(Loadout.LoadoutName, "", false, OnCheckboxChanged, OnLoadSelectedLoadoutClicked);
+			ListItem.UpdateDataCheckbox(GetLoadoutDisplayName(Loadout), "", false, OnCheckboxChanged, OnLoadSelectedLoadoutClicked);
 		}
 	}
 
@@ -271,6 +276,25 @@ simulated function PopulateData()
 			EquipLoadoutButton.SetDisabled(true);
 		}
 	}
+}
+
+private function string GetLoadoutDisplayName(const out IRILoadoutStruct Loadout)
+{
+	local string						DisplayName;
+	local X2SoldierClassTemplate		ClassTemplate;
+	
+	DisplayName = Loadout.LoadoutName;
+	
+	if (LoadoutFilterStatus == eLFS_Class && Loadout.SoldierClass != '')
+	{
+		ClassTemplate = ClassMgr.FindSoldierClassTemplate(Loadout.SoldierClass);
+		if (ClassTemplate != none)
+		{
+			DisplayName = ClassTemplate.DisplayName $ ": " $ DisplayName;
+		}
+	}
+
+	return DisplayName;
 }
 
 private function bool LoadoutPassesFilters(const IRILoadoutStruct Loadout)

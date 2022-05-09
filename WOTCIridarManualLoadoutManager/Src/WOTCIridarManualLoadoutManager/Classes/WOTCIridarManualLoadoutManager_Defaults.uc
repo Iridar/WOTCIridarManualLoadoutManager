@@ -11,3 +11,4 @@ var config bool DISPLAY_SQUAD_SELECT_SHORTCUT;
 var config int LOADOUT_FILTER_STATUS;
 var config int MAX_LOADOUT_LIST_ITEMS;
 var config bool DISPLAY_SQUAD_ITEMS_BUTTON;
+var config bool MAKE_BACKUPS;

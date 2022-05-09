@@ -6,12 +6,13 @@ var private array<IRILoadoutStruct> BackupLoadouts;
 
 const FilePath = "\\Documents\\my games\\XCOM2 War of the Chosen\\XComGame\\X2LoadoutManagerBackup.bin";
 
+`include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
+
 static final function SaveLoadut_Static(const string LoadoutName, const array<XComGameState_Item> ItemStates, XComGameState_Unit UnitState)
 {
 	local XComGameState_Item	ItemState;
 	local IRILoadoutItemStruct	LoadoutItem;
 	local IRILoadoutStruct		NewLoadout;
-	local X2LoadoutSafe			Safe;
 	local int Index;
 
 	NewLoadout.LoadoutName = LoadoutName;
@@ -34,11 +35,7 @@ static final function SaveLoadut_Static(const string LoadoutName, const array<XC
 		default.Loadouts.AddItem(NewLoadout);
 	}
 
-	StaticSaveConfig();
-
-	Safe = LoadSafe();
-	Safe.BackupLoadouts = default.Loadouts;
-	SaveSafe(Safe);
+	DoSave();
 }
 
 static final function DeleteLoadut_Static(const string LoadoutName)
@@ -50,7 +47,22 @@ static final function DeleteLoadut_Static(const string LoadoutName)
 	{
 		default.Loadouts.Remove(Index, 1);
 	}
+	
+	DoSave();
+}
+
+static private function DoSave()
+{
+	local X2LoadoutSafe Safe;
+
 	StaticSaveConfig();
+
+	if (`GETMCMVAR(MAKE_BACKUPS))
+	{
+		Safe = LoadSafe();
+		Safe.BackupLoadouts = default.Loadouts;
+		SaveSafe(Safe);
+	}
 }
 
 
@@ -93,9 +105,13 @@ static final function bool ShouldLoadBackup()
 {
 	local X2LoadoutSafe Safe;
 
-	Safe = LoadSafe();
+	if (`GETMCMVAR(MAKE_BACKUPS))
+	{
+		Safe = LoadSafe();
 
-	return Safe.BackupLoadouts.Length > default.Loadouts.Length;
+		return Safe.BackupLoadouts.Length > default.Loadouts.Length;
+	}
+	return false;
 }
 
 static final function RaiseLoadBackupPopup()
@@ -106,10 +122,10 @@ static final function RaiseLoadBackupPopup()
 
 	Safe = LoadSafe();
 
-	kDialogData.strTitle = `GetLocalizedString('ConfirmDeleteLoadoutTitle');
+	kDialogData.strTitle = `GetLocalizedString('ConfirmLoadBackupTitle');
 	kDialogData.eType = eDialog_Warning;
 
-	PopupText = `GetLocalizedString('ConfirmLoadBackup');
+	PopupText = `GetLocalizedString('ConfirmLoadBackupText');
 	PopupText = Repl(PopupText, "%CurrentNumLoadouts%", default.Loadouts.Length);
 	PopupText = Repl(PopupText, "%BackupNumLoadouts%", Safe.BackupLoadouts.Length);
 
