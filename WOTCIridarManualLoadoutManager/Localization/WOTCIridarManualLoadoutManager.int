@@ -44,12 +44,18 @@ LIS_MissingTemplate_Tooltip				= "Template for this item is not available. This 
 LIS_NotAvailable_Tooltip				= "This item is currently not available."
 LIS_NotAvailable_Tooltip_NoReplacement	= "This item is currently not available and there are no suitable replacements."
 LIS_Restricted_Tooltip					= "This unit cannot equip this item."
+
 LIS_NoSlot_Tooltip						= "Unit appears to not have a slot to equip this item into, but you may attempt equipping it anyway."
+LIS_NoSlot_Replacement_Tooltip			= "The loadout item is currently not available. Unit appears to not have a slot to equip this replacement item into, but you may attempt equipping it anyway."
+
 LIS_NotSelected_Tooltip					= "This item will not be equipped. Check the checkbox to equip the item."
+LIS_NotSelected_Replacement_Tooltip		= "The loadout item is currently not available. This replacement item will not be equipped. Check the checkbox to equip the replacement item."
+
 LIS_Selected_Tooltip					= "This item will be equipped on the unit."
+LIS_Selected_Replacement_Tooltip		= "The loadout item is currently not available. This replacement item will be equipped on the unit."
+
 LIS_NotSelected_Tooltip_AlreadyEquipped = "This item is already equipped on the unit. Check the checkbox to make sure it remains equipped."
 LIS_Selected_Tooltip_AlreadyEquipped	= "This item is already equipped on the unit."
-
 
 
 SearchFieldTitle = "Enter partial loadout name"

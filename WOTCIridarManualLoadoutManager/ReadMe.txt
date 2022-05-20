@@ -1,6 +1,7 @@
 TODO: 
 
 mod preview image
+handle the case when there are no saved loadouts (disable the button)
 
 One day:
 preview loadout changes
@@ -38,6 +39,12 @@ If there are any issues with loadout items, the item name will be highlighted in
 [b]Equip Loadout[/b] button is added under each soldier's panel on the Squad Select screen. Known issue: when not using robojumper's Squad Select, the "Equip Loadout" button may linger under the soldier panel even after the soldier is removed from the squad.
 
 [b]Squad Items[/b] button is added to the top middle part of the screen. Clicking it will toggle the list of all items equipped on the entire squad, so you can check at a glance how many medikits you have on the mission, or whatever.
+
+[h1]Weapon Upgrades[/h1]
+
+Currently the mod does not interact with weapon upgrades. Meaning that if you save a loadout with an upgraded Magnetic Rifle, then when you equip that loadout later, the mod will look for any Magnetic Rifle, starting with those that do not have any weapon upgrades installed at all.
+
+Support for weapon upgrades may or may not be added later depending on how many of my patreon supporters will request this feature.
 
 [h1]REQUIREMENTS[/h1]
 [list]

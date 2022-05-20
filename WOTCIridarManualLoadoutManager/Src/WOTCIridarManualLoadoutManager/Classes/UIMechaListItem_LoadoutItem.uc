@@ -32,6 +32,11 @@ var delegate<OnCheckboxChangedCallback> OnCheckboxChangedFn;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
+`define YELLOW(VarName)	class'UIUtilities_Text'.static.GetColoredText(`VarName, eUIState_Warning)
+`define RED(VarName)	class'UIUtilities_Text'.static.GetColoredText(`VarName, eUIState_Bad)
+`define FADED(VarName)	class'UIUtilities_Text'.static.GetColoredText(`VarName, eUIState_Disabled)
+`define GREEN(VarName)	class'UIUtilities_Text'.static.GetColoredText(`VarName, eUIState_Good)
+
 // Returns true if the item can be equipped on the unit if there's a slot for it.
 final function bool InitLoadoutItem(IRILoadoutItemStruct _LoadoutItem, X2ItemTemplateManager _ItemMgr, XComGameState_Unit _UnitState, XComGameState_HeadquartersXCom _XComHQ)
 {	
@@ -51,13 +56,12 @@ final function bool InitLoadoutItem(IRILoadoutItemStruct _LoadoutItem, X2ItemTem
 	}
 
 	ItemState = GetItemState();
+	SpawnImages();
 	if (ItemState == none)
 	{
 		SetStatus(eLIS_NotAvailable);
 		return false;
 	}
-
-	SpawnImages();
 		
 	CachedDisabledReason = GetDisabledReason(ItemTemplate, ItemState);
 	if (CachedDisabledReason != "")
@@ -72,13 +76,31 @@ final function bool InitLoadoutItem(IRILoadoutItemStruct _LoadoutItem, X2ItemTem
 
 simulated function SpawnImages()
 {
-	local private UIPanel			WeaponImageParent;
-	local private array<UIImage>	WeaponImages;
-	local private array<string>		strImagePaths;
-	local private UIMask			ImageMask;
+	local UIPanel			WeaponImageParent;
+	local array<UIImage>	WeaponImages;
+	local array<string>		strImagePaths;
+	local UIMask			ImageMask;
+	local X2ItemTemplate	UseTemplate;
 	local int i;
 
-	strImagePaths = ItemState.GetWeaponPanelImages();
+	if (ReplacementTemplate != none)
+	{
+		UseTemplate = ReplacementTemplate;
+	}
+	else
+	{
+		UseTemplate = ItemTemplate;
+	}
+
+	if (ItemState != none)
+	{
+		strImagePaths = ItemState.GetWeaponPanelImages();
+	}
+	else
+	{
+		strImagePaths = GetImagesFromTemplate(UseTemplate);
+	}
+	
 	if (strImagePaths.Length == 0)
 		return;
 
@@ -99,9 +121,9 @@ simulated function SpawnImages()
 		// haxhaxhax -- primary weapons are bigger than the others, which is normally handled by the image stack
 		// but we need to do it manually
 		if (LoadoutItem.Slot == eInvSlot_PrimaryWeapon ||
-			(X2WeaponTemplate(ItemTemplate) != none &&
-				(X2WeaponTemplate(ItemTemplate).WeaponCat == 'pistol' ||
-				 X2WeaponTemplate(ItemTemplate).WeaponCat == 'sidearm'))
+			(X2WeaponTemplate(UseTemplate) != none &&
+				(X2WeaponTemplate(UseTemplate).WeaponCat == 'pistol' ||
+				 X2WeaponTemplate(UseTemplate).WeaponCat == 'sidearm'))
 		)
 		{
 			WeaponImages[i].SetPosition(102 + 70, -24);
@@ -123,6 +145,40 @@ simulated function SpawnImages()
 	ImageMask.SetSize(Width - 4, Height - 4);
 
 	Desc.MoveToHighestDepth();
+}
+
+private function array<string> GetImagesFromTemplate(const X2ItemTemplate UseTemplate)
+{
+	local array<string>		Images; 
+	local X2WeaponTemplate	WeaponTemplate; 
+	local int i; 
+
+	if (UseTemplate.IsA('X2WeaponTemplate'))
+	{
+		WeaponTemplate = X2WeaponTemplate(UseTemplate); 
+
+		if (UseTemplate.strImage != "")
+		{
+			Images.AddItem(UseTemplate.strImage);
+		}
+		else if (WeaponTemplate.WeaponPanelImage != "" )
+		{
+			Images.AddItem(WeaponTemplate.WeaponPanelImage);
+		}
+
+		for (i = 0; i < WeaponTemplate.DefaultAttachments.length; i++)
+		{
+			if (WeaponTemplate.DefaultAttachments[i].AttachIconName != "")
+			{
+				Images.AddItem(WeaponTemplate.DefaultAttachments[i].AttachIconName);			
+			}
+		}
+	}
+	else if (UseTemplate.strImage != "")
+	{
+		Images.AddItem(UseTemplate.strImage);
+	}
+	return Images; 
 }
 
 simulated function UpdateButtonX()
@@ -158,8 +214,8 @@ final function UpdateItem(optional bool bJustToggleCheckbox) // True when this f
 		}
 		else
 		{
-			// If checkbox already exists, then we keep whatever setting it had. Otherwise, we default to enabling the checkbox.
-			UpdateDataCheckbox(GetColoredTitle(), "", Checkbox != none ? Checkbox.bChecked : Status >= eLIS_Normal, OnCheckboxChangedFn, OnLoadoutItemClicked);
+			// If checkbox already exists, then we keep whatever setting it had. Otherwise, we default to enabling the checkbox, if the item is from the loadout, not a replacement.
+			UpdateDataCheckbox(GetColoredTitle(), "", Checkbox != none ? Checkbox.bChecked : Status >= eLIS_Normal && ReplacementTemplate == none, OnCheckboxChangedFn, OnLoadoutItemClicked);
 		}
 	}
 	else
@@ -218,35 +274,38 @@ private function string ColorText(string Text)
 
 private function string GetColoredTitle()
 {
-	return ColorText(GetTitle());
-}
-
-private function string GetTitle()
-{
 	switch (Status)
 	{
 	case eLIS_Unknown:
-		return ItemTemplate.GetItemFriendlyNameNoStats() @ "Unknown Loadout Item Status";
+		return `RED( ItemTemplate.GetItemFriendlyNameNoStats() @ "Unknown Loadout Item Status" );
 	case eLIS_MissingTemplate:
-		return `GetLocalizedString('LIS_MissingTemplate') @ "'" $ LoadoutItem.Item $ "'";
+		return `FADED( `GetLocalizedString('LIS_MissingTemplate') @ "'" $ LoadoutItem.Item $ "'" );
 	case eLIS_NotAvailable:
-		return ItemTemplate.GetItemFriendlyNameNoStats();
+		return `RED( ItemTemplate.GetItemFriendlyNameNoStats() );
 	case eLIS_Restricted:
-		return ItemTemplate.GetItemFriendlyNameNoStats() $ ": " $ CachedDisabledReason;
+		return `RED( ItemTemplate.GetItemFriendlyNameNoStats() $ ": " $ CachedDisabledReason );
 	case eLIS_NoSlot:
 		if (SlotDisabledReason != "")
 		{
-			return ItemTemplate.GetItemFriendlyNameNoStats() $ ": " $ SlotDisabledReason;
+			return `YELLOW( ItemTemplate.GetItemFriendlyNameNoStats() $ ": " $ SlotDisabledReason );
+		}
+		else if (ReplacementTemplate != none)
+		{
+			return `RED( ItemTemplate.GetItemFriendlyNameNoStats() ) $ " -> " $ `YELLOW( ReplacementTemplate.GetItemFriendlyNameNoStats() $ `GetLocalizedString('LIS_NoSlot'));
 		}
 		else
 		{
-			return ItemTemplate.GetItemFriendlyNameNoStats() $ `GetLocalizedString('LIS_NoSlot');
-		}
-		
+			return `YELLOW( ItemTemplate.GetItemFriendlyNameNoStats() $ `GetLocalizedString('LIS_NoSlot') );
+		}		
 	case eLIS_Normal:
+		if (ReplacementTemplate != none)
+		{
+			return `RED( ItemTemplate.GetItemFriendlyNameNoStats() ) $ " -> " $ `YELLOW( ReplacementTemplate.GetItemFriendlyNameNoStats() );
+		}
+		// No coloring.
 		return ItemTemplate.GetItemFriendlyNameNoStats();
 	default:
-		return  "Unhandled Loadout Item Status:" @ Status;
+		return "Unhandled Loadout Item Status:" @ Status;
 	}
 }
 
@@ -657,12 +716,16 @@ private function string GetTooltipText()
 	case eLIS_NotAvailable:
 		if (`GETMCMVAR(ALLOW_REPLACEMENT_ITEMS))
 		{
-			return `GetLocalizedString('LIS_NotAvailable_NoReplacement_Tooltip');
+			return `GetLocalizedString('LIS_NotAvailable_Tooltip_NoReplacement');
 		}
 		return `GetLocalizedString('LIS_NotAvailable_Tooltip');
 	case eLIS_Restricted:
 		return `GetLocalizedString('LIS_Restricted_Tooltip');
 	case eLIS_NoSlot:
+		if (ReplacementTemplate != none)
+		{
+			return `GetLocalizedString('LIS_NoSlot_Replacement_Tooltip');
+		}
 		return `GetLocalizedString('LIS_NoSlot_Tooltip');
 	case eLIS_Normal:
 		if (bAlreadyEqupped)
@@ -678,10 +741,18 @@ private function string GetTooltipText()
 		}
 		if (Checkbox.bChecked)
 		{
+			if (ReplacementTemplate != none)
+			{
+				return `GetLocalizedString('LIS_Selected_Replacement_Tooltip');
+			}
 			return `GetLocalizedString('LIS_Selected_Tooltip');
 		}
 		else
 		{
+			if (ReplacementTemplate != none)
+			{
+				return `GetLocalizedString('LIS_NotSelected_Replacement_Tooltip');
+			}
 			return `GetLocalizedString('LIS_NotSelected_Tooltip');
 		}
 	default:
