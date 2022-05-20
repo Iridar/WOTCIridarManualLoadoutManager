@@ -593,6 +593,24 @@ private function XComGameState_Item GetItemState()
 
 	return none;
 }
+/*
+private function FindUpgradedItemRecursive(const X2ItemTemplate OriginalTemplate, out XComGameState_Item UpgradedItem)
+{
+	local X2ItemTemplate UpgradeTemplate;
+
+	foreach XComHQ.Inventory(ItemRef)
+	{
+		ItemState = XComGameState_Item(History.GetGameStateForObjectID(ItemRef.ObjectID));
+
+		// If item matches and (it has not been modified or we allow modified items).
+		if (ItemState != none && (	ItemState.GetMyTemplate().BaseItem == OriginalTemplate.DataName || 
+									ItemState.GetMyTemplateName() == OriginalTemplate.UpgradeItem))
+		{
+			UpgradedItem = ItemState;
+			FindUpgradedItemRecursive(UpgradedItem.GetMyTemplate(), UpgradedItem);
+		}
+	}
+}*/
 
 private function XComGameState_Item FindBestReplacementItemForUnit(optional bool bAllowModified)
 {

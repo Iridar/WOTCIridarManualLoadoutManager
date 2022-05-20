@@ -1,9 +1,5 @@
 TODO: 
 
-mod preview image
-handle the case when there are no saved loadouts (disable the button)
-
-One day:
 preview loadout changes
 PCS support
 Weapon Upgrade support
@@ -20,7 +16,7 @@ Adds new functionality to Loadout and Squad Select screens to save and equip uni
 
 [h1]Loadout Screen[/h1]
 
-Adds two buttons to the armory Loadout screen:
+Adds two buttons to the Armory Loadout screen:
 
 [b]Save Loadout[/b] - clicking this button will bring you to the Save Loadout screen, where you will see the list of previously saved loadouts on the left, and the list of items currently equipped on the unit on the right. You can toggle checkboxes near each item to decide whether you want to save that particular item in the loadout. Then you can click the top element in the loadout list to save it as a new loadout, or you can click an existing loadout to overwrite it. You can also delete previously saved loadouts on this screeen.
 
@@ -40,17 +36,18 @@ If there are any issues with loadout items, the item name will be highlighted in
 
 [b]Squad Items[/b] button is added to the top middle part of the screen. Clicking it will toggle the list of all items equipped on the entire squad, so you can check at a glance how many medikits you have on the mission, or whatever.
 
-[h1]Weapon Upgrades[/h1]
+[h1]KNOWN ISSUES[/h1]
+[list][*] Weapon upgrades are not supported. If you save a loadout with an upgraded Magnetic Rifle, then when you equip that loadout later, the mod will look for *any* Magnetic Rifle, starting with those that do not have any weapon upgrades installed at all.
+[*] PCS are not supported.
+[*] If you purchase a squad upgrade for a weapon, you have to update the loadout manually. If you save a loadout with a Magnetic Rifle, then purchase the Beam Rifle upgrade, the loadout will still equip a Magnetic Rifle.
+[/list]
 
-Currently the mod does not interact with weapon upgrades. Meaning that if you save a loadout with an upgraded Magnetic Rifle, then when you equip that loadout later, the mod will look for any Magnetic Rifle, starting with those that do not have any weapon upgrades installed at all.
-
-Support for weapon upgrades may or may not be added later depending on how many of my patreon supporters will request this feature.
 
 [h1]REQUIREMENTS[/h1]
 [list]
 [*] [url=https://steamcommunity.com/workshop/filedetails/?id=1134256495][b]X2 WOTC Community Highlander[/b][/url] is required.
 [*] [url=https://steamcommunity.com/sharedfiles/filedetails/?id=667104300][b][WotC] Mod Config Menu[/b][/url] is supported, but not a hard requirement.
-[*]Safe to add or remove mid-campaign.[/list]
+[*] Safe to add or remove mid-campaign.[/list]
 
 [h1]COMPATIBILITY[/h1]
 
@@ -70,10 +67,10 @@ Default MCM settings:
 
 You might want to back up these files when deleting User Config folder:
 
-MCM settings:
+Your MCM settings:
 ..\Documents\my games\XCOM2 War of the Chosen\XComGame\Config\XComWOTCIridarManualLoadoutManager.ini
 
-Saved loadouts:
+Your Saved loadouts:
 ..\Documents\my games\XCOM2 War of the Chosen\XComGame\Config\XComLoadoutManager.ini[/code]
 
 [h1]Automated Backups[/h1]
@@ -86,7 +83,7 @@ The backup is saved every time you save a loadout. When you start the game after
 [h1]CREDITS[/h1]
 
 Code responsible for displaying fancy inventory images copied from Tactical Armory UI by [b]Musashi[/b].
-Thanks to [b]Xymanek (Astral Descend)[/b] for consultations and controller support.
+Thanks to [b]Xymanek (Astral Descend)[/b] for consultations.
 Shoutout to [b][url=https://www.twitch.tv/beagsandjam/videos/all]Beaglerush[/url][/b] for showcasing this mod during his streams.
 
 Please [b][url=https://www.patreon.com/Iridar]support me on Patreon[/url][/b] if you require tech support, have a suggestion for a feature, or simply wish to help me create more awesome mods.
