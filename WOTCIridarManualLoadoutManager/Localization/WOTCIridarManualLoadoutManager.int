@@ -32,6 +32,9 @@ NoItemsInLoadoutText_Equip  = "No items in the loadout are selected. Loadout wil
 ConfirmOverwriteLoadoutTitle = "CONFIRM OVERWRITE"
 ConfirmOverwriteLoadoutText = "Are you sure you want to overwrite loadout %LoadoutName%?"
 
+NoLoadoutsToDisplay = "No saved loadouts to display."
+NoLoadoutsToDisplay_MaybeDisableFilters = "No saved loadouts to display. Try a different filter, perhaps?"
+
 LIS_MissingTemplate				= "Missing Item Template:"
 ;LIS_NotAvailable				= ""
 ;LIS_NotAvailable_NoReplacement	= ""

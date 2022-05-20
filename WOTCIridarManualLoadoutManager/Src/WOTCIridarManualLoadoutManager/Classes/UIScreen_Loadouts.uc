@@ -278,17 +278,26 @@ simulated function PopulateData()
 	{
 		if (List.ItemCount > 0)
 		{
+			ItemCard.Show();
+
 			List.SetSelectedIndex(1); // To account for the "create new loadout" 0th list item.
 			SelectedItemChanged(List, 1);
 
 			List.RealizeItems();
 			List.RealizeList();
 		}
+		else
+		{
+			ItemCard.Hide();
+			AddNoLoadoutsItem();
+		}
 	}
 	else
 	{
 		if (List.ItemCount > 0)
 		{
+			ItemCard.Show();
+
 			if (List.ItemCount == 1) // Select the first loadout in the list if it's the only one.
 			{
 				SelectListItem(0);
@@ -304,9 +313,32 @@ simulated function PopulateData()
 		else
 		{
 			UIItemCard_Inventory(ItemCard).ClearListItems(); // Clear loadout preview from the list on the right.
+			ItemCard.Hide();
+			AddNoLoadoutsItem();
 			EquipLoadoutButton.SetDisabled(true);
 		}
 	}
+}
+
+
+
+private function AddNoLoadoutsItem()
+{
+	local UIMechaListItem_LoadoutItem ListItem;
+
+	ListItem = Spawn(class'UIMechaListItem_LoadoutItem', List.itemContainer);
+	ListItem.bAnimateOnInit = false;
+	ListItem.SetWidth(TitleHeader.headerWidth - 65);
+	ListItem.InitListItem();
+		
+	if (LoadoutFilterStatus == eLFS_NoFilter)
+	{
+		ListItem.UpdateDataDescription(`GetLocalizedString('NoLoadoutsToDisplay'));
+	}
+	else
+	{
+		ListItem.UpdateDataDescription(`GetLocalizedString('NoLoadoutsToDisplay_MaybeDisableFilters'));
+	}	
 }
 
 private function string GetLoadoutDisplayName(const out IRILoadoutStruct Loadout)
