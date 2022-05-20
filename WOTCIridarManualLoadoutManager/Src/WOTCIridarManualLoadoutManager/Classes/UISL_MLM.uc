@@ -32,13 +32,13 @@ var private bool bLoadoutSpawned;
 var private string PathToButton;
 var private bool bRJSSPresent;
 
-const RJSS_List_VerticalOffset = 70;
-const List_VerticalOffset = 40;
-const ListBG_Padding = 5;
-const ListBG_Alpha = 50;
-const ListBG_ItemHeight = 28.0f;
-const ListWidth = 250;
-const HorizontalPaddingBetweenLists = 15;
+var config int RJSS_List_VerticalOffset;
+var config int List_VerticalOffset;
+var config int ListBG_Padding;
+var config int ListBG_Alpha;
+var config float ListBG_ItemHeight;
+var config int List_Width;
+var config int HorizontalPaddingBetweenLists;
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
@@ -91,20 +91,22 @@ private function AddSquadButtons(UISquadSelect Screen)
 {
 	local UIButton SquadLoadoutButton;
 
-	SquadLoadoutButton = Screen.Spawn(class'UIButton', Screen).InitButton('IRI_SquadLoadoutButton', `GetLocalizedString('SquadItems'), OnCategoryButtonClicked_Weapons, eUIButtonStyle_NONE);
+	SquadLoadoutButton = Screen.Spawn(class'UIButton', Screen).InitButton('IRI_SquadLoadoutButton', `GetLocalizedString('SquadItems'), OnCategoryButtonClicked_Weapons, eUIButtonStyle_NONE);	
+	//SquadLoadoutButton.AnchorTopCenter();
+	SquadLoadoutButton.AnimateIn(0);	
+	SquadLoadoutButton.SetTooltipText("Button tooltip text tastes just like raisins");
+
 	if (Screen.Class != class'UISquadSelect') // Basially check if RJSS or derivatives is active.
 	{
 		bRJSSPresent = true;
-		SquadLoadoutButton.SetPosition(-250, 5); 
+		//SquadLoadoutButton.SetPosition(0, 75); 
 	}
-	else
-	{
-		SquadLoadoutButton.SetPosition(0, 5);
-	}
-	
-	SquadLoadoutButton.AnchorTopCenter();
-	SquadLoadoutButton.AnimateIn(0);	
-	SquadLoadoutButton.SetTooltipText("Button tooltip text tastes just like raisins");
+	//else
+	//{
+	//	SquadLoadoutButton.SetPosition(0, 5);
+	//}
+	SquadLoadoutButton.AnchorTopLeft();
+	SquadLoadoutButton.SetPosition(`GETMCMVAR(SquadItemsPositionX), `GETMCMVAR(SquadItemsPositionY));
 }
 
 private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
@@ -127,7 +129,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		RealizeListBG(List, ListBG);
 		
 		// Primary Weapons
-		InitX += ListWidth + HorizontalPaddingBetweenLists;
+		InitX += List_Width + HorizontalPaddingBetweenLists;
 
 		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Primary_BG',	InitX, InitY, btn_clicked.ParentPanel);
 		List = CreateList('IRI_SquadLoadoutList_Weapon_Primary',		InitX + 5, InitY, btn_clicked.ParentPanel);
@@ -136,7 +138,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		RealizeListBG(List, ListBG);
 
 		// Secondary and other weapons
-		InitX += ListWidth + HorizontalPaddingBetweenLists;
+		InitX += List_Width + HorizontalPaddingBetweenLists;
 
 		ListBG = CreateListBG('IRI_SquadLoadoutList_Weapon_Other_BG',	InitX, InitY, btn_clicked.ParentPanel);
 		List = CreateList('IRI_SquadLoadoutList_Weapon_Other',			InitX + 5, InitY, btn_clicked.ParentPanel);
@@ -145,7 +147,7 @@ private function OnCategoryButtonClicked_Weapons(UIButton btn_clicked)
 		RealizeListBG(List, ListBG);
 
 		// Grenades and other items
-		InitX += ListWidth + HorizontalPaddingBetweenLists;
+		InitX += List_Width + HorizontalPaddingBetweenLists;
 
 		ListBG = CreateListBG('IRI_SquadLoadoutList_Item_BG',	InitX, InitY, btn_clicked.ParentPanel);
 		List = CreateList('IRI_SquadLoadoutList_Item',			InitX + 5, InitY, btn_clicked.ParentPanel);
@@ -195,7 +197,7 @@ private function UIList CreateList(name InitName, float initX, float initY, UIPa
 	local UIList List;
 
 	List = ParentPanel.Spawn(class'UIList', ParentPanel);
-	List.InitList(InitName, initX, initY, ListWidth);
+	List.InitList(InitName, initX, initY, List_Width);
 	List.bAnimateOnInit = false;
 	List.ItemPadding = -10;
 
@@ -208,7 +210,7 @@ private function UIBGBox CreateListBG(name InitName, float initX, float initY, U
 
 	ListBG = ParentPanel.Spawn(class'UIBGBox', ParentPanel);
 	ListBG.LibID = class'UIUtilities_Controls'.const.MC_X2Background;
-	ListBG.InitBG(InitName, initX - ListBG_Padding, initY - ListBG_Padding, ListWidth + ListBG_Padding * 2);
+	ListBG.InitBG(InitName, initX - ListBG_Padding, initY - ListBG_Padding, List_Width + ListBG_Padding * 2);
 	ListBG.bAnimateOnInit = false;
 	ListBG.SetAlpha(ListBG_Alpha);
 

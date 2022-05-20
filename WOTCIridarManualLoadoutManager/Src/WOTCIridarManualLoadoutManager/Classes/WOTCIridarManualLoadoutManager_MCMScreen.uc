@@ -22,6 +22,8 @@ var localized array<string> LOADOUT_FILTER_STATUS_Tooltips;
 `MCM_API_AutoIndexDropdownVars(LOADOUT_FILTER_STATUS);
 `MCM_API_AutoCheckBoxVars(DISPLAY_SQUAD_SELECT_SHORTCUT);
 `MCM_API_AutoSliderVars(MAX_LOADOUT_LIST_ITEMS);
+`MCM_API_AutoSliderVars(SquadItemsPositionX);
+`MCM_API_AutoSliderVars(SquadItemsPositionY);
 
 `include(WOTCIridarManualLoadoutManager\Src\ModConfigMenuAPI\MCM_API_CfgHelpers.uci)
 
@@ -35,6 +37,8 @@ var localized array<string> LOADOUT_FILTER_STATUS_Tooltips;
 `MCM_API_AutoCheckBoxFns(DISPLAY_SQUAD_SELECT_SHORTCUT, 1);
 `MCM_API_AutoIndexDropdownFns(LOADOUT_FILTER_STATUS, 1)
 `MCM_API_AutoSliderFns(MAX_LOADOUT_LIST_ITEMS,, 1)
+`MCM_API_AutoSliderFns(SquadItemsPositionX,, 2)
+`MCM_API_AutoSliderFns(SquadItemsPositionY,, 2)
 
 
 event OnInit(UIScreen Screen)
@@ -68,6 +72,8 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	`MCM_API_AutoAddCheckBox(Group, DISPLAY_SQUAD_ITEMS_BUTTON, DISPLAY_SQUAD_ITEMS_BUTTON_ChangeHandler);
 	`MCM_API_AutoAddSLider(Group, MAX_LOADOUT_LIST_ITEMS, 1, 99, 1);
 	`MCM_API_AutoAddCheckBox(Group, DISPLAY_SQUAD_SELECT_SHORTCUT);
+	`MCM_API_AutoAddSLider(Group, SquadItemsPositionX, 0, 1920, 1);
+	`MCM_API_AutoAddSLider(Group, SquadItemsPositionY, 0, 1080, 1);
 
 	Group = Page.AddGroup('Group3', Group3Header);
 
@@ -103,6 +109,8 @@ simulated function LoadSavedSettings()
 	DISPLAY_SQUAD_SELECT_SHORTCUT = `GETMCMVAR(DISPLAY_SQUAD_SELECT_SHORTCUT);
 	LOADOUT_FILTER_STATUS = `GETMCMVAR(LOADOUT_FILTER_STATUS);
 	MAX_LOADOUT_LIST_ITEMS = `GETMCMVAR(MAX_LOADOUT_LIST_ITEMS);
+	SquadItemsPositionX = `GETMCMVAR(SquadItemsPositionX);
+	SquadItemsPositionY = `GETMCMVAR(SquadItemsPositionY);
 }
 
 simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
@@ -116,6 +124,8 @@ simulated function ResetButtonClicked(MCM_API_SettingsPage Page)
 	`MCM_API_AutoReset(MAKE_BACKUPS);
 	`MCM_API_AutoReset(DISPLAY_SQUAD_SELECT_SHORTCUT);
 	`MCM_API_AutoReset(MAX_LOADOUT_LIST_ITEMS);
+	`MCM_API_AutoReset(SquadItemsPositionX);
+	`MCM_API_AutoReset(SquadItemsPositionY);
 	`MCM_API_AutoIndexReset(LOADOUT_FILTER_STATUS);
 }
 
@@ -124,5 +134,3 @@ simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 	VERSION_CFG = `MCM_CH_GetCompositeVersion();
 	SaveConfig();
 }
-
-

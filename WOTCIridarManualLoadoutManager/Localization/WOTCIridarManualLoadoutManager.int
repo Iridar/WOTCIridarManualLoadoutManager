@@ -120,6 +120,10 @@ MAKE_BACKUPS_Tip = "If enabled, the mod will backup all loadouts automatically a
 DEBUG_LOGGING_Label = "Enable debug logging"
 DEBUG_LOGGING_Tip = "If enabled, the mod will print debug messages into the log file, located at:\n..\\Documents\\my games\\XCOM2 War of the Chosen\\XComGame\\Logs\\Launch.log"
 
+SquadItemsPositionX_Label = "Squad Items button position X"
+SquadItemsPositionX_Tip = "Horizontal offset from the top left corner of the screen."
+SquadItemsPositionY_Label = "Squad Items button position Y"
+SquadItemsPositionY_Tip = "Vertical offset from the top left corner of the screen."
 
 
 LOADOUT_FILTER_STATUS_Strings[0] = "Disabled"
