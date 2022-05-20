@@ -60,6 +60,8 @@ simulated function UpdateNavHelp()
 	local UINavigationHelp NavHelp;
 	
 	super.UpdateNavHelp();
+	
+	//UIArmoryLoadoutScreen.UpdateNavHelp();
 
 	NavHelp = `HQPRES.m_kAvengerHUD.NavHelp;
 
@@ -83,6 +85,35 @@ simulated function UpdateNavHelp()
 			false,
 			`GetLocalizedString('SearchButtonTooltip'),
 			class'UIUtilities'.const.ANCHOR_BOTTOM_CENTER);
+
+	if (UIArmoryLoadoutScreen.bWeaponsStripped && UIArmoryLoadoutScreen.bGearStripped && UIArmoryLoadoutScreen.bItemsStripped)
+	{
+		NavHelp.AddRightHelp(`GetLocalizedString('MakeItemsAvailable_Title'), 
+			"", 
+			none, 
+			true,
+			`GetLocalizedString('MakeItemsAvailable_Tooltip_Disabled'),
+			class'UIUtilities'.const.ANCHOR_BOTTOM_CENTER);
+	}
+	else
+	{
+		NavHelp.AddRightHelp(`GetLocalizedString('MakeItemsAvailable_Title'),			
+			class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_RT_R2, 
+			OnMakeItemsAvailableClicked,
+			false,
+			`GetLocalizedString('MakeItemsAvailable_Tooltip'),
+			class'UIUtilities'.const.ANCHOR_BOTTOM_CENTER);
+	}
+}
+
+private function OnMakeItemsAvailableClicked()
+{
+	if (!UIArmoryLoadoutScreen.bWeaponsStripped)	UIArmoryLoadoutScreen.OnStripWeaponsDialogCallback('eUIAction_Accept');
+	if (!UIArmoryLoadoutScreen.bGearStripped)		UIArmoryLoadoutScreen.OnStripGearDialogCallback('eUIAction_Accept');
+	if (!UIArmoryLoadoutScreen.bItemsStripped)		UIArmoryLoadoutScreen.OnStripItemsDialogCallback('eUIAction_Accept');
+
+	UpdateNavHelp();
+	PopulateData();
 }
 
 private function OnFilterButtonClicked()

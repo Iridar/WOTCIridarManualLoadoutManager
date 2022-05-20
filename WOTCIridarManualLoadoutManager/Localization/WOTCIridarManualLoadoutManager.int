@@ -66,6 +66,10 @@ FilterButtonTitle = "FILTER"
 
 SquadItems = "SQUAD ITEMS"
 
+MakeItemsAvailable_Title = "MAKE ITEMS AVAILABLE"
+MakeItemsAvailable_Tooltip = "Unequip armor, items and weapons from all soldiers NOT selected for current mission duty. This gear will become available for any soldier to equip immediately."
+MakeItemsAvailable_Tooltip_Disabled = "Armor, items and weapons were already made available."
+
 
 ConfirmLoadBackupTitle = "Restore Loadouts from backup?" 
 ConfirmLoadBackupText = "Iridar's Loadout Manager has detected that your saved Loadouts have been lost.<br/><br/>Current number of saved Loadouts: %CurrentNumLoadouts%\n\nA backup file is available. It contains %BackupNumLoadouts% saved Loadouts. Would you like to restore your Loadouts from that backup?\n\nIf you accept, your current saved Loadouts will be completely overwritten by the backup.\nIf you proceed without restoring the backup now, the backup itself will be overwritten if you save a new Loadout."
