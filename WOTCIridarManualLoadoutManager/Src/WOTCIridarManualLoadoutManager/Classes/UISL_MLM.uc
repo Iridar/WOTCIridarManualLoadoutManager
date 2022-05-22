@@ -523,12 +523,12 @@ private function AddLoadoutButtons(UIArmory_Loadout Screen)
 	ListContainer = Screen.EquippedListContainer;
 
 	SaveLoadoutButton = UIButton(ListContainer.GetChild('IRI_SaveLoadoutButton', false));
-	SaveLoadoutButton = ListContainer.Spawn(class'UIButton', ListContainer).InitButton('IRI_SaveLoadoutButton', default.strSaveLoadout, SaveLoadoutButtonClicked, eUIButtonStyle_NONE);
+	SaveLoadoutButton = ListContainer.Spawn(class'UIButton', ListContainer).InitButton('IRI_SaveLoadoutButton_MLM', default.strSaveLoadout, SaveLoadoutButtonClicked, eUIButtonStyle_NONE);
 	SaveLoadoutButton.SetPosition(default.SaveLoadout_OffsetX - 108.65, default.SaveLoadout_OffsetY - 121);
 	SaveLoadoutButton.AnimateIn(0);
 
 	ToggleLoadoutLockButton = UIButton(ListContainer.GetChild('IRI_ToggleLoadoutLockButton', false));
-	ToggleLoadoutLockButton = ListContainer.Spawn(class'UIButton', ListContainer).InitButton('IRI_ToggleLoadoutLockButton',, ToggleLoadoutButtonClicked, eUIButtonStyle_NONE);
+	ToggleLoadoutLockButton = ListContainer.Spawn(class'UIButton', ListContainer).InitButton('IRI_ToggleLoadoutLockButton_MLM',, ToggleLoadoutButtonClicked, eUIButtonStyle_NONE);
 
 	ToggleLoadoutLockButton.SetText(default.strLoadLoadout);
 	ToggleLoadoutLockButton.SetPosition(default.LoadLoadout_OffsetX - 108.65, default.LoadLoadout_OffsetY - 121);
